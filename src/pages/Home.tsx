@@ -316,20 +316,51 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="bg-black/90 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl md:text-5xl font-pioneer text-white mb-8">
-            Newsletter
-          </h2>
+      {/* OurVibe Section */}
+      <section id="ourvibe" className="py-20 bg-black border-t border-gold/10">
+        <div className="gofit-container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-light tracking-wider text-white mb-6">OUR VIBE</h2>
+            <p className="text-xl text-gold font-light max-w-3xl mx-auto mb-4 tracking-wide">
+              "To transform how we perceive fitness — not just as physical activity, but as a journey of clarity and purpose."
+            </p>
+            <p className="text-gray-300 max-w-2xl mx-auto">
+              Founded by Suyash Kumar Singh, BlinderFit redefines fitness by focusing on the mind-body connection. 
+              We believe true transformation begins with clear vision and purpose.
+            </p>
+          </div>
           
-          <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-10 tracking-wide">
-            "Success isn't just about achieving goals, it's about consistently pushing boundaries and embracing the journey."
-          </p>
-
-          <button className="px-12 py-4 bg-gold hover:bg-gold/90 text-black text-lg font-medium tracking-wider transition-all duration-300">
-            SUBSCRIBE
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-black/60 backdrop-blur-sm p-8 border border-gold/20 transform transition-all duration-300 hover:translate-y-[-10px] hover:border-gold/40">
+              <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mb-6">
+                <Leaf className="h-8 w-8 text-gold" />
+              </div>
+              <h3 className="text-xl font-light text-white mb-4">Perception Training</h3>
+              <p className="text-gray-300">
+                Our unique approach retrains how you perceive fitness challenges, turning obstacles into stepping stones.
+              </p>
+            </div>
+            
+            <div className="bg-black/60 backdrop-blur-sm p-8 border border-gold/20 transform transition-all duration-300 hover:translate-y-[-10px] hover:border-gold/40">
+              <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mb-6">
+                <Dumbbell className="h-8 w-8 text-gold" />
+              </div>
+              <h3 className="text-xl font-light text-white mb-4">Clarity Through Motion</h3>
+              <p className="text-gray-300">
+                Movement isn't just physical—it's mental. We guide you to find clarity in every rep, every stride.
+              </p>
+            </div>
+            
+            <div className="bg-black/60 backdrop-blur-sm p-8 border border-gold/20 transform transition-all duration-300 hover:translate-y-[-10px] hover:border-gold/40">
+              <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mb-6">
+                <CircuitBoard className="h-8 w-8 text-gold" />
+              </div>
+              <h3 className="text-xl font-light text-white mb-4">AI-Enhanced Vision</h3>
+              <p className="text-gray-300">
+                Our technology analyzes your unique patterns to create personalized training that evolves with you.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -440,6 +471,8 @@ const Home = () => {
 };
 
 export default Home;
+
+
 
 
 
