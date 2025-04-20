@@ -147,7 +147,7 @@ const Home = () => {
   return (
     <div className="overflow-hidden">
       {/* Main Hero Section */}
-      <section className="relative h-screen flex items-center">
+      <section className="relative h-screen flex items-start pt-32">
         <div className="absolute inset-0 bg-black/60 z-10"></div>
         
         <Carousel 
@@ -176,11 +176,11 @@ const Home = () => {
         
         <div className="gofit-container relative z-10">
           <div 
-            className={`max-w-2xl transition-all duration-1000 ease-out ${
+            className={`max-w-2xl ml-8 transition-all duration-1000 ease-out ${
               isVisible.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
-            <div className="mb-8 flex flex-col items-center sm:items-start">
+            <div className="flex flex-col items-start">
               <div className="flex items-center justify-center mb-6 p-6 rounded-full bg-black/50 border border-gold/30">
                 <img 
                   src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
@@ -188,23 +188,25 @@ const Home = () => {
                   className="h-16 w-auto"
                 />
               </div>
-              <h1 className="text-4xl sm:text-5xl font-light tracking-wider text-white mb-4 text-center sm:text-left">
+              <h1 className="text-5xl font-light tracking-[0.5em] text-white mb-6">
                 BLINDERFIT
               </h1>
-              <p className="text-2xl md:text-3xl text-gold font-light mb-2 text-center sm:text-left">
-                {heroImages[currentSlide].message}
+              <p className="text-3xl text-gold font-light mb-4 tracking-[0.3em]">
+                CLARITY THROUGH MOTION
               </p>
-              <p className="text-lg text-gray-300 font-light mb-6 text-center sm:text-left">
-                {heroImages[currentSlide].description}
+              <p className="text-gray-300 text-lg mb-8 tracking-wide">
+                Founded by Suyash Kumar Singh to bring clarity and purpose to fitness journeys.
               </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center sm:justify-start">
-              <Link to="/fitmentor" className="gofit-button group flex items-center justify-center">
-                Begin Your Journey <ChevronRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-              <Link to="/fitlearn" className="gofit-button-outline group flex items-center justify-center">
-                Explore More <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
+              <div className="flex gap-6">
+                <button className="px-8 py-3 bg-gold text-black font-medium tracking-wider 
+                  hover:bg-opacity-90 transition-all duration-500">
+                  Begin Your Journey
+                </button>
+                <button className="px-8 py-3 border border-gold text-gold font-medium tracking-wider 
+                  hover:bg-gold hover:text-black transition-all duration-500">
+                  Explore More
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -238,7 +240,7 @@ const Home = () => {
         <div className="gofit-container">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-light tracking-wider text-white mb-6">OUR VISION</h2>
-            <p className="text-xl text-gold italic font-light max-w-3xl mx-auto mb-4">
+            <p className="text-xl text-gold font-light max-w-3xl mx-auto mb-4 tracking-wide">
               "To transform how we perceive fitness — not just as physical activity, but as a journey of clarity and purpose."
             </p>
             <p className="text-gray-300 max-w-2xl mx-auto">
@@ -281,58 +283,53 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Email Signup Section */}
-      <section id="earlyAdopter" className="py-12 bg-black/80 backdrop-blur-sm border-y border-gold/10">
-        <div className="gofit-container flex justify-center">
-          <div 
-            className={`w-full max-w-[200px] border border-gold/30 bg-black/80 p-6 transition-all duration-1000 ease-out ${
-              isVisible.earlyAdopter ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-            }`}
-          >
-            <div className="mb-6 text-center">
-              <div className="inline-block bg-black border border-gold rounded-full px-3 py-1 mb-3 pulse-animation">
-                <p className="text-xs text-gold font-light tracking-wider">Be Our First 1,000!</p>
-              </div>
-              <h3 className="text-xl font-light tracking-wide text-white mb-2">Early Adopter Invite</h3>
-              <p className="text-sm text-gray-300 font-light">
+      {/* Early Adopter Section */}
+      <section id="earlyAdopter" className="py-16 bg-black/80 backdrop-blur-sm border-y border-gold/10">
+        <div className="gofit-container">
+          <div className="max-w-4xl mx-auto bg-black/60 border border-gold/20 rounded-lg p-12">
+            <div className="text-center">
+              <span className="inline-block px-6 py-2 rounded-full border border-gold text-gold text-sm tracking-wider mb-6">
+                Be Our First 1,000!
+              </span>
+              
+              <h2 className="text-4xl font-pioneer text-white mb-4">
+                Early Adopter Invite
+              </h2>
+              
+              <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
                 Join our exclusive community of early adopters and get access to special features.
               </p>
-            </div>
-            
-            {!showSuccess ? (
-              <form onSubmit={handleEarlyAdopterSubmit} className="space-y-3">
-                <div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Your email"
-                    className="w-full px-3 py-2 bg-black border border-gold/30 text-white placeholder-gray-500 text-sm"
-                    required
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-2 bg-gold text-black text-sm tracking-wider hover:bg-gold/90 transition-colors"
-                >
-                  {isSubmitting ? "Joining..." : "JOIN"}
+
+              <div className="flex gap-4 max-w-2xl mx-auto">
+                <input 
+                  type="email" 
+                  placeholder="Your email" 
+                  className="flex-1 bg-black/50 border border-gold/30 rounded px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-gold"
+                />
+                
+                <button className="bg-gold hover:bg-gold/90 text-black px-12 py-4 rounded font-medium tracking-wider transition-all duration-300">
+                  JOIN
                 </button>
-              </form>
-            ) : (
-              <div className="text-center space-y-4">
-                <p className="text-gold text-sm">
-                  You're in! Check TribeVibe for exclusive recipes.
-                </p>
-                <Link 
-                  to="/tribevibe" 
-                  className="inline-block text-white border-b border-gold text-sm hover:text-gold transition-colors"
-                >
-                  Visit TribeVibe
-                </Link>
               </div>
-            )}
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Newsletter Section */}
+      <section className="bg-black/90 py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-4xl md:text-5xl font-pioneer text-white mb-8">
+            Newsletter
+          </h2>
+          
+          <p className="text-base md:text-lg text-gray-300 max-w-2xl mx-auto mb-10 tracking-wide">
+            "Success isn't just about achieving goals, it's about consistently pushing boundaries and embracing the journey."
+          </p>
+
+          <button className="px-12 py-4 bg-gold hover:bg-gold/90 text-black text-lg font-medium tracking-wider transition-all duration-300">
+            SUBSCRIBE
+          </button>
         </div>
       </section>
 
@@ -443,3 +440,14 @@ const Home = () => {
 };
 
 export default Home;
+
+
+
+
+
+
+
+
+
+
+

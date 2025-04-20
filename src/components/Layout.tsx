@@ -52,9 +52,63 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled ? 'bg-black/80 backdrop-blur-lg py-3' : 'bg-black/50 backdrop-blur-md py-5'
-        } border-b border-white/10`}>
+      {/* Full Screen Mobile Menu */}
+      <div 
+        className={`fixed inset-y-0 left-0 w-[400px] max-w-full bg-gradient-to-b from-black/95 via-black/90 to-black/85 backdrop-blur-2xl z-50 transform 
+          transition-transform duration-500 ease-in-out overflow-y-auto ${
+          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="container mx-auto px-4 py-6 min-h-full flex flex-col justify-center">
+          {/* Close Button - Moved to top right corner */}
+          <button 
+            onClick={() => setIsMenuOpen(false)}
+            className="absolute top-6 right-6 text-white rounded-full border border-white/30 p-2 hover:border-white/60 transition-all"
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
+
+          {/* Logo and Brand Section - Centered */}
+          <div className="flex flex-col items-center mb-16">
+            <img 
+              src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
+              alt="BlinderFit Logo" 
+              className="h-16 w-auto mb-4"
+            />
+            <h2 className="text-2xl font-light tracking-[0.5em] text-white/90">
+              BLINDERFIT
+            </h2>
+          </div>
+
+          {/* Navigation - Centered with increased spacing */}
+          <nav className="flex flex-col items-center space-y-8">
+            {[
+              { to: "/pulsehub", label: "PULSEHUB" },
+              { to: "/fitlearn", label: "FITLEARN" },
+              { to: "/mindshift", label: "MINDSHIFT" },
+              { to: "/fitmentor", label: "FITMENTOR" },
+              { to: "/tribevibe", label: "TRIBEVIBE" },
+              { to: "/myzone", label: "MYZONE" },
+            ].map((item) => (
+              <Link 
+                key={item.to}
+                to={item.to} 
+                onClick={() => setIsMenuOpen(false)}
+                className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
+                  hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Header */}
+      <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
+        isScrolled ? 'bg-black/80 backdrop-blur-lg py-3' : 'bg-black/50 backdrop-blur-md py-5'
+      } border-b border-white/10`}>
         <div className="container mx-auto px-4 flex items-center justify-between h-16">
           {/* Left: Menu Button (Mobile) / Menu Items (Desktop) */}
           <div className="flex items-center">
@@ -104,115 +158,9 @@ const Layout = () => {
             )}
           </div>
         </div>
-
-        {/* Full Screen Mobile Menu */}
-        {isMenuOpen && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex flex-col">
-            <div className="absolute top-6 right-6">
-              <button 
-                onClick={() => setIsMenuOpen(false)}
-                className="text-white rounded-full border border-white/30 p-2 hover:border-white/60 transition-all"
-                aria-label="Close menu"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="flex h-full">
-              {/* Menu content */}
-              <div 
-                className="w-full h-full overflow-y-auto py-24 px-12"
-                style={{ 
-                  animation: 'slideInFromLeft 0.5s ease-out forwards'
-                }}
-              >
-                <img 
-                  src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
-                  alt="BlinderFit Logo" 
-                  className="h-24 w-auto mx-auto mb-12"
-                />
-                <p className="text-center text-xl text-gold italic mb-8">
-                  "Push past your limits and embrace the journey of transformation."
-                </p>
-                <nav className="text-center space-y-8">
-                  <Link 
-                    to="/pulsehub" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block text-white text-xl tracking-widest uppercase"
-                  >
-                    PulseHub
-                  </Link>
-                  <Link 
-                    to="/fitlearn" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block text-white text-xl tracking-widest uppercase"
-                  >
-                    FitLearn
-                  </Link>
-                  <Link 
-                    to="/mindshift" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block text-white text-xl tracking-widest uppercase"
-                  >
-                    MindShift
-                  </Link>
-                  <Link 
-                    to="/fitmentor" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block text-white text-xl tracking-widest uppercase"
-                  >
-                    FitMentor
-                  </Link>
-                  <Link 
-                    to="/tribevibe" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block text-white text-xl tracking-widest uppercase"
-                  >
-                    TribeVibe
-                  </Link>
-                  <Link 
-                    to="/myzone" 
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block text-white text-xl tracking-widest uppercase"
-                  >
-                    MyZone
-                  </Link>
-                  {user ? (
-                    <button 
-                      onClick={() => {
-                        handleLogout();
-                        setIsMenuOpen(false);
-                      }}
-                      className="block text-white text-xl tracking-widest uppercase mx-auto"
-                    >
-                      Logout
-                    </button>
-                  ) : (
-                    <>
-                      <Link 
-                        to="/login" 
-                        onClick={() => setIsMenuOpen(false)}
-                        className="block text-white text-xl tracking-widest uppercase"
-                      >
-                        Login
-                      </Link>
-                      <Link 
-                        to="/register" 
-                        onClick={() => setIsMenuOpen(false)}
-                        className="block text-white text-xl tracking-widest uppercase"
-                      >
-                        Register
-                      </Link>
-                    </>
-                  )}
-                </nav>
-              </div>
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* Main Content with necessary padding to accommodate the fixed header */}
+      {/* Main Content */}
       <main className="flex-grow pt-24">
         <Outlet />
       </main>
@@ -411,3 +359,19 @@ const Layout = () => {
 };
 
 export default Layout;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
