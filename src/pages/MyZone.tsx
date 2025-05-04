@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   User, Settings, Shield, Bell, Clock, ChevronRight,
-  Edit, Mail, Phone, MapPin, Calendar, Crown
+  Edit, Mail, Phone, MapPin, Calendar, Crown, LogOut,
+  Activity, Heart, BarChart, Target, Award, Zap, Sliders
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,6 +16,12 @@ const MyZone = () => {
 
   const handleUpdateProfile = () => {
     toast.success('Profile updated successfully');
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+    toast.success('Logged out successfully');
   };
 
   if (!user) {
@@ -34,9 +41,18 @@ const MyZone = () => {
 
   return (
     <div className="gofit-container py-12 min-h-screen">
-      <h1 className="text-2xl md:text-3xl font-light tracking-wider mb-12">
-        My <span className="text-gold">Zone</span>
-      </h1>
+      <div className="flex justify-between items-center mb-12">
+        <h1 className="text-2xl md:text-3xl font-light tracking-wider">
+          My <span className="text-gold">Zone</span>
+        </h1>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 bg-transparent border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+        >
+          <LogOut size={16} />
+          <span>Logout</span>
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
         {/* Sidebar Navigation */}
@@ -153,20 +169,185 @@ const MyZone = () => {
                   </div>
                 </div>
               </div>
+
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <h3 className="text-xl font-light mb-6">Fitness Stats Overview</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white/5 p-4 rounded-md">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Activity size={20} className="text-gold" />
+                      <h4 className="text-white">Activity Score</h4>
+                    </div>
+                    <p className="text-3xl font-light text-gold">87<span className="text-sm text-silver">/100</span></p>
+                    <p className="text-xs text-silver mt-2">+12% from last month</p>
+                  </div>
+                  
+                  <div className="bg-white/5 p-4 rounded-md">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Heart size={20} className="text-gold" />
+                      <h4 className="text-white">Heart Health</h4>
+                    </div>
+                    <p className="text-3xl font-light text-gold">Excellent</p>
+                    <p className="text-xs text-silver mt-2">Based on your latest metrics</p>
+                  </div>
+                  
+                  <div className="bg-white/5 p-4 rounded-md">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Target size={20} className="text-gold" />
+                      <h4 className="text-white">Goals Progress</h4>
+                    </div>
+                    <p className="text-3xl font-light text-gold">68<span className="text-sm text-silver">%</span></p>
+                    <p className="text-xs text-silver mt-2">3 of 5 goals on track</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           
           {activeTab === 'settings' && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-in space-y-8">
               <h2 className="text-2xl font-light mb-6">Account Settings</h2>
-              <p className="text-silver">Manage your account preferences and settings.</p>
+              
+              <div className="space-y-6">
+                <div className="border-b border-white/10 pb-6">
+                  <h3 className="text-lg font-medium mb-4">Appearance</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white">Dark Mode</p>
+                        <p className="text-sm text-silver">Toggle between light and dark themes</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked className="sr-only peer" />
+                        <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold"></div>
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white">Compact View</p>
+                        <p className="text-sm text-silver">Reduce spacing for more content</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only peer" />
+                        <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-b border-white/10 pb-6">
+                  <h3 className="text-lg font-medium mb-4">Language & Region</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-silver mb-2">Language</label>
+                      <select className="w-full bg-white/5 border border-white/10 text-white p-2.5 rounded">
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm text-silver mb-2">Time Zone</label>
+                      <select className="w-full bg-white/5 border border-white/10 text-white p-2.5 rounded">
+                        <option value="est">Eastern Time (ET)</option>
+                        <option value="cst">Central Time (CT)</option>
+                        <option value="mst">Mountain Time (MT)</option>
+                        <option value="pst">Pacific Time (PT)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Subscription</h3>
+                  <div className="bg-gold/10 p-4 rounded-md border border-gold/30">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Crown size={18} className="text-gold" />
+                        <h4 className="text-white font-medium">Premium Plan</h4>
+                      </div>
+                      <span className="text-gold text-sm">Active</span>
+                    </div>
+                    <p className="text-sm text-silver mb-4">Your subscription renews on May 16, 2024</p>
+                    <div className="flex gap-3">
+                      <button className="px-4 py-2 bg-gold text-black text-sm hover:bg-gold/90 transition-colors">
+                        Manage Plan
+                      </button>
+                      <button className="px-4 py-2 border border-white/20 text-white text-sm hover:bg-white/5 transition-colors">
+                        View Benefits
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           
           {activeTab === 'privacy' && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-in space-y-8">
               <h2 className="text-2xl font-light mb-6">Privacy & Security</h2>
-              <p className="text-silver">Control your privacy settings and security preferences.</p>
+              
+              <div className="space-y-6">
+                <div className="border-b border-white/10 pb-6">
+                  <h3 className="text-lg font-medium mb-4">Password Management</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-silver mb-2">Current Password</label>
+                      <input type="password" className="w-full bg-white/5 border border-white/10 text-white p-2.5 rounded" placeholder="••••••••" />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm text-silver mb-2">New Password</label>
+                      <input type="password" className="w-full bg-white/5 border border-white/10 text-white p-2.5 rounded" placeholder="••••••••" />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm text-silver mb-2">Confirm New Password</label>
+                      <input type="password" className="w-full bg-white/5 border border-white/10 text-white p-2.5 rounded" placeholder="••••••••" />
+                    </div>
+                    
+                    <button className="px-4 py-2 bg-gold text-black text-sm hover:bg-gold/90 transition-colors">
+                      Update Password
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="border-b border-white/10 pb-6">
+                  <h3 className="text-lg font-medium mb-4">Two-Factor Authentication</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-white">Enable 2FA</p>
+                      <p className="text-sm text-silver">Add an extra layer of security to your account</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" />
+                      <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold"></div>
+                    </label>
+                  </div>
+                  <button className="px-4 py-2 border border-white/20 text-white text-sm hover:bg-white/5 transition-colors">
+                    Setup Two-Factor Authentication
+                  </button>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-4">Data Privacy</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-white">Share Fitness Data with Trainers</p>
+                        <p className="text-sm text-silver">Allow your trainers to view your fitness metrics</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked className="sr-only peer" />
+                        <div className="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold"></div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           
@@ -190,3 +371,4 @@ const MyZone = () => {
 };
 
 export default MyZone;
+

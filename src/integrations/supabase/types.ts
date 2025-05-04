@@ -26,6 +26,46 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      },
+      user_profiles: {
+        Row: {
+          id: string
+          auth_id: string | null
+          name: string
+          email: string | null
+          phone: string | null
+          created_at: string
+          updated_at: string
+          profileComplete: boolean
+        }
+        Insert: {
+          id?: string
+          auth_id?: string | null
+          name: string
+          email?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+          profileComplete?: boolean
+        }
+        Update: {
+          id?: string
+          auth_id?: string | null
+          name?: string
+          email?: string | null
+          phone?: string | null
+          created_at?: string
+          updated_at?: string
+          profileComplete?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_auth_id_fkey"
+            columns: ["auth_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
@@ -153,3 +193,5 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
+

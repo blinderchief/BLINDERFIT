@@ -10,6 +10,8 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { toast } from "sonner";
+import PhoneInput from '@/components/PhoneInput';
+import { supabase } from '@/integrations/supabase/client';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -22,7 +24,7 @@ const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [codeRequested, setCodeRequested] = useState(false);
   const [error, setError] = useState('');
-  const { register, registerWithPhone, requestPhoneVerification } = useAuth();
+  const { register, registerWithPhone, requestPhoneVerification, phoneAuthAvailable, forceReconnect } = useAuth();
   const navigate = useNavigate();
 
   const handleEmailRegister = async (e: React.FormEvent) => {
@@ -67,19 +69,72 @@ const Register = () => {
       return;
     }
     
+    if (!validatePhone(phone)) {
+      setError('Please enter a valid Indian phone number (10 digits)');
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
       const success = await requestPhoneVerification(phone);
+      
       if (success) {
         setCodeRequested(true);
         toast.success("Verification code sent to your phone");
+      } else {
+        // Check if we got the unsupported provider error
+        const testPhoneAuth = async () => {
+          try {
+            // Try a test request with a valid phone number format
+            const { error } = await supabase.auth.signInWithOtp({
+              phone: "+919999999999" // Test number
+            });
+            
+            if (error && error.message.includes('unsupported phone provider')) {
+              await forceReconnect();
+              // Switch to email tab
+              (document.querySelector('[data-state="inactive"][value="email"]') as HTMLElement)?.click();
+            }
+          } catch (err) {
+            console.error("Phone auth test failed:", err);
+          }
+        };
+        
+        testPhoneAuth();
       }
     } catch (error: any) {
       setError(error.message || 'Failed to send verification code');
+      
+      if (error.message && error.message.includes('unsupported phone provider')) {
+        await forceReconnect();
+        // Switch to email tab
+        (document.querySelector('[data-state="inactive"][value="email"]') as HTMLElement)?.click();
+      }
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const validatePhone = (phoneNumber: string) => {
+    // If empty, return false
+    if (!phoneNumber) return false;
+    
+    // If it has a + sign, use international format validation
+    if (phoneNumber.startsWith('+')) {
+      // International format: +[country code][number]
+      const phoneRegex = /^\+[1-9]\d{6,14}$/;
+      return phoneRegex.test(phoneNumber);
+    } else {
+      // For Indian numbers without country code, should be 10 digits
+      const indianPhoneRegex = /^[6-9]\d{9}$/;
+      return indianPhoneRegex.test(phoneNumber);
+    }
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(e.target.value);
+    if (error) setError('');
   };
 
   const handlePhoneRegister = async (e: React.FormEvent) => {
@@ -123,8 +178,16 @@ const Register = () => {
         
         <Tabs defaultValue="email" className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-black/50 border border-gold/20">
-            <TabsTrigger value="email" className="data-[state=active]:bg-gold data-[state=active]:text-black">Email</TabsTrigger>
-            <TabsTrigger value="phone" className="data-[state=active]:bg-gold data-[state=active]:text-black">Phone</TabsTrigger>
+            <TabsTrigger value="email" className="data-[state=active]:bg-gold data-[state=active]:text-black">
+              Email
+            </TabsTrigger>
+            <TabsTrigger 
+              value="phone" 
+              className="data-[state=active]:bg-gold data-[state=active]:text-black"
+              disabled={!phoneAuthAvailable}
+            >
+              Phone {!phoneAuthAvailable && '(Unavailable)'}
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="email">
@@ -281,16 +344,13 @@ const Register = () => {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Phone className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input
+                      <PhoneInput
                         id="register-phone"
-                        name="phone"
-                        type="tel"
-                        autoComplete="tel"
-                        required
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="block w-full pl-10 pr-3 py-3 border border-gold/20 bg-black text-white placeholder-gray-500 focus:ring-2 focus:ring-gold/50 focus:border-transparent"
+                        onChange={setPhone}
+                        error={error ? "Phone number is required" : ""}
                         placeholder="Phone number"
+                        required
                       />
                     </div>
                   </div>
@@ -405,3 +465,13 @@ const Register = () => {
 };
 
 export default Register;
+
+
+
+
+
+
+
+
+
+

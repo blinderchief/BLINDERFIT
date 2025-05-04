@@ -150,6 +150,11 @@
   .section-subheading {
     @apply text-lg md:text-xl text-gray-300 font-light tracking-wide mb-12;
   }
+
+  /* Add a new class for the menu items with reduced letter spacing */
+  .menu-item {
+    @apply tracking-wide; /* Reduced from tracking-wider */
+  }
 }
 
 /* Scroll behavior */
@@ -257,3 +262,4 @@ html {
 .pulse-animation {
   animation: pulse 2s infinite ease-in-out;
 }
+

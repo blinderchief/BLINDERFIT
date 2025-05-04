@@ -9,3 +9,55 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+// Helper function to check if Supabase connection is working
+export const checkSupabaseConnection = async () => {
+  try {
+    // Simple query to check connection
+    const { data, error } = await supabase.from('user_profiles').select('count').limit(1);
+    
+    if (error) {
+      console.error('Supabase connection error:', error);
+      return false;
+    }
+    
+    console.log('Supabase connection successful');
+    return true;
+  } catch (err) {
+    console.error('Supabase connection check failed:', err);
+    return false;
+  }
+};
+
+// Add this function to check if phone auth is available
+export const isPhoneAuthAvailable = async (): Promise<boolean> => {
+  try {
+    // Try a test request with a valid phone number format
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: "+919999999999" // Test number
+    });
+    
+    // If we get an unsupported provider error, phone auth is not available
+    if (error && error.message.includes('unsupported phone provider')) {
+      console.warn('Phone authentication is not available in this Supabase project');
+      return false;
+    }
+    
+    // If we get any other error, phone auth might still be available
+    // (e.g., rate limiting, invalid phone format, etc.)
+    return true;
+  } catch (err) {
+    console.error("Phone auth availability check failed:", err);
+    return false;
+  }
+};
+
+// Function to reconnect to Supabase (useful for debugging)
+export const reconnectSupabase = () => {
+  console.log('Reconnecting to Supabase...');
+  // The client is already created with the correct URL and key
+  // This function is mainly for logging purposes
+  return supabase;
+};
+
+
