@@ -25,6 +25,7 @@ interface AuthContextType {
   loading: boolean;
   phoneAuthAvailable: boolean;
   forceReconnect: () => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -517,6 +518,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const resetPassword = async (email: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Use the allowed redirect URL from Supabase settings
+      const redirectUrl = "https://blinderfit.vercel.app/reset-password";
+      console.log('Reset password redirect URL:', redirectUrl);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+      
+      if (error) {
+        console.error('Password reset error:', error);
+        toast.error(error.message || 'Failed to send reset instructions');
+        return false;
+      }
+      
+      toast.success('Password reset instructions sent to your email');
+      return true;
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast.error(error.message || 'Failed to send reset instructions');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     user,
     login,
@@ -527,11 +557,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     loading,
     phoneAuthAvailable,
-    forceReconnect
+    forceReconnect,
+    resetPassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+
+
+
+
+
+
 
 
 

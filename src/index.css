@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&display=swap');
 /* Custom Font Declarations */
 @font-face {
@@ -102,13 +101,14 @@
   }
 
   body {
-    @apply bg-black text-white font-pioneer;
-    font-family: 'Pioneer', sans-serif;
+    @apply bg-black text-white;
+    font-family: 'Pioneer', 'Cinzel', sans-serif; /* Added fallback fonts */
     font-size: 10pt;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-pioneer tracking-wider;
+    @apply tracking-wider;
+    font-family: 'Pioneer', 'Cinzel', sans-serif; /* Added fallback fonts */
   }
 
   /* Fix for input text visibility in login/signup forms */
