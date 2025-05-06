@@ -12,6 +12,9 @@ const Layout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Check if current page is home
+  const isHomePage = location.pathname === '/' || location.pathname === '/home';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -112,7 +115,7 @@ const Layout = () => {
         <div className="container mx-auto px-4 flex items-center justify-between h-16">
           {/* Left: Menu Button (Mobile) / Menu Items (Desktop) */}
           <div className="flex items-center">
-            {/* Menu Button - Now always visible per Rolls Royce style */}
+            {/* Menu Button */}
             <button 
               className="text-white mr-4 p-2 flex items-center rounded-full border border-white/30 hover:border-white/60 transition-all"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -165,68 +168,92 @@ const Layout = () => {
         <Outlet />
       </main>
 
-      {/* Newsletter Section */}
-      <section className="bg-[#222222] py-12">
-        <div className="gofit-container text-center">
-          <h2 className="text-2xl font-light tracking-wider text-white mb-4">Newsletter</h2>
-          <p className="text-[#E8E8E8] mb-6 max-w-2xl mx-auto">
-            "Success isn't just about achieving goals, it's about consistently pushing boundaries and embracing the journey."
-          </p>
-          <div className="flex justify-center">
-            <button className="bg-[#E63946] hover:bg-[#E63946]/90 text-white py-3 px-12 transition-colors">
-              SUBSCRIBE
-            </button>
+      {/* Newsletter Section - Only show on home page */}
+      {isHomePage && (
+        <section className="bg-[#222222] py-12">
+          <div className="gofit-container text-center">
+            <h2 className="text-2xl font-light tracking-wider text-white mb-4">Newsletter</h2>
+            <p className="text-[#E8E8E8] mb-6 max-w-2xl mx-auto">
+              "Success isn't just about achieving goals, it's about consistently pushing boundaries and embracing the journey."
+            </p>
+            <div className="flex justify-center">
+              <button className="bg-[#E63946] hover:bg-[#E63946]/90 text-white py-3 px-12 transition-colors">
+                SUBSCRIBE
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="bg-[#111111] text-white pt-12 pb-6 relative">
         <div className="gofit-container">
-          {/* OurVibe Section */}
-          <div className="mb-12 border-b border-white/10 pb-12">
-            <h3 className="text-2xl font-light text-white mb-6 text-center">OurVibe</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-              <div className="aspect-video bg-black/40 relative overflow-hidden rounded-sm border border-white/10">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <img 
-                    src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
-                    alt="BlinderFit Story" 
-                    className="h-16 w-auto opacity-40"
-                  />
+          {/* OurVibe Section - Only show on home page */}
+          {isHomePage && (
+            <div className="mb-12 border-b border-white/10 pb-12">
+              <h3 className="text-2xl font-light text-white mb-6 text-center">OurVibe</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                <div className="aspect-video bg-black/40 relative overflow-hidden rounded-sm border border-white/10">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-16 h-16 text-gold opacity-80" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"></path>
-                    </svg>
+                    <img 
+                      src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
+                      alt="BlinderFit Story" 
+                      className="h-16 w-auto opacity-40"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <svg className="w-16 h-16 text-gold opacity-80" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"></path>
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 text-center">
+                    <p className="text-gold text-sm font-light italic">
+                      "Imagine a fitness journey where every movement brings clarity, every challenge reveals strength, and technology adapts to your unique potential."
+                    </p>
+                    <p className="text-white/70 text-xs mt-2">
+                      — Founder's Vision
+                    </p>
                   </div>
                 </div>
-              </div>
-              <div>
-                <h4 className="text-xl font-light text-gold mb-4">Our Journey</h4>
-                <p className="text-silver mb-6">
-                  Founded with a vision to transform how people approach fitness, BlinderFit combines cutting-edge AI technology with proven fitness methodologies to create a truly personalized experience for every user.
-                </p>
-                <div className="space-y-4">
-                  <div className="flex">
-                    <div className="w-24 text-gold border-r border-gold/30 pr-4 font-light">2020</div>
-                    <div className="flex-1 pl-4">Founded with a mission to democratize fitness</div>
-                  </div>
-                  <div className="flex">
-                    <div className="w-24 text-gold border-r border-gold/30 pr-4 font-light">2022</div>
-                    <div className="flex-1 pl-4">Launched AI-powered fitness recommendations</div>
-                  </div>
-                  <div className="flex">
-                    <div className="w-24 text-gold border-r border-gold/30 pr-4 font-light">2024</div>
-                    <div className="flex-1 pl-4">Expanded to serve over 1 million fitness enthusiasts</div>
-                  </div>
-                  <div className="flex">
-                    <div className="w-24 text-gold border-r border-gold/30 pr-4 font-light">2025</div>
-                    <div className="flex-1 pl-4">Introduced FitMentor & voice coaching technology</div>
+                <div>
+                  <h4 className="text-xl font-light text-gold mb-4">Our Vision</h4>
+                  <p className="text-silver mb-6">
+                    Currently in the idea stage, BlinderFit is being built with a revolutionary vision to transform how people approach fitness. The founder's bold mission is to create a platform that treats fitness not just as physical activity, but as a holistic journey of clarity and purpose.
+                  </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                          <path d="M2 17l10 5 10-5"></path>
+                          <path d="M2 12l10 5 10-5"></path>
+                        </svg>
+                      </div>
+                      <div>Personalized AI-driven fitness experiences for every individual</div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                        </svg>
+                      </div>
+                      <div>Mind-body connection that transforms obstacles into stepping stones</div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="M12 8v4"></path>
+                          <path d="M12 16h.01"></path>
+                        </svg>
+                      </div>
+                      <div>Community-driven approach to health and fitness transformation</div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Main Footer Categories */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8 pb-10">
@@ -359,6 +386,12 @@ const Layout = () => {
 };
 
 export default Layout;
+
+
+
+
+
+
 
 
 

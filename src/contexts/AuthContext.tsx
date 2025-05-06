@@ -389,28 +389,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
-      // Create user profile in a separate step
+      // Create user profile in a separate step with better error handling
       try {
-        const { error: profileError } = await supabase
+        // Check if profile already exists to prevent duplicate errors
+        const { data: existingProfile } = await supabase
           .from('user_profiles')
-          .insert([
-            {
-              auth_id: data.user.id,
-              name,
-              email,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              profileComplete: false
-            }
-          ]);
+          .select('id')
+          .eq('auth_id', data.user.id)
+          .single();
+        
+        if (!existingProfile) {
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert([
+              {
+                auth_id: data.user.id,
+                name,
+                email,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                profileComplete: false
+              }
+            ]);
           
-        if (profileError) {
-          console.error("Error creating user profile:", profileError);
-          // Don't fail the registration if profile creation fails
-          // We'll try to create it again when they log in
+          if (profileError) {
+            console.error("Error creating user profile:", profileError);
+            // Log more details about the error
+            if (profileError.code === '23505') {
+              toast.error('An account with this email already exists');
+            } else {
+              toast.error(`Profile creation error: ${profileError.message}`);
+            }
+            // Don't fail the registration if profile creation fails
+          }
         }
-      } catch (profileErr) {
+      } catch (profileErr: any) {
         console.error("Exception creating user profile:", profileErr);
+        // Don't show this error to the user to avoid confusion
       }
       
       toast.success('Registration successful! Please check your email for verification.');
@@ -587,6 +602,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+
 
 
 
