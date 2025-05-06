@@ -20,10 +20,10 @@ export default {
 		},
 		extend: {
 			fontFamily: {
-				'sans': ['Playfair Display', 'Didot', 'serif'],
-				'heading': ['Trajan Pro', 'Cinzel', 'serif'],
-				'accent': ['Gotham', 'Helvetica', 'Arial', 'sans-serif'],
-				'pioneer': ['Pioneer', 'sans-serif'],
+				'sans': ['Montserrat', 'sans-serif'],
+				'heading': ['Montserrat', 'sans-serif'],
+				'accent': ['Montserrat', 'sans-serif'],
+				'pioneer': ['Montserrat', 'sans-serif'],
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -69,9 +69,11 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				green: {
-					500: '#00FF00',
-				},
+				gold: '#D4AF37',
+				silver: '#C0C0C0',
+				black: '#0A0A0A',
+				charcoal: '#222222',
+				offwhite: '#F5F5F5',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -145,3 +147,8 @@ export default {
 	},
 	plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+
+
+
+
+

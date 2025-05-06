@@ -389,6 +389,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
       
+      // Create user profile in a separate step
+      try {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert([
+            {
+              auth_id: data.user.id,
+              name,
+              email,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              profileComplete: false
+            }
+          ]);
+          
+        if (profileError) {
+          console.error("Error creating user profile:", profileError);
+          // Don't fail the registration if profile creation fails
+          // We'll try to create it again when they log in
+        }
+      } catch (profileErr) {
+        console.error("Exception creating user profile:", profileErr);
+      }
+      
       toast.success('Registration successful! Please check your email for verification.');
       return true;
     } catch (error: any) {
@@ -563,6 +587,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+
 
 
 

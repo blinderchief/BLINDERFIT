@@ -188,24 +188,22 @@ const Home = () => {
                   className="h-16 w-auto"
                 />
               </div>
-              <h1 className="text-5xl font-light tracking-[0.5em] text-white mb-6">
+              <h1 className="text-5xl font-normal tracking-[0.5em] text-white mb-6">
                 BLINDERFIT
               </h1>
               <p className="text-3xl text-gold font-light mb-4 tracking-[0.3em]">
                 CLARITY THROUGH MOTION
               </p>
-              <p className="text-gray-300 text-lg mb-8 tracking-wide">
+              <p className="text-gray-300 text-lg mb-8 font-light">
                 Founded by Suyash Kumar Singh to bring clarity and purpose to fitness journeys.
               </p>
-              <div className="flex gap-6">
-                <button className="px-8 py-3 bg-gold text-black font-medium tracking-wider 
-                  hover:bg-opacity-90 transition-all duration-500">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/signup" className="gofit-button">
                   Begin Your Journey
-                </button>
-                <button className="px-8 py-3 border border-gold text-gold font-medium tracking-wider 
-                  hover:bg-gold hover:text-black transition-all duration-500">
+                </Link>
+                <Link to="/about" className="gofit-button-outline">
                   Explore More
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -471,6 +469,7 @@ const Home = () => {
 };
 
 export default Home;
+
 
 
 
