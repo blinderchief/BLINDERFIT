@@ -17,6 +17,7 @@ const fitnessArticles = [
     readTime: 8,
     publishedAt: "2025-04-10T09:00:00Z",
     isBookmarked: false,
+    externalLink: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6786990/",
     content: `
 # The Science Behind High-Intensity Interval Training
 
@@ -55,6 +56,7 @@ Remember to start at your own fitness level and gradually increase intensity ove
     readTime: 12,
     publishedAt: "2025-04-12T14:30:00Z",
     isBookmarked: false,
+    externalLink: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6628334/",
     content: `
 # Nutrition Timing: When to Eat for Optimal Performance
 
@@ -105,6 +107,7 @@ Remember that individual needs vary based on goals, training intensity, and body
     readTime: 6,
     publishedAt: "2025-04-14T11:15:00Z",
     isBookmarked: false,
+    externalLink: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6753170/",
     content: `
 # Mindfulness Meditation for Athletes: Mental Training
 
@@ -145,6 +148,7 @@ Many professional teams now incorporate mindfulness training into their regular 
     readTime: 10,
     publishedAt: "2025-04-15T08:45:00Z",
     isBookmarked: false,
+    externalLink: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6019475/",
     content: `
 # Recovery Methods: The Latest Science on Muscle Repair
 
@@ -201,6 +205,7 @@ Remember that recovery needs are highly individual. The most effective approach 
     readTime: 7,
     publishedAt: "2025-04-16T10:20:00Z",
     isBookmarked: false,
+    externalLink: "https://www.frontiersin.org/articles/10.3389/fpsyg.2019.02788/full",
     content: `
 # The Future of Fitness: AI and VR Training Technologies
 
@@ -240,6 +245,214 @@ Studies show that technology-enhanced fitness experiences can:
 - Reduce injury rates through better form monitoring
 
 While nothing replaces the fundamentals of consistent training and nutrition, these technologies are providing powerful tools to optimize the process and results.
+    `
+  },
+  {
+    id: 7,
+    title: "Diabetes and Exercise: Managing Blood Glucose Through Movement",
+    excerpt: "Learn how physical activity affects insulin sensitivity and blood sugar control for both prevention and management.",
+    image: "https://images.unsplash.com/photo-1573757801565-85dfe2b13e6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1769&q=80",
+    category: "health",
+    readTime: 8,
+    publishedAt: "2025-04-18T13:40:00Z",
+    isBookmarked: false,
+    externalLink: "https://care.diabetesjournals.org/content/39/11/2065",
+    content: `
+# Diabetes and Exercise: Managing Blood Glucose Through Movement
+
+Physical activity is a powerful tool for both preventing type 2 diabetes and managing existing diabetes. Understanding the relationship between exercise and blood glucose can help optimize your approach.
+
+## Immediate Effects of Exercise
+
+During exercise, your muscles use glucose for energy, which can lower blood sugar levels. Additionally, exercise increases insulin sensitivity, allowing your cells to use insulin more effectively.
+
+For people with type 2 diabetes, a single bout of exercise can:
+- Reduce blood glucose for up to 24 hours
+- Improve insulin sensitivity for up to 72 hours
+
+## Long-Term Benefits
+
+Regular physical activity provides substantial benefits:
+
+- Reduced HbA1c levels (a measure of long-term blood glucose control)
+- Decreased insulin resistance
+- Improved cardiovascular health
+- Reduced risk of diabetes complications
+
+## Exercise Recommendations for Diabetes
+
+The American Diabetes Association recommends:
+
+- 150 minutes of moderate-to-vigorous aerobic activity weekly, spread over at least 3 days
+- 2-3 sessions of resistance training per week
+- No more than 2 consecutive days without activity
+
+For those with type 1 diabetes, additional monitoring is necessary to prevent hypoglycemia during and after exercise.
+
+Remember that consistency is key, and any movement is better than none. Always consult with your healthcare provider before beginning a new exercise program, especially if you have diabetes complications.
+    `
+  },
+  {
+    id: 8,
+    title: "Cancer Prevention: The Exercise-Oncology Connection",
+    excerpt: "Explore the growing research showing how regular physical activity can reduce cancer risk and improve outcomes.",
+    image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1780&q=80",
+    category: "health",
+    readTime: 11,
+    publishedAt: "2025-04-19T10:30:00Z",
+    isBookmarked: false,
+    externalLink: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6568409/",
+    content: `
+# Cancer Prevention: The Exercise-Oncology Connection
+
+The field of exercise oncology has grown significantly in recent years, with compelling evidence that physical activity plays a crucial role in cancer prevention and survivorship.
+
+## Cancer Risk Reduction
+
+Research indicates that regular exercise can reduce the risk of several cancers:
+
+- Colon cancer: 20-25% lower risk
+- Breast cancer: 20-30% lower risk
+- Endometrial cancer: 20-30% lower risk
+- Kidney cancer: 10-20% lower risk
+- Bladder cancer: 15% lower risk
+- Esophageal cancer: 20% lower risk
+
+## Mechanisms of Protection
+
+Exercise helps prevent cancer through multiple pathways:
+
+### Hormone Regulation
+Physical activity can reduce levels of estrogen and insulin, which at high levels may promote the growth of certain cancers.
+
+### Inflammation Reduction
+Chronic inflammation is linked to cancer development. Regular exercise reduces inflammatory markers in the body.
+
+### Immune Function
+Moderate exercise enhances immune surveillance, potentially helping to identify and eliminate cancer cells.
+
+### Weight Management
+Maintaining a healthy weight through exercise reduces the risk of obesity-related cancers.
+
+## Exercise Recommendations for Cancer Prevention
+
+The American Cancer Society recommends:
+
+- 150-300 minutes of moderate-intensity activity or 75-150 minutes of vigorous activity weekly
+- Strength training at least twice weekly
+- Limiting sedentary behavior
+
+For cancer survivors, similar guidelines apply, though programs should be tailored to individual needs and capabilities.
+
+Remember that it's never too late to start. Even previously inactive individuals can gain significant cancer-protective benefits by becoming more physically active.
+    `
+  },
+  {
+    id: 9,
+    title: "Alzheimer's Disease: Can Exercise Protect Your Brain?",
+    excerpt: "The latest research on how physical activity affects cognitive function and may help prevent neurodegenerative diseases.",
+    image: "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1769&q=80",
+    category: "health",
+    readTime: 9,
+    publishedAt: "2025-04-20T14:15:00Z",
+    isBookmarked: false,
+    externalLink: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6530042/",
+    content: `
+# Alzheimer's Disease: Can Exercise Protect Your Brain?
+
+As our population ages, Alzheimer's disease and other forms of dementia are becoming increasingly prevalent. However, growing evidence suggests that regular physical activity may be one of our best defenses against cognitive decline.
+
+## The Brain-Exercise Connection
+
+Exercise benefits the brain through several mechanisms:
+
+### Increased Blood Flow
+Physical activity improves cerebral blood flow, delivering more oxygen and nutrients to brain cells.
+
+### Neurogenesis and Plasticity
+Exercise stimulates the production of brain-derived neurotrophic factor (BDNF), which promotes the growth of new neurons and strengthens existing neural connections.
+
+### Reduced Inflammation
+Chronic neuroinflammation contributes to Alzheimer's pathology. Exercise has anti-inflammatory effects that may protect brain tissue.
+
+### Improved Insulin Sensitivity
+Some researchers refer to Alzheimer's as "type 3 diabetes" due to the role of insulin resistance. Exercise improves insulin sensitivity throughout the body, including the brain.
+
+## The Evidence
+
+Multiple longitudinal studies show that physically active individuals have:
+
+- Up to 50% lower risk of developing Alzheimer's disease
+- Slower progression of cognitive decline if already diagnosed
+- Better preservation of hippocampal volume (a brain region critical for memory)
+
+## Exercise Recommendations for Brain Health
+
+Research suggests the following for optimal cognitive protection:
+
+- Aerobic exercise: 150 minutes weekly at moderate intensity
+- Resistance training: 2-3 sessions weekly
+- Coordination activities (like dance or tennis) that challenge the brain
+- Consistency over decades rather than short-term programs
+
+It's important to note that exercise appears most effective when combined with other brain-healthy habits like proper nutrition, quality sleep, social engagement, and cognitive stimulation.
+
+Remember that it's never too early or too late to start exercising for brain health. Even those with mild cognitive impairment or early Alzheimer's can benefit from appropriate physical activity.
+    `
+  },
+  {
+    id: 10,
+    title: "Rhabdomyolysis: When Exercise Becomes Dangerous",
+    excerpt: "Understanding this potentially life-threatening condition caused by extreme exercise and how to prevent it.",
+    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80",
+    category: "health-risks",
+    readTime: 7,
+    publishedAt: "2025-04-21T11:20:00Z",
+    isBookmarked: false,
+    externalLink: "https://www.ncbi.nlm.nih.gov/books/NBK448168/",
+    content: `
+# Rhabdomyolysis: When Exercise Becomes Dangerous
+
+While exercise is generally beneficial, excessive or inappropriate training can lead to serious complications. Rhabdomyolysis ("rhabdo") is a potentially life-threatening condition that athletes and fitness enthusiasts should understand.
+
+## What is Rhabdomyolysis?
+
+Rhabdomyolysis occurs when damaged muscle tissue breaks down rapidly, releasing proteins (particularly myoglobin) into the bloodstream. These proteins can cause kidney damage and, in severe cases, kidney failure.
+
+## Warning Signs and Symptoms
+
+Early recognition is crucial. Watch for:
+
+- Extreme muscle pain that's disproportionate to the exercise performed
+- Unusual muscle weakness or swelling
+- Dark, cola-colored urine
+- Reduced urine output
+- Nausea or vomiting
+- Confusion or dizziness
+- Fever
+
+## Risk Factors
+
+Several factors increase the risk of exercise-induced rhabdomyolysis:
+
+- Performing unfamiliar, high-intensity exercises
+- Exercising in extreme heat or humidity
+- Dehydration
+- Certain medications (statins, antipsychotics)
+- Recent viral illnesses
+- Genetic muscle disorders
+
+## Prevention Strategies
+
+To minimize your risk:
+
+- Progress training intensity gradually
+- Stay well-hydrated, especially in hot weather
+- Warm up thoroughly before intense exercise
+- Cool down and stretch after workouts
+- Listen to your body and avoid pushing through severe pain
+- Be cautious with new exercises or high-intensity workouts
+- Report any unusual muscle symptoms to a healthcare professional
     `
   }
 ];
@@ -320,6 +533,12 @@ const formatDate = (dateString) => {
 // Calculate read time in minutes format
 const formatReadTime = (minutes) => {
   return `${minutes} min read`;
+};
+
+// Add a compact date formatter for mobile
+const formatCompactDate = (dateString) => {
+  const options = { month: 'short', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
 };
 
 const FitLearn = () => {
@@ -572,11 +791,11 @@ const FitLearn = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
                 {getFilteredArticles().length > 0 ? (
                   getFilteredArticles().map(article => (
                     <Card key={article.id} className="bg-[#111] border-white/10 overflow-hidden hover:border-gold/30 transition-all">
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative h-36 sm:h-48 overflow-hidden">
                         <img 
                           src={article.image} 
                           alt={article.title}
@@ -588,53 +807,58 @@ const FitLearn = () => {
                               e.stopPropagation();
                               toggleBookmark(article.id);
                             }}
-                            className="h-8 w-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-gold/80 hover:text-black transition-colors"
+                            className={`p-1.5 rounded-full ${
+                              article.isBookmarked 
+                                ? 'bg-gold text-black' 
+                                : 'bg-black/50 text-white hover:bg-black/70'
+                            }`}
                           >
-                            {article.isBookmarked ? (
-                              <BookmarkCheck className="h-4 w-4" />
-                            ) : (
-                              <Bookmark className="h-4 w-4" />
-                            )}
+                            <Bookmark className="h-3 w-3 sm:h-4 sm:w-4" fill={article.isBookmarked ? 'currentColor' : 'none'} />
                           </button>
-                        </div>
-                        <div className="absolute top-2 left-2">
-                          <span className="bg-black/50 text-white text-xs px-2 py-1 rounded capitalize">
-                            {article.category}
-                          </span>
                         </div>
                       </div>
                       
-                      <CardHeader className="p-4">
-                        <CardTitle className="text-lg font-medium line-clamp-2 hover:text-gold cursor-pointer" onClick={() => setSelectedArticle(article)}>
+                      <CardContent className="p-3 sm:p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="bg-gold/20 text-gold text-[10px] sm:text-xs px-1.5 py-0.5 rounded capitalize tracking-tight">
+                            {article.category}
+                          </span>
+                          <span className="text-[10px] sm:text-xs text-gray-400 tracking-tight">
+                            {formatCompactDate(article.publishedAt)}
+                          </span>
+                        </div>
+                        
+                        <h3 className="text-sm sm:text-base font-medium text-white mb-1 sm:mb-2 line-clamp-2 tracking-tight leading-tight">
                           {article.title}
-                        </CardTitle>
-                        <CardDescription className="line-clamp-2 mt-2">
+                        </h3>
+                        
+                        <p className="text-xs sm:text-sm text-gray-300 line-clamp-2 mb-2 tracking-tight leading-snug">
                           {article.excerpt}
-                        </CardDescription>
-                      </CardHeader>
+                        </p>
+                      </CardContent>
                       
-                      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-                        <div className="flex items-center text-sm text-gray-400">
-                          <Clock className="h-4 w-4 mr-1" /> 
+                      <CardFooter className="p-3 sm:p-4 pt-0 flex justify-between items-center">
+                        <div className="flex items-center text-[10px] sm:text-xs text-gray-400 tracking-tight">
+                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1" /> 
                           {formatReadTime(article.readTime)}
                         </div>
                         
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto text-gold flex items-center"
+                          className="p-0 h-auto text-gold flex items-center text-xs sm:text-sm tracking-tight"
                           onClick={() => setSelectedArticle(article)}
                         >
-                          Read more <ArrowRight className="ml-1 h-4 w-4" />
+                          Read more <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </CardFooter>
                     </Card>
                   ))
                 ) : (
-                  <div className="col-span-full text-center py-16">
-                    <p className="text-gray-400">No articles found in this category.</p>
+                  <div className="col-span-full text-center py-8 sm:py-16">
+                    <p className="text-sm sm:text-base text-gray-400 tracking-tight">No articles found in this category.</p>
                     <Button 
                       variant="outline" 
-                      className="mt-4"
+                      className="mt-3 sm:mt-4 text-xs sm:text-sm py-1 px-3 sm:py-2 sm:px-4"
                       onClick={() => filterArticles('all')}
                     >
                       View all articles
@@ -646,46 +870,46 @@ const FitLearn = () => {
           </TabsContent>
           
           <TabsContent value="news" className="mt-0">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-light text-white">Latest Fitness News</h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg sm:text-xl font-light text-white tracking-normal">Latest Fitness News</h2>
               <Button 
                 variant="outline" 
-                className="flex items-center"
+                className="flex items-center text-xs sm:text-sm py-1 px-2 sm:py-2 sm:px-3"
                 onClick={refreshNews}
                 disabled={isRefreshing}
               >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`mr-1 h-3 w-3 sm:h-4 sm:w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? 'Refreshing...' : 'Refresh News'}
               </Button>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-3">
               {news.map((newsItem) => (
                 <div 
                   key={newsItem.id} 
-                  className="bg-[#111] border border-white/10 p-4 rounded-sm hover:border-gold/30 transition-all"
+                  className="bg-[#111] border border-white/10 p-3 sm:p-4 rounded-sm hover:border-gold/30 transition-all"
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm text-gray-400">{newsItem.source}</span>
-                        <span className="text-sm text-gray-400">•</span>
-                        <span className="text-sm text-gray-400">{formatDate(newsItem.publishedAt)}</span>
+                      <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                        <span className="text-xs text-gray-400 tracking-tight">{newsItem.source}</span>
+                        <span className="text-xs text-gray-400">•</span>
+                        <span className="text-xs text-gray-400 tracking-tight">{formatDate(newsItem.publishedAt)}</span>
                         {newsItem.isNew && (
-                          <span className="bg-gold text-black text-xs px-2 py-0.5 rounded-full">New</span>
+                          <span className="bg-gold text-black text-xs px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs tracking-tight">New</span>
                         )}
                       </div>
-                      <h3 className="text-lg font-medium text-white mb-2">{newsItem.title}</h3>
-                      <p className="text-gray-300">{newsItem.excerpt}</p>
+                      <h3 className="text-sm sm:text-base font-medium text-white mb-1 sm:mb-2 tracking-tight leading-tight">{newsItem.title}</h3>
+                      <p className="text-xs sm:text-sm text-gray-300 tracking-tight leading-snug">{newsItem.excerpt}</p>
                     </div>
-                    <span className="bg-black/50 text-white text-xs px-2 py-1 rounded capitalize self-start ml-2">
+                    <span className="bg-black/50 text-white text-[10px] sm:text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded capitalize self-start ml-2 tracking-tight">
                       {newsItem.category}
                     </span>
                   </div>
                   
-                  <div className="flex justify-end mt-3">
-                    <Button variant="link" className="p-0 h-auto text-gold">
-                      Read full story <ArrowRight className="ml-1 h-4 w-4" />
+                  <div className="flex justify-end mt-2">
+                    <Button variant="link" className="p-0 h-auto text-gold text-xs sm:text-sm tracking-tight">
+                      Read full story <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </div>
@@ -699,3 +923,17 @@ const FitLearn = () => {
 };
 
 export default FitLearn;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

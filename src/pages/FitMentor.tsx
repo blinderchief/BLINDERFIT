@@ -20,6 +20,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
+// Gemini API integration
+const GEMINI_API_KEY = "AIzaSyB1NLC_Wy_P-53U1R-4rpICOIk60eehHrA";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
+const GEMINI_VISION_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent";
+
 // Create a schema for health assessment form validation
 const formSchema = z.object({
   age: z.string().min(1, "Age is required"),
@@ -903,3 +908,6 @@ Remember, this plan is a starting point. Adjust as needed and listen to your bod
 };
 
 export default FitMentor;
+
+
+

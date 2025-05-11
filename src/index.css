@@ -132,4 +132,48 @@
   @apply w-full max-w-full overflow-x-hidden px-4 sm:px-6;
 }
 
+/* Add these utility classes for tighter text spacing */
+@layer utilities {
+  .tracking-tight {
+    letter-spacing: -0.01em;
+  }
+  
+  .tracking-tighter {
+    letter-spacing: -0.025em;
+  }
+  
+  .word-spacing-tight {
+    word-spacing: -0.05em;
+  }
+  
+  .leading-tight {
+    line-height: 1.2;
+  }
+  
+  .leading-snug {
+    line-height: 1.375;
+  }
+}
+
+/* Apply tighter spacing to FitLearn content */
+.fitlearn-content h1,
+.fitlearn-content h2,
+.fitlearn-content h3,
+.fitlearn-content p,
+.fitlearn-content span {
+  @apply tracking-tight word-spacing-tight;
+}
+
+.fitlearn-content p {
+  @apply leading-snug;
+}
+
+.fitlearn-content h1,
+.fitlearn-content h2,
+.fitlearn-content h3 {
+  @apply leading-tight;
+}
+
+
+
 

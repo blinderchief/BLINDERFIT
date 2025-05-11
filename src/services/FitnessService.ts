@@ -229,19 +229,68 @@ function generateRestDayActivities(data: HealthData): string[] {
 function generateEducationalArticles(data: HealthData): any[] {
   const generalArticles = [
     {
+      id: 1,
       title: "The Science of Recovery: Why Rest Days Matter",
       summary: "Learn about the physiological processes that occur during rest and why adequate recovery is essential for progress.",
-      readTime: "4 min read"
+      readTime: "4 min read",
+      category: "Training",
+      externalLink: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5932411/"
     },
     {
+      id: 2,
       title: "Nutrition Fundamentals for Fitness Success",
       summary: "Understand macronutrients, micronutrients, and how to structure your diet to complement your training.",
-      readTime: "6 min read"
+      readTime: "6 min read",
+      category: "Nutrition",
+      externalLink: "https://www.hsph.harvard.edu/nutritionsource/what-should-you-eat/protein/"
     },
     {
+      id: 3,
       title: "Sleep and Fitness: The Crucial Connection",
       summary: "Discover how sleep quality impacts your fitness results and strategies to improve your sleep.",
-      readTime: "5 min read"
+      readTime: "5 min read",
+      category: "Recovery",
+      externalLink: "https://www.sleepfoundation.org/physical-activity/athletic-performance-and-sleep"
+    },
+    {
+      id: 4,
+      title: "Heart Disease: Prevention Through Exercise",
+      summary: "Learn how regular physical activity can significantly reduce your risk of cardiovascular disease.",
+      readTime: "7 min read",
+      category: "Health",
+      externalLink: "https://www.heart.org/en/healthy-living/fitness/fitness-basics/aha-recs-for-physical-activity-in-adults"
+    },
+    {
+      id: 5,
+      title: "Diabetes Management: The Exercise Connection",
+      summary: "Discover how specific types of exercise can help manage blood glucose levels and improve insulin sensitivity.",
+      readTime: "8 min read",
+      category: "Health",
+      externalLink: "https://www.diabetes.org/healthy-living/fitness"
+    },
+    {
+      id: 6,
+      title: "Exercise and Mental Health: The Brain-Body Connection",
+      summary: "Explore the powerful effects of regular physical activity on depression, anxiety, and overall mental wellbeing.",
+      readTime: "6 min read",
+      category: "Mental Health",
+      externalLink: "https://www.apa.org/topics/exercise-fitness/stress"
+    },
+    {
+      id: 7,
+      title: "Cancer Prevention: The Role of Physical Activity",
+      summary: "Research shows that regular exercise can reduce the risk of several types of cancer. Learn the science behind this connection.",
+      readTime: "9 min read",
+      category: "Health",
+      externalLink: "https://www.cancer.gov/about-cancer/causes-prevention/risk/obesity/physical-activity-fact-sheet"
+    },
+    {
+      id: 8,
+      title: "Osteoporosis: Building Stronger Bones Through Exercise",
+      summary: "Discover the best types of exercise to increase bone density and prevent this common degenerative condition.",
+      readTime: "5 min read",
+      category: "Health",
+      externalLink: "https://www.bones.nih.gov/health-info/bone/bone-health/exercise/exercise-your-bone-health"
     }
   ];
   
@@ -250,36 +299,76 @@ function generateEducationalArticles(data: HealthData): any[] {
   // Add articles based on user goals
   if (data.goals.includes('weight_loss')) {
     goalSpecificArticles.push({
+      id: 101,
       title: "Sustainable Weight Loss Strategies That Actually Work",
       summary: "Evidence-based approaches to weight loss that focus on long-term success rather than quick fixes.",
-      readTime: "7 min read"
+      readTime: "7 min read",
+      category: "Weight Management",
+      externalLink: "https://www.cdc.gov/healthyweight/losing_weight/index.html"
+    });
+    
+    goalSpecificArticles.push({
+      id: 102,
+      title: "The Dangers of Rapid Weight Loss",
+      summary: "Why crash diets and extreme weight loss methods can harm your metabolism and overall health.",
+      readTime: "6 min read",
+      category: "Health Risks",
+      externalLink: "https://www.mayoclinic.org/healthy-lifestyle/weight-loss/expert-answers/fast-weight-loss/faq-20058289"
     });
   }
   
   if (data.goals.includes('muscle_gain')) {
     goalSpecificArticles.push({
+      id: 201,
       title: "Hypertrophy Training: Optimizing Your Workouts for Muscle Growth",
       summary: "Learn the principles of effective strength training for maximum muscle development.",
-      readTime: "8 min read"
+      readTime: "8 min read",
+      category: "Training",
+      externalLink: "https://journals.lww.com/acsm-msse/Fulltext/2009/03000/Progression_Models_in_Resistance_Training_for.26.aspx"
+    });
+    
+    goalSpecificArticles.push({
+      id: 202,
+      title: "Rhabdomyolysis: When Muscle Building Goes Too Far",
+      summary: "Understand this serious condition caused by extreme exercise and how to prevent it.",
+      readTime: "5 min read",
+      category: "Health Risks",
+      externalLink: "https://www.ncbi.nlm.nih.gov/books/NBK448168/"
     });
   }
   
   if (data.goals.includes('flexibility')) {
     goalSpecificArticles.push({
+      id: 301,
       title: "Beyond Static Stretching: Modern Approaches to Flexibility",
       summary: "Discover dynamic flexibility techniques and mobility practices to improve your range of motion.",
-      readTime: "5 min read"
+      readTime: "5 min read",
+      category: "Mobility",
+      externalLink: "https://www.acsm.org/all-blog-posts/certification-blog/acsm-certified-blog/2019/10/28/stretching-recommendations-flexibility-mobility"
     });
   }
   
   // Add articles based on health issues if present
   if (data.healthIssues.length > 0) {
     goalSpecificArticles.push({
+      id: 401,
       title: "Exercising Safely with Health Considerations",
       summary: "Guidelines for adapting your fitness routine to work with rather than against your body's needs.",
-      readTime: "6 min read"
+      readTime: "6 min read",
+      category: "Safety",
+      externalLink: "https://www.cdc.gov/physicalactivity/basics/adding-activity/activities-for-health-conditions.html"
+    });
+    
+    goalSpecificArticles.push({
+      id: 402,
+      title: "Chronic Conditions and Exercise: What You Need to Know",
+      summary: "How to safely incorporate physical activity when managing chronic health conditions.",
+      readTime: "8 min read",
+      category: "Health Management",
+      externalLink: "https://www.health.harvard.edu/staying-healthy/exercising-with-chronic-health-conditions"
     });
   }
   
   return [...generalArticles, ...goalSpecificArticles];
 }
+
