@@ -12,7 +12,7 @@ const Layout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Check if current page is home
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
 
@@ -55,9 +55,76 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
+        isScrolled ? 'bg-black/80 backdrop-blur-lg py-2 sm:py-3' : 'bg-black/50 backdrop-blur-md py-3 sm:py-5'
+      } border-b border-white/10`}>
+        <div className="container mx-auto px-4 flex items-center justify-between h-12 sm:h-16">
+          {/* Left: Menu Button (Mobile) / Menu Items (Desktop) */}
+          <div className="flex items-center">
+            {/* Menu Button */}
+            <button 
+              className="text-white mr-4 p-2 flex items-center rounded-full border border-white/30 hover:border-white/60 transition-all"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+
+          {/* Center: Logo and Company Name */}
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center">
+            <img 
+              src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
+              alt="BlinderFit Logo" 
+              className="h-8 w-auto mb-1"
+            />
+            <Link to="/" className="text-center">
+              <h1 className="text-xl md:text-2xl font-light tracking-[0.3em] text-white">
+                BLINDERFIT
+              </h1>
+            </Link>
+          </div>
+
+          {/* Right: Login/Profile - Hide on mobile, show on desktop */}
+          <div className="hidden md:flex items-center space-x-6">
+            {user ? (
+              <div 
+                onClick={() => navigate('/myzone')}
+                className="text-white hover:text-gray-200 flex items-center cursor-pointer transition-colors"
+              >
+                <User size={20} />
+                <span className="ml-2 text-xs hidden md:inline tracking-widest uppercase">Profile</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Link to="/login" className="text-gray-300 hover:text-white text-xs tracking-widest uppercase transition-colors">
+                  Login
+                </Link>
+                <Link to="/register" className="text-gray-300 hover:text-white border border-white/30 px-4 py-2 text-xs tracking-widest uppercase transition-colors hover:bg-white/10">
+                  Register
+                </Link>
+              </div>
+            )}
+          </div>
+          
+          {/* Mobile profile icon - only show on mobile */}
+          <div className="flex md:hidden items-center">
+            {user && (
+              <div 
+                onClick={() => navigate('/myzone')}
+                className="text-white hover:text-gray-200 flex items-center cursor-pointer transition-colors"
+              >
+                <User size={20} />
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
       {/* Full Screen Mobile Menu */}
       <div 
-        className={`fixed inset-y-0 left-0 w-[400px] max-w-full bg-gradient-to-b from-black/95 via-black/90 to-black/85 backdrop-blur-2xl z-50 transform 
+        className={`fixed inset-y-0 left-0 w-full sm:w-[400px] max-w-full bg-gradient-to-b from-black/95 via-black/90 to-black/85 backdrop-blur-2xl z-50 transform 
           transition-transform duration-500 ease-in-out overflow-y-auto ${
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -104,64 +171,29 @@ const Layout = () => {
                 {item.label}
               </Link>
             ))}
+            
+            {/* Add Login/Register buttons for mobile */}
+            <div className="flex flex-col space-y-4 w-full mt-6 pt-6 border-t border-white/10">
+              <Link 
+                to="/login" 
+                onClick={() => setIsMenuOpen(false)}
+                className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
+                  hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center"
+              >
+                LOGIN
+              </Link>
+              <Link 
+                to="/register" 
+                onClick={() => setIsMenuOpen(false)}
+                className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
+                  hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center border border-gold/30"
+              >
+                REGISTER
+              </Link>
+            </div>
           </nav>
         </div>
       </div>
-
-      {/* Header */}
-      <header className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
-        isScrolled ? 'bg-black/80 backdrop-blur-lg py-3' : 'bg-black/50 backdrop-blur-md py-5'
-      } border-b border-white/10`}>
-        <div className="container mx-auto px-4 flex items-center justify-between h-16">
-          {/* Left: Menu Button (Mobile) / Menu Items (Desktop) */}
-          <div className="flex items-center">
-            {/* Menu Button */}
-            <button 
-              className="text-white mr-4 p-2 flex items-center rounded-full border border-white/30 hover:border-white/60 transition-all"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
-
-          {/* Center: Logo and Company Name */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center">
-            <img 
-              src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
-              alt="BlinderFit Logo" 
-              className="h-8 w-auto mb-1"
-            />
-            <Link to="/" className="text-center">
-              <h1 className="text-xl md:text-2xl font-light tracking-[0.3em] text-white">
-                BLINDERFIT
-              </h1>
-            </Link>
-          </div>
-
-          {/* Right: Login/Profile */}
-          <div className="flex items-center space-x-6">
-            {user ? (
-              <div 
-                onClick={() => navigate('/myzone')}
-                className="text-white hover:text-gray-200 flex items-center cursor-pointer transition-colors"
-              >
-                <User size={20} />
-                <span className="ml-2 text-xs hidden md:inline tracking-widest uppercase">Profile</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <Link to="/login" className="text-gray-300 hover:text-white text-xs tracking-widest uppercase transition-colors">
-                  Login
-                </Link>
-                <Link to="/register" className="text-gray-300 hover:text-white border border-white/30 px-4 py-2 text-xs tracking-widest uppercase transition-colors hover:bg-white/10">
-                  Register
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main className="flex-grow pt-24">
@@ -256,7 +288,7 @@ const Layout = () => {
           )}
 
           {/* Main Footer Categories */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 pb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 pb-10">
             {/* Column 1: TRAINING */}
             <div>
               <h3 className="text-white uppercase text-sm tracking-wider mb-6">Training</h3>
@@ -329,7 +361,7 @@ const Layout = () => {
 
           {/* Social Media Links */}
           <div className="border-t border-[#333] py-8">
-            <div className="flex flex-wrap justify-center gap-8">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
               <a href="https://facebook.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
                 <Facebook size={18} />
                 <span className="text-xs uppercase tracking-wider">Facebook</span>
@@ -355,7 +387,7 @@ const Layout = () => {
 
           {/* Legal Links */}
           <div className="border-t border-[#333] pt-8 mt-4">
-            <div className="flex flex-wrap justify-center gap-6 mb-4">
+            <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mb-4">
               <Link to="/legal" className="text-[#999] hover:text-white text-xs transition-colors">Legal</Link>
               <Link to="/privacy-policy" className="text-[#999] hover:text-white text-xs transition-colors">Privacy Policy</Link>
               <Link to="/cookie-policy" className="text-[#999] hover:text-white text-xs transition-colors">Cookie Policy</Link>
@@ -386,6 +418,13 @@ const Layout = () => {
 };
 
 export default Layout;
+
+
+
+
+
+
+
 
 
 

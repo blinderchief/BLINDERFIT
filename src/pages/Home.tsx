@@ -176,25 +176,25 @@ const Home = () => {
         
         <div className="gofit-container relative z-10">
           <div 
-            className={`max-w-2xl ml-8 transition-all duration-1000 ease-out ${
+            className={`max-w-2xl mx-auto sm:ml-8 transition-all duration-1000 ease-out ${
               isVisible.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
-            <div className="flex flex-col items-start">
-              <div className="flex items-center justify-center mb-6 p-6 rounded-full bg-black/50 border border-gold/30">
+            <div className="flex flex-col items-center sm:items-start">
+              <div className="flex items-center justify-center mb-6 p-4 sm:p-6 rounded-full bg-black/50 border border-gold/30">
                 <img 
                   src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
                   alt="BlinderFit Logo" 
-                  className="h-16 w-auto"
+                  className="h-12 sm:h-16 w-auto"
                 />
               </div>
-              <h1 className="text-5xl font-normal tracking-[0.5em] text-white mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-[0.3em] sm:tracking-[0.5em] text-white mb-4 sm:mb-6 text-center sm:text-left">
                 BLINDERFIT
               </h1>
-              <p className="text-3xl text-gold font-light mb-4 tracking-[0.3em]">
+              <p className="text-xl sm:text-2xl md:text-3xl text-gold font-light mb-4 tracking-[0.2em] sm:tracking-[0.3em] text-center sm:text-left">
                 CLARITY THROUGH MOTION
               </p>
-              <p className="text-gray-300 text-lg mb-8 font-light">
+              <p className="text-gray-300 text-base sm:text-lg mb-6 sm:mb-8 font-light text-center sm:text-left">
                 Founded by Suyash Kumar Singh to bring clarity and purpose to fitness journeys.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -280,34 +280,46 @@ const Home = () => {
       </section>
 
       {/* Early Adopter Section */}
-      <section id="earlyAdopter" className="py-16 bg-black/80 backdrop-blur-sm border-y border-gold/10">
+      <section className="py-16 bg-black border-t border-b border-gold/20">
         <div className="gofit-container">
-          <div className="max-w-4xl mx-auto bg-black/60 border border-gold/20 rounded-lg p-12">
-            <div className="text-center">
-              <span className="inline-block px-6 py-2 rounded-full border border-gold text-gold text-sm tracking-wider mb-6">
-                Be Our First 1,000!
-              </span>
-              
-              <h2 className="text-4xl font-pioneer text-white mb-4">
-                Early Adopter Invite
-              </h2>
-              
-              <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
-                Join our exclusive community of early adopters and get access to special features.
-              </p>
-
-              <div className="flex gap-4 max-w-2xl mx-auto">
+          <div 
+            className={`max-w-xl mx-auto text-center transition-all duration-1000 ease-out ${
+              isVisible.earlyAdopter ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            }`}
+          >
+            <div className="border border-gold/30 rounded-full px-8 py-3 inline-block mb-8">
+              <p className="text-gold text-sm sm:text-base">Be Our First 1,000!</p>
+            </div>
+            
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-wider mb-6 leading-tight">
+              <span className="block sm:inline">EARLY</span>{" "}
+              <span className="block sm:inline">ADOPTER</span>{" "}
+              <span className="block sm:inline">INVITE</span>
+            </h2>
+            
+            <p className="text-gray-300 mb-8 max-w-lg mx-auto">
+              Join our exclusive community of early adopters and get access to special features.
+            </p>
+            
+            <form onSubmit={handleEarlyAdopterSubmit} className="max-w-md mx-auto">
+              <div className="flex flex-col sm:flex-row gap-4">
                 <input 
                   type="email" 
                   placeholder="Your email" 
-                  className="flex-1 bg-black/50 border border-gold/30 rounded px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-gold"
+                  className="flex-grow bg-transparent border border-white/30 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gold"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                 />
-                
-                <button className="bg-gold hover:bg-gold/90 text-black px-12 py-4 rounded font-medium tracking-wider transition-all duration-300">
-                  JOIN
+                <button 
+                  type="submit"
+                  className="gofit-button"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Joining...' : 'Join Now'}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       </section>
@@ -419,6 +431,11 @@ const Home = () => {
 };
 
 export default Home;
+
+
+
+
+
 
 
 
