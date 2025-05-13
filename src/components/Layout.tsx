@@ -49,8 +49,8 @@ const Layout = () => {
 
   const handleLogout = async () => {
     await logout();
-    // Navigate to login page after logout
-    navigate('/login', { replace: true });
+    // Navigate to home page after logout instead of login
+    navigate('/', { replace: true });
   };
 
   return (
@@ -172,24 +172,36 @@ const Layout = () => {
               </Link>
             ))}
             
-            {/* Add Login/Register buttons for mobile */}
+            {/* Add Login/Register/Logout buttons for mobile */}
             <div className="flex flex-col space-y-4 w-full mt-6 pt-6 border-t border-white/10">
-              <Link 
-                to="/login" 
-                onClick={() => setIsMenuOpen(false)}
-                className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
-                  hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center"
-              >
-                LOGIN
-              </Link>
-              <Link 
-                to="/register" 
-                onClick={() => setIsMenuOpen(false)}
-                className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
-                  hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center border border-gold/30"
-              >
-                REGISTER
-              </Link>
+              {user ? (
+                <button 
+                  onClick={handleLogout}
+                  className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
+                    hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center"
+                >
+                  LOGOUT
+                </button>
+              ) : (
+                <>
+                  <Link 
+                    to="/login" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
+                      hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center"
+                  >
+                    LOGIN
+                  </Link>
+                  <Link 
+                    to="/register" 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-white/70 text-xl tracking-[0.4em] uppercase transition-all duration-500 px-4 py-2
+                      hover:text-white hover:bg-white/5 hover:pl-6 backdrop-blur-sm w-full text-center"
+                  >
+                    REGISTER
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>
@@ -418,6 +430,9 @@ const Layout = () => {
 };
 
 export default Layout;
+
+
+
 
 
 

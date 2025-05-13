@@ -25,7 +25,8 @@ import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
 import SplashScreen from "./components/SplashScreen";
 import Chatbot from "./components/Chatbot";
-import SupabaseTest from "./components/SupabaseTest";
+import FirebaseTest from "./components/FirebaseTest";
+import { app, analytics } from './integrations/firebase/client';
 
 // Create a query client
 const queryClient = new QueryClient({
@@ -74,6 +75,13 @@ const App = () => {
     }
   }, [isLoaded]);
 
+  useEffect(() => {
+    // Initialize Firebase analytics
+    if (analytics) {
+      console.log('Firebase Analytics initialized');
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -96,16 +104,19 @@ const App = () => {
                     <Route path="reset-password" element={<ResetPassword />} />
                     <Route path="fitlearn" element={<FitLearn />} />
                     <Route path="fitlearn-content" element={<FitLearnContent />} />
-                    <Route path="mindshift" element={<MindShift />} />
-                    <Route path="fitmentor" element={<FitMentor />} />
-                    <Route path="tribevibe" element={<TribeVibe />} />
-                    <Route path="supabase-test" element={<SupabaseTest />} />
+                    
+                    {/* Protected routes - require authentication */}
                     <Route element={<ProtectedRoute />}>
                       <Route path="pulsehub" element={<PulseHub />} />
                       <Route path="health-form" element={<HealthForm />} />
                       <Route path="fitness-plan" element={<FitnessPlan />} />
                       <Route path="myzone" element={<MyZone />} />
+                      <Route path="mindshift" element={<MindShift />} />
+                      <Route path="fitmentor" element={<FitMentor />} />
+                      <Route path="tribevibe" element={<TribeVibe />} />
+                      <Route path="firebase-test" element={<FirebaseTest />} />
                     </Route>
+                    
                     <Route path="*" element={<NotFound />} />
                   </Route>
                   <Route path="/logout" element={<Navigate to="/login" replace />} />
@@ -121,6 +132,11 @@ const App = () => {
 };
 
 export default App;
+
+
+
+
+
 
 
 

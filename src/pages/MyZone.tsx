@@ -1,26 +1,66 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
-  User, Settings, Shield, Bell, Clock, ChevronRight,
-  Edit, Mail, Phone, MapPin, Calendar, Crown, LogOut,
-  Activity, Heart, BarChart, Target, Award, Zap, Sliders
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Calendar, 
+  Crown, 
+  Edit, 
+  Settings, 
+  LogOut, 
+  Shield, 
+  Bell, 
+  Key, 
+  ChevronRight, 
+  Activity,
+  Heart,
+  Target,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { updateUserProfile } from '@/integrations/firebase/db';
 
 const MyZone = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
+  const [isEditing, setIsEditing] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: 'New York, USA' // Default or from user data if available
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleUpdateProfile = () => {
-    toast.success('Profile updated successfully');
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    try {
+      await updateUserProfile(user.id, {
+        name: profileData.name,
+        // Only include other fields if they've changed
+        ...(profileData.phone !== user.phone && { phone: profileData.phone })
+      });
+      
+      setIsEditing(false);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true }); // Navigate to home page instead of login
     toast.success('Logged out successfully');
   };
 
@@ -112,24 +152,56 @@ const MyZone = () => {
               <div className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-6 border-b border-white/10">
                 <div className="w-24 h-24 rounded-full bg-gold/20 flex items-center justify-center relative group">
                   <User size={40} className="text-gold" />
-                  <button className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <button 
+                    className="absolute inset-0 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                    onClick={() => setIsEditing(true)}
+                  >
                     <Edit size={20} className="text-white" />
                   </button>
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-xl font-medium mb-2">{user.email}</h2>
+                  <h2 className="text-xl font-medium mb-2">
+                    {isEditing ? (
+                      <input 
+                        type="text" 
+                        value={profileData.name} 
+                        onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                        className="bg-black border border-white/20 text-white px-2 py-1 w-full"
+                      />
+                    ) : (
+                      profileData.name || 'Your Name'
+                    )}
+                  </h2>
                   <div className="flex items-center gap-2 text-silver">
                     <Crown size={16} className="text-gold" />
                     <span>Premium Member</span>
                   </div>
                   <p className="text-silver mt-1">Member since April 2024</p>
                 </div>
-                <button 
-                  onClick={handleUpdateProfile}
-                  className="px-6 py-2 border border-gold text-gold hover:bg-gold hover:text-black transition-colors"
-                >
-                  Update Profile
-                </button>
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleUpdateProfile}
+                      disabled={isSaving}
+                      className="px-6 py-2 bg-gold text-black hover:bg-gold/90 transition-colors"
+                    >
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </button>
+                    <button 
+                      onClick={() => setIsEditing(false)}
+                      className="px-6 py-2 border border-white/20 text-white hover:bg-white/10 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="px-6 py-2 border border-gold text-gold hover:bg-gold hover:text-black transition-colors"
+                  >
+                    Edit Profile
+                  </button>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -138,7 +210,7 @@ const MyZone = () => {
                     <label className="block text-sm text-silver mb-2">Email</label>
                     <div className="flex items-center gap-3 p-3 bg-white/5 rounded">
                       <Mail size={16} className="text-silver" />
-                      <span className="text-white">{user.email}</span>
+                      <span className="text-white">{user?.email}</span>
                     </div>
                   </div>
                   
@@ -146,7 +218,17 @@ const MyZone = () => {
                     <label className="block text-sm text-silver mb-2">Phone Number</label>
                     <div className="flex items-center gap-3 p-3 bg-white/5 rounded">
                       <Phone size={16} className="text-silver" />
-                      <span className="text-white">+1 (555) 000-0000</span>
+                      {isEditing ? (
+                        <input 
+                          type="tel" 
+                          value={profileData.phone} 
+                          onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                          className="bg-transparent border-none text-white w-full focus:outline-none"
+                          placeholder="+1 (555) 000-0000"
+                        />
+                      ) : (
+                        <span className="text-white">{profileData.phone || '+1 (555) 000-0000'}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -241,21 +323,21 @@ const MyZone = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm text-silver mb-2">Language</label>
-                      <select className="w-full bg-white/5 border border-white/10 text-white p-2.5 rounded">
-                        <option value="en">English</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
+                      <select className="w-full bg-black border border-white/10 text-white p-2.5 rounded focus:border-gold focus:ring-1 focus:ring-gold">
+                        <option value="en" className="bg-black text-white">English</option>
+                        <option value="es" className="bg-black text-white">Spanish</option>
+                        <option value="fr" className="bg-black text-white">French</option>
+                        <option value="de" className="bg-black text-white">German</option>
                       </select>
                     </div>
                     
                     <div>
                       <label className="block text-sm text-silver mb-2">Time Zone</label>
-                      <select className="w-full bg-white/5 border border-white/10 text-white p-2.5 rounded">
-                        <option value="est">Eastern Time (ET)</option>
-                        <option value="cst">Central Time (CT)</option>
-                        <option value="mst">Mountain Time (MT)</option>
-                        <option value="pst">Pacific Time (PT)</option>
+                      <select className="w-full bg-black border border-white/10 text-white p-2.5 rounded focus:border-gold focus:ring-1 focus:ring-gold">
+                        <option value="est" className="bg-black text-white">Eastern Time (ET)</option>
+                        <option value="cst" className="bg-black text-white">Central Time (CT)</option>
+                        <option value="mst" className="bg-black text-white">Mountain Time (MT)</option>
+                        <option value="pst" className="bg-black text-white">Pacific Time (PT)</option>
                       </select>
                     </div>
                   </div>
@@ -371,4 +453,9 @@ const MyZone = () => {
 };
 
 export default MyZone;
+
+
+
+
+
 

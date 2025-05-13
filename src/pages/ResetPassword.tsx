@@ -1,45 +1,55 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
+import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
+import { auth } from '../integrations/firebase/client';
 import { Eye, EyeOff, Lock, ArrowRight } from 'lucide-react';
-import { toast } from "sonner";
-import { supabase } from '@/integrations/supabase/client';
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isTokenValid, setIsTokenValid] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [actionCode, setActionCode] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Check if the reset token is valid on page load
   useEffect(() => {
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error checking session:', error);
-        setError('Invalid or expired reset link. Please request a new password reset.');
-        return;
-      }
-      
-      if (data.session) {
-        setIsTokenValid(true);
-      } else {
-        setError('Invalid or expired reset link. Please request a new password reset.');
-      }
-    };
+    const queryParams = new URLSearchParams(location.search);
+    const oobCode = queryParams.get('oobCode');
     
-    checkSession();
-  }, []);
+    if (!oobCode) {
+      setIsTokenValid(false);
+      setError('Invalid or expired reset link. Please request a new password reset.');
+      return;
+    }
+    
+    setActionCode(oobCode);
+    
+    // Verify the password reset code
+    verifyPasswordResetCode(auth, oobCode)
+      .then(() => {
+        setIsTokenValid(true);
+      })
+      .catch((error) => {
+        console.error('Error verifying reset code:', error);
+        setIsTokenValid(false);
+        setError('Invalid or expired reset link. Please request a new password reset.');
+      });
+  }, [location]);
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
     setError('');
     
-    if (!newPassword || !confirmPassword) {
-      setError('All fields are required');
+    // Validate passwords
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters long');
       return;
     }
     
@@ -48,26 +58,13 @@ const ResetPassword = () => {
       return;
     }
     
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-    
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-      
-      if (error) {
-        throw error;
-      }
+      // Complete password reset with Firebase
+      await confirmPasswordReset(auth, actionCode, newPassword);
       
       toast.success('Password has been reset successfully');
-      
-      // Sign out the user after password reset
-      await supabase.auth.signOut();
       
       // Redirect to login page
       setTimeout(() => {
@@ -75,7 +72,17 @@ const ResetPassword = () => {
       }, 2000);
     } catch (error: any) {
       console.error('Password reset error:', error);
-      setError(error.message || 'Failed to reset password');
+      let errorMessage = 'Failed to reset password';
+      
+      if (error.code === 'auth/expired-action-code') {
+        errorMessage = 'Reset link has expired. Please request a new one.';
+      } else if (error.code === 'auth/invalid-action-code') {
+        errorMessage = 'Invalid reset link. Please request a new one.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -100,7 +107,7 @@ const ResetPassword = () => {
         )}
 
         {isTokenValid ? (
-          <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
                 <label htmlFor="new-password" className="sr-only">New password</label>
@@ -189,3 +196,4 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+

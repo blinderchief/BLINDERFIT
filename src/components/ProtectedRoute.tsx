@@ -9,12 +9,13 @@ const ProtectedRoute = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-gofit-gold">Loading...</div>
+        <div className="animate-pulse text-white">Loading...</div>
       </div>
     );
   }
 
   if (!user) {
+    // Save the attempted URL for redirecting after login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -22,3 +23,5 @@ const ProtectedRoute = () => {
 };
 
 export default ProtectedRoute;
+
+

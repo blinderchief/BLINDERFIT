@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Leaf, Dumbbell, CircuitBoard, ChevronRight, ArrowRight, Mail, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 import { 
   Carousel,
   CarouselContent,
   CarouselItem
 } from "@/components/ui/carousel";
 import { toast } from '@/hooks/use-toast';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../integrations/firebase/client';
 
 const Home = () => {
   const { user } = useAuth();
@@ -98,13 +99,13 @@ const Home = () => {
     setShowCookieBanner(false);
   };
 
-  const handleEarlyAdopterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email) {
       toast({
         title: "Error",
-        description: "Please enter your email address.",
+        description: "Please enter your email address",
         variant: "destructive"
       });
       return;
@@ -113,16 +114,11 @@ const Home = () => {
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase
-        .from('beta_users')
-        .insert([
-          {
-            email,
-            created_at: new Date().toISOString()
-          }
-        ]);
-        
-      if (error) throw error;
+      // Add email to Firebase Firestore
+      await addDoc(collection(db, 'earlyAdopters'), {
+        email,
+        createdAt: serverTimestamp()
+      });
       
       setEmail('');
       setShowSuccess(true);
@@ -198,10 +194,15 @@ const Home = () => {
                 Founded by Suyash Kumar Singh to bring clarity and purpose to fitness journeys.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/login" className="gofit-button">
-                  Begin Your Journey
-                </Link>
-                {/* Removed the "Explore More" button */}
+                {user ? (
+                  <Link to="/pulsehub" className="gofit-button">
+                    Go to Your Dashboard
+                  </Link>
+                ) : (
+                  <Link to="/login" className="gofit-button">
+                    Begin Your Journey
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -301,7 +302,7 @@ const Home = () => {
               Join our exclusive community of early adopters and get access to special features.
             </p>
             
-            <form onSubmit={handleEarlyAdopterSubmit} className="max-w-md mx-auto">
+            <form onSubmit={handleSubmit} className="max-w-md mx-auto">
               <div className="flex flex-col sm:flex-row gap-4">
                 <input 
                   type="email" 
@@ -431,6 +432,14 @@ const Home = () => {
 };
 
 export default Home;
+
+
+
+
+
+
+
+
 
 
 

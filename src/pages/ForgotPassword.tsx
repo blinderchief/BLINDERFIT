@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from "sonner";
-import { supabase } from '@/integrations/supabase/client';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../integrations/firebase/client';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -20,27 +21,22 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
     
     try {
-      console.log(`Attempting to send reset email to: ${email}`);
-      // Use the allowed redirect URL from Supabase settings
-      const redirectUrl = "https://blinderfit.vercel.app/reset-password";
-      console.log(`Redirect URL: ${redirectUrl}`);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
-      });
-      
-      if (error) {
-        console.error("Reset password error:", error);
-        toast.error(error.message || "Failed to send reset instructions");
-        return;
-      }
+      // Send password reset email using Firebase
+      await sendPasswordResetEmail(auth, email);
       
       setIsSubmitted(true);
       toast.success("Password reset instructions sent to your email");
-      console.log("Reset email sent successfully");
     } catch (error: any) {
-      console.error("Exception during password reset:", error);
-      toast.error(error.message || "Failed to send reset instructions");
+      console.error("Error:", error);
+      let errorMessage = "Failed to send reset instructions. Please try again.";
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = "No account found with this email address";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address";
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -126,6 +122,8 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+
+
 
 
 

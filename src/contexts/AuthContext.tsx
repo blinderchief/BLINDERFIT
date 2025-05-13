@@ -1,8 +1,21 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { supabase, checkSupabaseConnection, isPhoneAuthAvailable } from '@/integrations/supabase/client';
-import { Session } from '@supabase/supabase-js';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+  updateProfile,
+  User as FirebaseUser,
+  PhoneAuthProvider,
+  signInWithCredential,
+  RecaptchaVerifier,
+  sendEmailVerification
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../integrations/firebase/client';
 
 // Define user type
 interface User {
@@ -13,7 +26,6 @@ interface User {
   profileComplete: boolean;
 }
 
-// Define context type
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
@@ -41,462 +53,186 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState<Session | null>(null);
-  const [connectionChecked, setConnectionChecked] = useState(false);
   const [phoneAuthAvailable, setPhoneAuthAvailable] = useState(true);
+  const [verificationId, setVerificationId] = useState<string | null>(null);
 
-  // Check Supabase connection
+  // Initialize auth state from Firebase
   useEffect(() => {
-    const checkConnection = async () => {
-      const isConnected = await checkSupabaseConnection();
-      setConnectionChecked(true);
-      
-      if (!isConnected) {
-        console.error('Unable to connect to Supabase');
-        toast.error('Database connection failed. Some features may not work properly.');
-      } else {
-        // Check if phone auth is available
-        const phoneAuthEnabled = await isPhoneAuthAvailable();
-        setPhoneAuthAvailable(phoneAuthEnabled);
-        
-        if (!phoneAuthEnabled) {
-          console.warn('Phone authentication is not available');
-          // We don't show a toast here to avoid confusing users who don't need phone auth
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Get additional user data from Firestore
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setUser({
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || userData.name || 'User',
+              email: firebaseUser.email || userData.email || '',
+              phone: firebaseUser.phoneNumber || userData.phone || '',
+              profileComplete: userData.profileComplete || false
+            });
+          } else {
+            // If user document doesn't exist, create one with basic info
+            setUser({
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || 'User',
+              email: firebaseUser.email || '',
+              phone: firebaseUser.phoneNumber || '',
+              profileComplete: false
+            });
+            
+            // Create user document in Firestore
+            await setDoc(doc(db, 'users', firebaseUser.uid), {
+              name: firebaseUser.displayName || 'User',
+              email: firebaseUser.email || '',
+              phone: firebaseUser.phoneNumber || '',
+              profileComplete: false,
+              createdAt: serverTimestamp()
+            });
+          }
+        } catch (error) {
+          console.error('Error getting user data:', error);
+          // Fallback to basic Firebase user info
+          setUser({
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || 'User',
+            email: firebaseUser.email || '',
+            phone: firebaseUser.phoneNumber || '',
+            profileComplete: false
+          });
         }
+      } else {
+        setUser(null);
       }
-    };
-    
-    checkConnection();
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  // Initialize auth state from Supabase
-  useEffect(() => {
-    if (!connectionChecked) return;
-    
-    const initializeAuth = async () => {
-      setLoading(true);
-      
-      try {
-        // Get current session
-        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Error getting session:', sessionError);
-          setLoading(false);
-          return;
-        }
-        
-        setSession(currentSession);
-        
-        if (currentSession) {
-          // Get user profile from database
-          const { data: profileData, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('auth_id', currentSession.user.id)
-            .single();
-          
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error fetching profile:', profileError);
-          }
-          
-          if (profileData) {
-            const userData: User = {
-              id: currentSession.user.id,
-              name: profileData.name || 'User',
-              email: profileData.email || currentSession.user.email || '',
-              phone: profileData.phone || currentSession.user.phone || '',
-              profileComplete: !!profileData.profileComplete
-            };
-            setUser(userData);
-            localStorage.setItem('gofit_user', JSON.stringify(userData));
-          } else {
-            // If no profile exists but user is authenticated, create minimal user object
-            const userData: User = {
-              id: currentSession.user.id,
-              name: currentSession.user.email ? currentSession.user.email.split('@')[0] : 'User',
-              email: currentSession.user.email || '',
-              phone: currentSession.user.phone || '',
-              profileComplete: false
-            };
-            setUser(userData);
-            localStorage.setItem('gofit_user', JSON.stringify(userData));
-            
-            // Try to create a profile for this user
-            try {
-              await supabase.from('user_profiles').insert([
-                {
-                  auth_id: currentSession.user.id,
-                  name: userData.name,
-                  email: userData.email,
-                  phone: userData.phone,
-                  created_at: new Date().toISOString(),
-                  profileComplete: false
-                }
-              ]);
-            } catch (error) {
-              console.error('Error creating profile for existing user:', error);
-            }
-          }
-        } else {
-          // Check if user is stored in localStorage as fallback
-          const storedUser = localStorage.getItem('gofit_user');
-          if (storedUser) {
-            try {
-              setUser(JSON.parse(storedUser));
-            } catch (e) {
-              console.error('Error parsing stored user:', e);
-              localStorage.removeItem('gofit_user');
-            }
-          }
-        }
-        
-        // Set up auth state change listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, newSession) => {
-            console.log('Auth state changed:', event);
-            setSession(newSession);
-            
-            if (event === 'SIGNED_IN' && newSession) {
-              // Get user profile from database
-              const { data: profileData, error: profileError } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('auth_id', newSession.user.id)
-                .single();
-              
-              if (profileError && profileError.code !== 'PGRST116') {
-                console.error('Error fetching profile on auth change:', profileError);
-              }
-              
-              if (profileData) {
-                const userData: User = {
-                  id: newSession.user.id,
-                  name: profileData.name || 'User',
-                  email: profileData.email || newSession.user.email || '',
-                  phone: profileData.phone || newSession.user.phone || '',
-                  profileComplete: !!profileData.profileComplete
-                };
-                setUser(userData);
-                localStorage.setItem('gofit_user', JSON.stringify(userData));
-              } else {
-                // If no profile exists but user is authenticated, create minimal user object
-                const userData: User = {
-                  id: newSession.user.id,
-                  name: newSession.user.email ? newSession.user.email.split('@')[0] : 'User',
-                  email: newSession.user.email || '',
-                  phone: newSession.user.phone || '',
-                  profileComplete: false
-                };
-                setUser(userData);
-                localStorage.setItem('gofit_user', JSON.stringify(userData));
-              }
-            } else if (event === 'SIGNED_OUT') {
-              setUser(null);
-              localStorage.removeItem('gofit_user');
-            }
-          }
-        );
-        
-        // Cleanup subscription on unmount
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    initializeAuth();
-  }, [connectionChecked]);
-
-  // Email/password login
+  // Firebase email/password login
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-      
-      if (!data.user) {
-        toast.error('Login failed');
-        return false;
-      }
-      
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       toast.success('Login successful');
       return true;
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(error.message || 'Login failed');
+      let errorMessage = 'Login failed';
+      
+      // Handle specific Firebase auth errors
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = 'Invalid email or password';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed login attempts. Please try again later.';
+      }
+      
+      toast.error(errorMessage);
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  // Phone login
+  // Firebase phone login
   const loginWithPhone = async (phone: string, verificationCode: string): Promise<boolean> => {
     try {
       setLoading(true);
       
-      // Format phone number with India (+91) as default
-      let formattedPhone = phone;
-      
-      if (!phone.startsWith('+')) {
-        const cleanPhone = phone.replace(/^0+/, '');
-        
-        if (cleanPhone.startsWith('91') && cleanPhone.length >= 12) {
-          formattedPhone = '+' + cleanPhone;
-        } else {
-          formattedPhone = '+91' + cleanPhone;
-        }
-      }
-      
-      // Verify the phone number with Supabase
-      const { data, error } = await supabase.auth.verifyOtp({
-        phone: formattedPhone,
-        token: verificationCode,
-        type: 'sms'
-      });
-      
-      if (error) {
-        toast.error(error.message);
+      if (!verificationId) {
+        toast.error('Please request a verification code first');
         return false;
       }
       
-      if (!data.user) {
-        toast.error('Authentication failed');
-        return false;
-      }
+      // Create credential with verification ID and code
+      const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
       
-      toast.success('Phone login successful');
+      // Sign in with credential
+      const userCredential = await signInWithCredential(auth, credential);
+      
+      toast.success('Login successful');
       return true;
     } catch (error: any) {
       console.error('Phone login error:', error);
-      toast.error(error.message || 'Phone login failed');
+      let errorMessage = 'Phone login failed';
+      
+      if (error.code === 'auth/invalid-verification-code') {
+        errorMessage = 'Invalid verification code';
+      } else if (error.code === 'auth/code-expired') {
+        errorMessage = 'Verification code has expired';
+      }
+      
+      toast.error(errorMessage);
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  // Request phone verification
-  const requestPhoneVerification = async (phone: string): Promise<boolean> => {
-    try {
-      if (!phone) {
-        toast.error('Please enter a phone number');
-        return false;
-      }
-      
-      // Format phone number with India (+91) as default if no country code
-      let formattedPhone = phone;
-      
-      // If it doesn't start with +, add the India country code
-      if (!phone.startsWith('+')) {
-        // Remove any leading zeros
-        const cleanPhone = phone.replace(/^0+/, '');
-        
-        // If it already has 91 prefix, add just the +
-        if (cleanPhone.startsWith('91') && cleanPhone.length >= 12) {
-          formattedPhone = '+' + cleanPhone;
-        } else {
-          // Otherwise add +91
-          formattedPhone = '+91' + cleanPhone;
-        }
-      }
-      
-      // Validate phone number format (basic validation)
-      const phoneRegex = /^\+[1-9]\d{6,14}$/;
-      if (!phoneRegex.test(formattedPhone)) {
-        toast.error('Invalid phone number format. Please include country code.');
-        return false;
-      }
-      
-      console.log('Requesting OTP for phone:', formattedPhone);
-      
-      try {
-        // Send OTP via Supabase
-        const { error } = await supabase.auth.signInWithOtp({
-          phone: formattedPhone
-        });
-        
-        if (error) {
-          console.error('OTP request error:', error);
-          
-          // Handle specific error for unsupported phone provider
-          if (error.message.includes('unsupported phone provider')) {
-            toast.error('Phone authentication is not available. Please use email login instead.');
-            // You might want to redirect to email login tab here
-            return false;
-          }
-          
-          toast.error(error.message);
-          return false;
-        }
-        
-        toast.success('Verification code sent to your phone');
-        return true;
-      } catch (innerError: any) {
-        console.error('Inner OTP request error:', innerError);
-        
-        // Check for unsupported phone provider error
-        if (innerError.message && innerError.message.includes('unsupported phone provider')) {
-          toast.error('Phone authentication is not available. Please use email login instead.');
-          return false;
-        }
-        
-        throw innerError; // Re-throw for outer catch
-      }
-    } catch (error: any) {
-      console.error('Phone verification error:', error);
-      toast.error(error.message || 'Failed to send verification code');
-      return false;
-    }
-  };
-
-  // Email/password registration
+  // Firebase email/password registration
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
       
-      // Register with Supabase
-      const { data, error } = await supabase.auth.signUp({
+      // Create user with email and password
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+      
+      // Update profile with display name
+      await updateProfile(firebaseUser, { displayName: name });
+      
+      // Send email verification
+      await sendEmailVerification(firebaseUser);
+      
+      // Create user document in Firestore
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
+        name,
         email,
-        password,
-        options: {
-          data: {
-            name
-          }
-        }
+        profileComplete: false,
+        createdAt: serverTimestamp()
       });
       
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-      
-      if (!data.user) {
-        toast.error('Registration failed');
-        return false;
-      }
-      
-      // Create user profile in a separate step with better error handling
-      try {
-        // Check if profile already exists to prevent duplicate errors
-        const { data: existingProfile } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('auth_id', data.user.id)
-          .single();
-        
-        if (!existingProfile) {
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .insert([
-              {
-                auth_id: data.user.id,
-                name,
-                email,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-                profileComplete: false
-              }
-            ]);
-          
-          if (profileError) {
-            console.error("Error creating user profile:", profileError);
-            // Log more details about the error
-            if (profileError.code === '23505') {
-              toast.error('An account with this email already exists');
-            } else {
-              toast.error(`Profile creation error: ${profileError.message}`);
-            }
-            // Don't fail the registration if profile creation fails
-          }
-        }
-      } catch (profileErr: any) {
-        console.error("Exception creating user profile:", profileErr);
-        // Don't show this error to the user to avoid confusion
-      }
-      
-      toast.success('Registration successful! Please check your email for verification.');
+      toast.success('Registration successful. Please verify your email.');
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'Registration failed');
+      let errorMessage = 'Registration failed';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'Email is already in use';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
+      }
+      
+      toast.error(errorMessage);
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  // Phone registration
+  // Firebase phone registration
   const registerWithPhone = async (name: string, phone: string): Promise<boolean> => {
     try {
       setLoading(true);
       
-      // Format phone number with India (+91) as default
-      let formattedPhone = phone;
+      // Request phone verification first
+      const success = await requestPhoneVerification(phone);
       
-      if (!phone.startsWith('+')) {
-        const cleanPhone = phone.replace(/^0+/, '');
-        
-        if (cleanPhone.startsWith('91') && cleanPhone.length >= 12) {
-          formattedPhone = '+' + cleanPhone;
-        } else {
-          formattedPhone = '+91' + cleanPhone;
-        }
+      if (success) {
+        // Store name to use when verification is complete
+        localStorage.setItem('pendingUserName', name);
+        toast.success('Verification code sent to your phone');
+        return true;
       }
       
-      // Check if user already exists with this phone
-      const { data: existingUser, error: checkError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('phone', formattedPhone)
-        .single();
-      
-      if (existingUser) {
-        toast.error('An account with this phone number already exists');
-        return false;
-      }
-      
-      // Get current session (should be set after OTP verification)
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (!currentSession || !currentSession.user) {
-        toast.error('Please verify your phone number first');
-        return false;
-      }
-      
-      // Create user profile in database
-      const { error: createError } = await supabase
-        .from('user_profiles')
-        .insert([
-          {
-            auth_id: currentSession.user.id,
-            name,
-            phone: formattedPhone,
-            created_at: new Date().toISOString(),
-            profileComplete: false
-          }
-        ]);
-      
-      if (createError) {
-        toast.error(createError.message);
-        return false;
-      }
-      
-      toast.success('Phone registration successful');
-      return true;
+      return false;
     } catch (error: any) {
       console.error('Phone registration error:', error);
       toast.error(error.message || 'Phone registration failed');
@@ -506,20 +242,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Logout
+  // Firebase phone verification request
+  const requestPhoneVerification = async (phone: string): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Create a reCAPTCHA verifier
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+      });
+      
+      // Request verification code
+      const provider = new PhoneAuthProvider(auth);
+      const verificationIdResult = await provider.verifyPhoneNumber(phone, recaptchaVerifier);
+      
+      // Store verification ID
+      setVerificationId(verificationIdResult);
+      
+      toast.success('Verification code sent to your phone');
+      return true;
+    } catch (error: any) {
+      console.error('Phone verification error:', error);
+      let errorMessage = 'Failed to send verification code';
+      
+      if (error.code === 'auth/invalid-phone-number') {
+        errorMessage = 'Invalid phone number format';
+      } else if (error.code === 'auth/quota-exceeded') {
+        errorMessage = 'SMS quota exceeded. Please try again later.';
+      }
+      
+      toast.error(errorMessage);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Firebase logout
   const logout = async (): Promise<void> => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Logout error:', error);
-        toast.error(error.message);
-      } else {
-        setUser(null);
-        localStorage.removeItem('gofit_user');
-        toast.success('Logged out successfully');
-      }
+      await signOut(auth);
+      toast.success('Logged out successfully');
     } catch (error: any) {
       console.error('Logout error:', error);
       toast.error(error.message || 'Logout failed');
@@ -528,58 +292,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Add a function to force reconnect to Supabase
+  // Force reconnect function
   const forceReconnect = async (): Promise<boolean> => {
-    try {
-      console.log('Forcing reconnection to Supabase...');
-      
-      // Clear any existing sessions
-      await supabase.auth.signOut();
-      
-      // Check connection
-      const isConnected = await checkSupabaseConnection();
-      
-      if (!isConnected) {
-        toast.error('Failed to reconnect to Supabase');
-        return false;
-      }
-      
-      // Check if phone auth is available
-      const phoneAuthEnabled = await isPhoneAuthAvailable();
-      setPhoneAuthAvailable(phoneAuthEnabled);
-      
-      toast.success('Successfully reconnected to Supabase');
-      return true;
-    } catch (error: any) {
-      console.error('Reconnection error:', error);
-      toast.error(error.message || 'Failed to reconnect');
-      return false;
-    }
+    // No need to reconnect with Firebase, it handles this automatically
+    toast.success('Authentication system reconnected');
+    return true;
   };
 
+  // Firebase password reset
   const resetPassword = async (email: string): Promise<boolean> => {
     try {
       setLoading(true);
       
-      // Use the allowed redirect URL from Supabase settings
-      const redirectUrl = "https://blinderfit.vercel.app/reset-password";
-      console.log('Reset password redirect URL:', redirectUrl);
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
-      });
-      
-      if (error) {
-        console.error('Password reset error:', error);
-        toast.error(error.message || 'Failed to send reset instructions');
-        return false;
-      }
+      await sendPasswordResetEmail(auth, email);
       
       toast.success('Password reset instructions sent to your email');
       return true;
     } catch (error: any) {
       console.error('Password reset error:', error);
-      toast.error(error.message || 'Failed to send reset instructions');
+      let errorMessage = 'Failed to send reset instructions';
+      
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address';
+      }
+      
+      toast.error(errorMessage);
       return false;
     } finally {
       setLoading(false);
@@ -600,8 +339,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPassword
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {/* Invisible reCAPTCHA container for phone auth */}
+      <div id="recaptcha-container"></div>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+
+
+
+
 
 
 

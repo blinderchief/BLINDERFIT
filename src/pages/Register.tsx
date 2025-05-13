@@ -1,9 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Eye, EyeOff, Lock, Mail, User, ArrowRight } from 'lucide-react';
-
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -12,8 +11,14 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const { register } = useAuth();
+  const { user, register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/pulsehub', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +44,7 @@ const Register = () => {
     try {
       const success = await register(name, email, password);
       if (success) {
-        navigate('/health-form');
+        navigate('/pulsehub');
       }
     } catch (error: any) {
       setError(error.message || 'Registration failed');
@@ -190,6 +195,7 @@ const Register = () => {
 };
 
 export default Register;
+
 
 
 
