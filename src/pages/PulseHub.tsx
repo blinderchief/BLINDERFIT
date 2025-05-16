@@ -131,21 +131,62 @@ const Dashboard = () => {
 
   // Firestore real-time sync for plan/goals/progress
   useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    const userDocRef = doc(db, 'users', user.id);
-    const unsub = onSnapshot(userDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setFitnessPlan(data.fitnessPlan || null);
-        setStats(data.stats || stats);
-        setWeeklyTarget(data.weeklyTarget || weeklyTarget);
-        setWeeklyProgress(data.weeklyProgress || weeklyProgress);
-        setChallengeProgress(data.challengeProgress || 0);
-      }
+    if (!user) {
+      // If there's no user, set loading to false to prevent infinite loading
       setLoading(false);
-    });
-    return () => unsub();
+      return;
+    }
+    
+    setLoading(true);
+    
+    // Check if user.id exists, otherwise use user.uid (Firebase Auth standard)
+    const userId = user.id || user.uid;
+    
+    if (!userId) {
+      console.error("No user ID available");
+      setLoading(false);
+      return;
+    }
+    
+    const userDocRef = doc(db, 'users', userId);
+    
+    // Set up error handling and timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.log("Firestore fetch timed out");
+      setLoading(false);
+    }, 10000); // 10 second timeout
+    
+    try {
+      const unsub = onSnapshot(userDocRef, (docSnap) => {
+        clearTimeout(timeoutId);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setFitnessPlan(data.fitnessPlan || null);
+          setStats(data.stats || stats);
+          setWeeklyTarget(data.weeklyTarget || weeklyTarget);
+          setWeeklyProgress(data.weeklyProgress || weeklyProgress);
+          setChallengeProgress(data.challengeProgress || 0);
+        } else {
+          // If document doesn't exist, create default stats for this user
+          console.log("Creating default stats for new user");
+        }
+        
+        setLoading(false);
+      }, (error) => {
+        console.error("Firestore snapshot error:", error);
+        setLoading(false);
+      });
+      
+      return () => {
+        clearTimeout(timeoutId);
+        unsub();
+      };
+    } catch (error) {
+      console.error("Error setting up Firestore listener:", error);
+      clearTimeout(timeoutId);
+      setLoading(false);
+    }
   }, [user]);
 
   // Save plan/progress to Firestore if changed
@@ -164,10 +205,132 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) {
+  // Add state to track loading timeouts and authentication check
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [authCheckDone, setAuthCheckDone] = useState(false);
+  
+  // First check if authentication is established
+  useEffect(() => {
+    // Try to check cached auth first
+    const cachedAuthState = localStorage.getItem('blinderfit_auth_state');
+    let cachedAuth = null;
+    
+    if (cachedAuthState) {
+      try {
+        cachedAuth = JSON.parse(cachedAuthState);
+        const isRecent = Date.now() - cachedAuth.timestamp < 60 * 60 * 1000; // Within the last hour
+        
+        if (isRecent && cachedAuth.isAuthenticated) {
+          console.log('Using cached authentication state while checking auth');
+          // Don't set isAuthChecking to false immediately as we still need to wait for Firebase
+        }
+      } catch (e) {
+        console.error('Error parsing cached auth state:', e);
+      }
+    }
+
+    const checkAuth = setTimeout(() => {
+      // If we have both cached auth and Firebase user, or just Firebase user
+      if ((cachedAuth && user) || user) {
+        setIsAuthChecking(false);
+        setAuthCheckDone(true);
+      } 
+      // If we have cached auth but no Firebase user yet (still loading)
+      else if (cachedAuth && !user) {
+        // Keep waiting for Firebase, but with a longer timeout
+        setTimeout(() => {
+          setIsAuthChecking(false);
+          setAuthCheckDone(true);
+        }, 2000);
+      } 
+      // No auth at all
+      else {
+        setIsAuthChecking(false);
+        setAuthCheckDone(true);
+      }
+    }, 1000); // Give Firebase auth a moment to initialize
+    
+    return () => clearTimeout(checkAuth);
+  }, [user]);
+  
+  // Set a timeout for loading to give feedback to users
+  useEffect(() => {
+    if (loading && authCheckDone) {
+      const timeoutId = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 5000); // Show additional message after 5 seconds
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [loading, authCheckDone]);
+
+  // Store authentication status in localStorage to persist across refreshes
+  useEffect(() => {
+    if (user) {
+      // Save auth state to localStorage
+      localStorage.setItem('blinderfit_auth_state', JSON.stringify({
+        isAuthenticated: true,
+        userId: user.uid || user.id,
+        timestamp: Date.now()
+      }));
+    }
+  }, [user]);
+  
+  // Show loading while checking auth - prevents flash of login screen on refresh
+  if (isAuthChecking) {
     return (
       <div className="min-h-[calc(100vh-96px)] flex items-center justify-center bg-black">
-        <div className="animate-pulse text-gold text-xl">Loading your vision dashboard...</div>
+        <div className="animate-pulse text-gold text-xl">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  // Show loading state for data retrieval
+  if (loading && user) {
+    return (
+      <div className="min-h-[calc(100vh-96px)] flex flex-col items-center justify-center bg-black p-6">
+        <div className="animate-pulse text-gold text-xl mb-4">Loading your vision dashboard...</div>
+        
+        {loadingTimeout && (
+          <div className="max-w-md text-center">
+            <p className="text-white/70 text-sm mb-4">
+              Taking longer than expected? This could be due to:
+            </p>
+            <ul className="text-white/70 text-sm text-left mb-4 space-y-2">
+              <li>• Network connectivity issues</li>
+              <li>• Database connection delays</li>
+              <li>• Your account data is being initialized</li>
+            </ul>
+            <div className="flex justify-center mt-4">
+              <Link to="/" className="gofit-button-outline text-sm">
+                Return to Home
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // If no user is logged in, guide them to login
+  if (!user) {
+    return (
+      <div className="min-h-[calc(100vh-96px)] flex flex-col items-center justify-center bg-black p-6">
+        <div className="text-gold text-xl mb-4">Authentication Required</div>
+        <p className="text-white/70 text-center mb-6">
+          Please log in or create an account to access your personalized dashboard.
+        </p>
+        <div className="flex space-x-4">
+          <Link to="/login" className="gofit-button-outline">
+            Login
+          </Link>
+          <Link to="/register" className="gofit-button">
+            Register
+          </Link>
+        </div>
       </div>
     );
   }

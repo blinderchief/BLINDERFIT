@@ -14,6 +14,8 @@ const FitnessPlan = () => {
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [authCheckDone, setAuthCheckDone] = useState(false);
   const navigate = useNavigate();
   
   // Day name formatting
@@ -23,6 +25,62 @@ const FitnessPlan = () => {
   
   // Get today's day
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+  
+  // First check if authentication is established
+  useEffect(() => {
+    // Try to check cached auth first
+    const cachedAuthState = localStorage.getItem('blinderfit_auth_state');
+    let cachedAuth = null;
+    
+    if (cachedAuthState) {
+      try {
+        cachedAuth = JSON.parse(cachedAuthState);
+        const isRecent = Date.now() - cachedAuth.timestamp < 60 * 60 * 1000; // Within the last hour
+        
+        if (isRecent && cachedAuth.isAuthenticated) {
+          console.log('Using cached authentication state in FitnessPlan while checking auth');
+          // Don't set isAuthChecking to false immediately as we still need to wait for Firebase
+        }
+      } catch (e) {
+        console.error('Error parsing cached auth state:', e);
+      }
+    }
+
+    const checkAuth = setTimeout(() => {
+      // If we have both cached auth and Firebase user, or just Firebase user
+      if ((cachedAuth && user) || user) {
+        setIsAuthChecking(false);
+        setAuthCheckDone(true);
+      } 
+      // If we have cached auth but no Firebase user yet (still loading)
+      else if (cachedAuth && !user) {
+        // Keep waiting for Firebase, but with a longer timeout
+        setTimeout(() => {
+          setIsAuthChecking(false);
+          setAuthCheckDone(true);
+        }, 2000);
+      } 
+      // No auth at all
+      else {
+        setIsAuthChecking(false);
+        setAuthCheckDone(true);
+      }
+    }, 1000); // Give Firebase auth a moment to initialize
+    
+    return () => clearTimeout(checkAuth);
+  }, [user]);
+  
+  // Store authentication status in localStorage to persist across refreshes
+  useEffect(() => {
+    if (user) {
+      // Save auth state to localStorage
+      localStorage.setItem('blinderfit_auth_state', JSON.stringify({
+        isAuthenticated: true,
+        userId: user.uid || user.id,
+        timestamp: Date.now()
+      }));
+    }
+  }, [user]);
   
   useEffect(() => {
     const loadFitnessPlan = async () => {
@@ -86,6 +144,15 @@ const FitnessPlan = () => {
       setExpandedDay(day);
     }
   };
+  
+  // Show loading while checking auth - prevents flash of login screen on refresh
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-[calc(100vh-96px)] flex items-center justify-center bg-black">
+        <div className="animate-pulse text-gold text-xl">Loading your fitness plan...</div>
+      </div>
+    );
+  }
   
   if (loading) {
     return (

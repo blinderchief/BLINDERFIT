@@ -10,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,7 +35,7 @@ const Login = () => {
     
     setIsSubmitting(true);
     
-    const success = await login(email, password);
+    const success = await login(email, password, rememberMe);
     
     if (success) {
       // Redirect to PulseHub after successful login
@@ -95,7 +96,20 @@ const Login = () => {
           </div>
         </div>
         
-        <div className="text-right">
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-gold focus:ring-gold"
+            />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-400">
+              Remember me
+            </label>
+          </div>
+          
           <Link to="/forgot-password" className="text-sm text-gray-400 hover:text-white">
             Forgot password?
           </Link>

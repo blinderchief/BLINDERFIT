@@ -4,7 +4,8 @@ import * as z from "zod";
 import axios from 'axios';
 import { auth } from '@/integrations/firebase/client';
 import { storage } from '@/integrations/firebase/client';
-import { db } from '@/integrations/firebase/client';
+import { db, functions } from '@/integrations/firebase/client';
+import { httpsCallable } from "firebase/functions";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
 import { v4 as uuidv4 } from 'uuid';
@@ -330,52 +331,67 @@ const FitMentor = () => {
         content: msg.content
       }));
       
-      const token = await user.getIdToken();
+      // First try a simple test call to verify connection
+      try {
+        const helloWorld = httpsCallable(functions, 'helloWorld');
+        const result = await helloWorld({});
+        console.log("Connection test successful:", result);
+      } catch (testError) {
+        console.error("Connection test failed:", testError);
+        // Don't throw, try the main call anyway
+      }
       
-      let endpoint = 'https://us-central1-blinderfit.cloudfunctions.net/answerHealthQuestion';
+      // Use Firebase callable functions
+      const askAI = httpsCallable(functions, 'askAI');
+      
       let payload = { 
-        question: questionText,
-        chatHistory: recentMessages
+        question: questionText + "\n\nContext: " + recentMessages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join("\n")
       };
       
       if (uploadedFiles.length > 0) {
-        endpoint = 'https://us-central1-blinderfit.cloudfunctions.net/processFilesAndAnswer';
-        payload = { 
-          question: questionText,
-          files: uploadedFiles.map(file => ({
-            id: file.id,
-            name: file.name,
-            type: file.type,
-            url: file.url
-          })),
-          chatHistory: recentMessages
-        };
+        payload.question += "\n\nThe user has uploaded these files: " + 
+          uploadedFiles.map(file => file.name).join(", ");
       }
       
-      const res = await axios.post(
-        endpoint,
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      console.log("Sending request to AI:", payload);
+      const response = await askAI(payload);
       
-      const { answer } = res.data;
+      console.log("Raw response from AI:", response);
       
-      if (!answer) {
-        throw new Error("Invalid response format from AI service");
-      }
+      // Access callable function result via response.data
+      const answer = response.data;
+      console.log("Parsed answer:", answer);
       
       let formattedResponse = '';
       
-      if (answer.mainAnswer) {
-        formattedResponse += answer.mainAnswer + '\n\n';
-      }
-      
-      if (answer.additionalInfo) {
-        formattedResponse += '**Additional Information:**\n' + answer.additionalInfo + '\n\n';
-      }
-      
-      if (answer.personalizedTips) {
-        formattedResponse += '**Personalized Tips:**\n' + answer.personalizedTips;
+      if (answer && typeof answer === 'object') {
+        // Handle common response formats
+        if (answer.text) {
+          formattedResponse += answer.text;
+        } else if (answer.mainAnswer) {
+          formattedResponse += answer.mainAnswer;
+        } else if (answer.answer) {
+          formattedResponse += answer.answer;
+        } else if (Object.keys(answer).length > 0) {
+          // Extract any key that might contain text
+          for (const key in answer) {
+            if (typeof answer[key] === 'string' && answer[key].length > 10) {
+              formattedResponse += answer[key] + '\n\n';
+            }
+          }
+        }
+      } else if (typeof answer === 'string') {
+        formattedResponse = answer;
+      } else {
+        // Handle unexpected response format
+        try {
+          const stringified = JSON.stringify(answer, null, 2);
+          console.log("Stringified unexpected response:", stringified);
+          formattedResponse = "I've processed your question but received an unexpected response format. Please try again with a different question.";
+        } catch (err) {
+          console.error("Failed to stringify response:", err);
+          formattedResponse = "I've processed your question but couldn't parse the response. Please try again or contact support.";
+        }
       }
       
       const assistantMessage = { 
@@ -391,12 +407,61 @@ const FitMentor = () => {
       
     } catch (error) {
       console.error("Error getting AI response:", error);
+      
+      // Enhanced error reporting for better troubleshooting
+      let errorDetails = "";
+      let errorCode = "";
+      
+      if (error.code) {
+        errorCode = error.code;
+        errorDetails += `\nError code: ${error.code}`;
+      }
+      if (error.message) {
+        errorDetails += `\nError message: ${error.message}`;
+      }
+      if (error.details) {
+        errorDetails += `\nError details: ${JSON.stringify(error.details)}`;
+      }
+      if (error.stack) {
+        errorDetails += `\nStack trace: ${error.stack}`;
+      }
+      
+      console.log("Detailed error info:", errorDetails);
+      
+      let userFacingErrorMessage = "I'm sorry, I encountered an error while processing your question. Please try again later.";
+      
+      // If we're in development, add more details
+      if (process.env.NODE_ENV === 'development') {
+        userFacingErrorMessage += `\n\nTechnical details: ${errorCode || 'unknown error'}`;
+      }
+      
+      // For specific error codes, provide more helpful messages
+      if (errorCode === 'functions/internal') {
+        userFacingErrorMessage = "I'm sorry, there's a temporary issue with the AI service. Our team has been notified and is working on a fix.";
+      } else if (errorCode === 'functions/unavailable') {
+        userFacingErrorMessage = "The AI service is currently unavailable. Please try again in a few minutes.";
+      } else if (errorCode === 'functions/unauthenticated' || errorCode === 'functions/permission-denied') {
+        userFacingErrorMessage = "You need to be logged in to use this feature. Please log in and try again.";
+      } else if (errorCode === 'functions/invalid-argument') {
+        userFacingErrorMessage = "There was an issue with your request. Please try asking a simpler question.";
+      }
+      
       const errorMessage = { 
         role: 'assistant', 
-        content: "I'm sorry, I encountered an error while processing your question. Please try again later."
+        content: userFacingErrorMessage
       };
+      
       setMessages(prev => [...prev, errorMessage]);
       await saveMessageToFirestore(errorMessage);
+      
+      // Try to call a simpler function to determine if it's a specific issue with the AI function
+      try {
+        const helloWorld = httpsCallable(functions, 'helloWorld');
+        const pingResult = await helloWorld({});
+        console.log("Hello world succeeded after AI failure:", pingResult);
+      } catch (pingError) {
+        console.error("Hello world also failed, likely a connection issue:", pingError);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -478,14 +543,18 @@ const FitMentor = () => {
         setIsLoading(false);
         return;
       }
-      const token = await user.getIdToken();
-      const res = await axios.post(
-        'https://us-central1-blinderfit.cloudfunctions.net/generatePersonalizedPlan',
-        data,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setFitnessPlan(res.data.plan || 'No plan generated.');
+      
+      // Use Firebase callable function instead of direct HTTP request
+      const generatePersonalizedPlan = httpsCallable(functions, 'askAI');
+      const result = await generatePersonalizedPlan({
+        question: "Generate a 7-day fitness and nutrition plan based on this profile: " + JSON.stringify(data)
+      });
+      
+      // Access the result from the callable function
+      const planData = result.data;
+      setFitnessPlan(planData.plan || 'No plan generated.');
       setHasSubmitted(true);
+      
       toast({
         title: 'FMGuide Plan Generated!',
         description: 'Your personalized 7-day plan is ready.'

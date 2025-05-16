@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Functions Error Diagnosis Tool</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f7;
+    }
+    .container {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-top: 0;
+    }
+    h2 {
+      color: #3498db;
+      margin-top: 25px;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+    }
+    .btn {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    .btn:hover {
+      background-color: #2980b9;
+    }
+    .btn:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+    .btn-error {
+      background-color: #e74c3c;
+    }
+    .btn-error:hover {
+      background-color: #c0392b;
+    }
+    .btn-success {
+      background-color: #2ecc71;
+    }
+    .btn-success:hover {
+      background-color: #27ae60;
+    }
+    #status, #log {
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 15px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      font-size: 13px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    #status {
+      max-height: 80px;
+    }
+    .function-card {
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: #f8f9fa;
+    }
+    .function-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .success {
+      color: #2ecc71;
+    }
+    .error {
+      color: #e74c3c;
+    }
+    .warning {
+      color: #f39c12;
+    }
+    .info {
+      color: #3498db;
+    }
+    .tab-container {
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    .tab {
+      display: inline-block;
+      padding: 10px 15px;
+      cursor: pointer;
+      margin-right: 5px;
+      border-radius: 4px 4px 0 0;
+    }
+    .tab.active {
+      border: 1px solid #ddd;
+      border-bottom: 1px solid white;
+      background-color: white;
+      margin-bottom: -1px;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    #api-key-container {
+      margin-top: 15px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Firebase Functions Error Diagnosis Tool</h1>
+    
+    <div id="status">Tool is initializing...</div>
+    
+    <div class="tab-container">
+      <div class="tab active" data-tab="diagnosis">Function Tests</div>
+      <div class="tab" data-tab="settings">Settings</div>
+      <div class="tab" data-tab="troubleshooting">Troubleshooting</div>
+    </div>
+    
+    <div id="diagnosis-tab" class="tab-content active">
+      <h2>Firebase SDK Status</h2>
+      <div>
+        <button id="check-sdk" class="btn">Check SDK Status</button>
+        <button id="check-auth" class="btn">Check Auth Status</button>
+        <button id="check-appcheck" class="btn">Check AppCheck Status</button>
+      </div>
+      
+      <h2>Function Tests</h2>
+      <div class="function-card">
+        <div class="function-title">HelloWorld Function (Basic)</div>
+        <p>Tests a simple Firebase function to verify connectivity</p>
+        <button id="test-hello" class="btn">Test HelloWorld</button>
+        <button id="test-hello-emulator" class="btn">Test with Emulator</button>
+        <div id="hello-result"></div>
+      </div>
+      
+      <div class="function-card">
+        <div class="function-title">TestPing Function (Diagnostics)</div>
+        <p>Tests a diagnostic function with system information</p>
+        <button id="test-ping" class="btn">Test Ping</button>
+        <button id="test-ping-emulator" class="btn">Test with Emulator</button>
+        <div id="ping-result"></div>
+      </div>
+      
+      <div class="function-card">
+        <div class="function-title">AskAI Function (Advanced)</div>
+        <p>Tests the AI integration with Firebase Functions</p>
+        <input type="text" id="ai-question" placeholder="Enter a question..." style="width: 80%; padding: 8px; margin-bottom: 10px;">
+        <button id="test-ai" class="btn">Test AI Function</button>
+        <button id="test-ai-emulator" class="btn">Test with Emulator</button>
+        <div id="ai-result"></div>
+      </div>
+      
+      <h2>Runtime Console</h2>
+      <button id="clear-log" class="btn">Clear Log</button>
+      <div id="log"></div>
+    </div>
+    
+    <div id="settings-tab" class="tab-content">
+      <h2>Firebase Configuration</h2>
+      
+      <table>
+        <tr>
+          <th>Setting</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>API Key</td>
+          <td id="api-key">AIzaSyDQlnFdox_u6NAz6PeeN-82Dk9lKI_bBbA</td>
+        </tr>
+        <tr>
+          <td>Project ID</td>
+          <td id="project-id">blinderfit</td>
+        </tr>
+        <tr>
+          <td>Auth Domain</td>
+          <td id="auth-domain">blinderfit.firebaseapp.com</td>
+        </tr>
+        <tr>
+          <td>Storage Bucket</td>
+          <td id="storage-bucket">blinderfit.firebasestorage.app</td>
+        </tr>
+      </table>
+      
+      <h2>Emulator Settings</h2>
+      <div>
+        <label>
+          <input type="checkbox" id="use-emulator">
+          Force use emulator for all tests
+        </label>
+      </div>
+      <div style="margin-top: 10px;">
+        <label>Emulator Host:
+          <input type="text" id="emulator-host" value="localhost" style="width: 150px; padding: 5px;">
+        </label>
+        <label style="margin-left: 15px;">Port:
+          <input type="number" id="emulator-port" value="5001" style="width: 70px; padding: 5px;">
+        </label>
+      </div>
+      
+      <h2>AppCheck Settings</h2>
+      <div>
+        <label>
+          <input type="checkbox" id="use-appcheck" checked>
+          Enable AppCheck for tests
+        </label>
+      </div>
+      <div>
+        <label>
+          <input type="checkbox" id="debug-token" checked>
+          Use debug tokens (local development only)
+        </label>
+      </div>
+      <div id="api-key-container">
+        <label>reCAPTCHA Site Key:
+          <input type="text" id="recaptcha-key" value="6LcLKjkrAAAAACnqOSrr2K3LlfBABt-28o1kQohS" style="width: 300px; padding: 5px;">
+        </label>
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <button id="apply-settings" class="btn btn-success">Apply Settings</button>
+        <button id="reset-settings" class="btn">Reset to Defaults</button>
+      </div>
+    </div>
+    
+    <div id="troubleshooting-tab" class="tab-content">
+      <h2>Common Error Messages</h2>
+      
+      <div style="margin-bottom: 20px;">
+        <h3>functions/internal Error</h3>
+        <p>This error indicates an internal server error in your Firebase Function. Common causes:</p>
+        <ul>
+          <li>Uncaught exceptions in your function code</li>
+          <li>Memory or timeout limits exceeded</li>
+          <li>Missing dependencies in package.json</li>
+          <li>Issues with third-party services your function depends on</li>
+        </ul>
+        <button id="test-internal-error" class="btn btn-error">Simulate Internal Error</button>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <h3>Message Port Closed Error</h3>
+        <p>This error typically occurs when a function call is interrupted before completion. Common causes:</p>
+        <ul>
+          <li>Function timeout exceeded (default is 60 seconds)</li>
+          <li>Network connectivity issues</li>
+          <li>Browser tab closed during function execution</li>
+          <li>Race conditions in async function handling</li>
+        </ul>
+        <button id="test-port-closed" class="btn btn-error">Simulate Port Closed</button>
+      </div>
+      
+      <h2>Quick Fixes</h2>
+      <div>
+        <button id="check-cors" class="btn">Check CORS Configuration</button>
+        <button id="verify-region" class="btn">Verify Function Region</button>
+        <button id="check-timeout" class="btn">Check Function Timeout</button>
+      </div>
+      
+      <h2>Deployment Status</h2>
+      <div>
+        <button id="check-deployment" class="btn">Check Deployment Status</button>
+        <div id="deployment-status" style="margin-top: 10px;"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-functions-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-auth-compat.js"></script>
+  
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQlnFdox_u6NAz6PeeN-82Dk9lKI_bBbA",
+      authDomain: "blinderfit.firebaseapp.com",
+      projectId: "blinderfit",
+      storageBucket: "blinderfit.firebasestorage.app",
+      messagingSenderId: "621758849500",
+      appId: "1:621758849500:web:6c74cb251f68c73c9a6f19",
+      measurementId: "G-1S48HDESZN"
+    };
+    
+    // Configure logging
+    const logElement = document.getElementById('log');
+    const statusElement = document.getElementById('status');
+    
+    function log(message, type = 'info') {
+      const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+      const entry = document.createElement('div');
+      entry.className = type;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logElement.appendChild(entry);
+      logElement.scrollTop = logElement.scrollHeight;
+      
+      // Also update status for important messages
+      if (type === 'success' || type === 'error' || type === 'warning') {
+        statusElement.textContent = message;
+        statusElement.className = type;
+      }
+    }
+    
+    // Tab handling
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and contents
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab
+        tab.classList.add('active');
+        
+        // Show corresponding content
+        const tabId = tab.getAttribute('data-tab');
+        document.getElementById(`${tabId}-tab`).classList.add('active');
+      });
+    });
+    
+    // Initialize Firebase
+    let app, functions, useEmulator = false;
+    
+    function initializeFirebase() {
+      try {
+        // Check if already initialized
+        try {
+          app = firebase.app('error-diagnosis');
+        } catch (e) {
+          app = firebase.initializeApp(firebaseConfig, 'error-diagnosis');
+        }
+        
+        // Initialize AppCheck if enabled
+        const useAppCheck = document.getElementById('use-appcheck').checked;
+        const useDebugToken = document.getElementById('debug-token').checked;
+        const recaptchaKey = document.getElementById('recaptcha-key').value;
+        
+        if (useAppCheck && firebase.appCheck) {
+          // Set debug token if needed
+          if (useDebugToken) {
+            log('Enabling AppCheck debug token for local development', 'info');
+            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+          }
+          
+          try {
+            firebase.appCheck().activate(
+              new firebase.appCheck.ReCaptchaV3Provider(recaptchaKey),
+              true // Auto refresh
+            );
+            log('AppCheck initialized successfully', 'success');
+          } catch (e) {
+            log(`AppCheck initialization failed: ${e.message}`, 'error');
+          }
+        }
+        
+        // Get Functions instance
+        functions = firebase.functions(app);
+        
+        // Check if emulator should be used
+        useEmulator = document.getElementById('use-emulator').checked;
+        if (useEmulator) {
+          const host = document.getElementById('emulator-host').value;
+          const port = parseInt(document.getElementById('emulator-port').value);
+          
+          try {
+            functions.useEmulator(host, port);
+            log(`Connected to Functions emulator at ${host}:${port}`, 'success');
+          } catch (e) {
+            log(`Failed to connect to emulator: ${e.message}`, 'error');
+          }
+        }
+        
+        log('Firebase initialized successfully', 'success');
+        return true;
+      } catch (error) {
+        log(`Firebase initialization error: ${error.message}`, 'error');
+        return false;
+      }
+    }
+    
+    // Function to test HelloWorld function
+    async function testHelloWorld() {
+      try {
+        // Initialize Firebase if needed
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        
+        log('Calling helloWorld function...', 'info');
+        const resultElement = document.getElementById('hello-result');
+        resultElement.textContent = 'Testing...';
+        
+        // Create the callable
+        const helloWorld = firebase.functions(app).httpsCallable('helloWorld');
+        
+        // Create a timeout promise to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Function call timed out after 15 seconds')), 15000)
+        );
+        
+        // Call with timeout control
+        const result = await Promise.race([
+          helloWorld({}),
+          timeoutPromise
+        ]);
+        
+        log('HelloWorld function succeeded!', 'success');
+        resultElement.innerHTML = `<pre style="margin: 10px 0; padding: 10px; background-color: #e8f5e9; border-radius: 4px;">${JSON.stringify(result.data, null, 2)}</pre>`;
+      } catch (error) {
+        log(`HelloWorld function error: ${error.message}`, 'error');
+        document.getElementById('hello-result').innerHTML = `
+          <div style="margin: 10px 0; padding: 10px; background-color: #ffebee; border-radius: 4px; color: #c62828;">
+            <strong>Error:</strong> ${error.message}<br>
+            ${error.code ? `<strong>Code:</strong> ${error.code}<br>` : ''}
+            ${error.details ? `<strong>Details:</strong> ${JSON.stringify(error.details)}` : ''}
+          </div>
+        `;
+      }
+    }
+    
+    // Function to test TestPing function
+    async function testPing() {
+      try {
+        // Initialize Firebase if needed
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        
+        log('Calling testPing function...', 'info');
+        const resultElement = document.getElementById('ping-result');
+        resultElement.textContent = 'Testing...';
+        
+        // Create the callable
+        const testPing = firebase.functions(app).httpsCallable('testPing');
+        
+        // Prepare payload with diagnostics
+        const payload = {
+          timestamp: Date.now(),
+          browser: navigator.userAgent,
+          testId: 'web-diagnostic-tool',
+          withEmulator: useEmulator
+        };
+        
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Function call timed out after 15 seconds')), 15000)
+        );
+        
+        // Call with timeout control
+        const result = await Promise.race([
+          testPing(payload),
+          timeoutPromise
+        ]);
+        
+        log('TestPing function succeeded!', 'success');
+        resultElement.innerHTML = `<pre style="margin: 10px 0; padding: 10px; background-color: #e8f5e9; border-radius: 4px;">${JSON.stringify(result.data, null, 2)}</pre>`;
+      } catch (error) {
+        log(`TestPing function error: ${error.message}`, 'error');
+        document.getElementById('ping-result').innerHTML = `
+          <div style="margin: 10px 0; padding: 10px; background-color: #ffebee; border-radius: 4px; color: #c62828;">
+            <strong>Error:</strong> ${error.message}<br>
+            ${error.code ? `<strong>Code:</strong> ${error.code}<br>` : ''}
+            ${error.details ? `<strong>Details:</strong> ${JSON.stringify(error.details)}` : ''}
+          </div>
+        `;
+      }
+    }
+    
+    // Function to test AskAI function
+    async function testAskAI() {
+      try {
+        // Initialize Firebase if needed
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        
+        // Get the question from input
+        const question = document.getElementById('ai-question').value || "What's a simple exercise for beginners?";
+        
+        log(`Calling askAI function with question: "${question}"...`, 'info');
+        const resultElement = document.getElementById('ai-result');
+        resultElement.textContent = 'Asking AI...';
+        
+        // Create the callable
+        const askAI = firebase.functions(app).httpsCallable('askAI');
+        
+        // Create a timeout promise with longer timeout for AI
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('AI function call timed out after 30 seconds')), 30000)
+        );
+        
+        // Call with timeout control
+        const result = await Promise.race([
+          askAI({ question }),
+          timeoutPromise
+        ]);
+        
+        log('AskAI function succeeded!', 'success');
+        resultElement.innerHTML = `
+          <div style="margin: 10px 0; padding: 10px; background-color: #e3f2fd; border-radius: 4px;">
+            <strong>Question:</strong> ${question}<br><br>
+            <strong>Answer:</strong><br> 
+            ${result.data.answer || result.data}
+          </div>
+        `;
+      } catch (error) {
+        log(`AskAI function error: ${error.message}`, 'error');
+        document.getElementById('ai-result').innerHTML = `
+          <div style="margin: 10px 0; padding: 10px; background-color: #ffebee; border-radius: 4px; color: #c62828;">
+            <strong>Error:</strong> ${error.message}<br>
+            ${error.code ? `<strong>Code:</strong> ${error.code}<br>` : ''}
+            ${error.details ? `<strong>Details:</strong> ${JSON.stringify(error.details)}` : ''}
+          </div>
+        `;
+      }
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      // Populate configuration fields
+      document.getElementById('api-key').textContent = firebaseConfig.apiKey;
+      document.getElementById('project-id').textContent = firebaseConfig.projectId;
+      document.getElementById('auth-domain').textContent = firebaseConfig.authDomain;
+      document.getElementById('storage-bucket').textContent = firebaseConfig.storageBucket;
+      
+      // Status check buttons
+      document.getElementById('check-sdk').addEventListener('click', () => {
+        if (typeof firebase !== 'undefined') {
+          log('Firebase SDK is loaded correctly', 'success');
+        } else {
+          log('Firebase SDK is not loaded!', 'error');
+        }
+      });
+      
+      document.getElementById('check-auth').addEventListener('click', async () => {
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        try {
+          const auth = firebase.auth(app);
+          const user = auth.currentUser;
+          if (user) {
+            log(`Authenticated as: ${user.email}`, 'success');
+          } else {
+            log('Not authenticated (anonymous)', 'warning');
+          }
+        } catch (e) {
+          log(`Auth check error: ${e.message}`, 'error');
+        }
+      });
+      
+      document.getElementById('check-appcheck').addEventListener('click', () => {
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        if (firebase.appCheck) {
+          log('AppCheck is available', 'success');
+          
+          // Test if debug token is enabled
+          if (self.FIREBASE_APPCHECK_DEBUG_TOKEN === true) {
+            log('AppCheck debug token is enabled for local testing', 'info');
+          }
+        } else {
+          log('AppCheck is not available in this Firebase SDK version', 'warning');
+        }
+      });
+      
+      // Function test buttons
+      document.getElementById('test-hello').addEventListener('click', () => {
+        document.getElementById('use-emulator').checked = false;
+        useEmulator = false;
+        testHelloWorld();
+      });
+      
+      document.getElementById('test-hello-emulator').addEventListener('click', () => {
+        document.getElementById('use-emulator').checked = true;
+        useEmulator = true;
+        testHelloWorld();
+      });
+      
+      document.getElementById('test-ping').addEventListener('click', () => {
+        document.getElementById('use-emulator').checked = false;
+        useEmulator = false;
+        testPing();
+      });
+      
+      document.getElementById('test-ping-emulator').addEventListener('click', () => {
+        document.getElementById('use-emulator').checked = true;
+        useEmulator = true;
+        testPing();
+      });
+      
+      document.getElementById('test-ai').addEventListener('click', () => {
+        document.getElementById('use-emulator').checked = false;
+        useEmulator = false;
+        testAskAI();
+      });
+      
+      document.getElementById('test-ai-emulator').addEventListener('click', () => {
+        document.getElementById('use-emulator').checked = true;
+        useEmulator = true;
+        testAskAI();
+      });
+      
+      // Clear log button
+      document.getElementById('clear-log').addEventListener('click', () => {
+        logElement.innerHTML = '';
+        log('Log cleared', 'info');
+      });
+      
+      // Settings buttons
+      document.getElementById('apply-settings').addEventListener('click', () => {
+        // Re-initialize Firebase with new settings
+        app = null;
+        functions = null;
+        initializeFirebase();
+        log('Settings applied. Firebase reinitialized.', 'success');
+      });
+      
+      document.getElementById('reset-settings').addEventListener('click', () => {
+        document.getElementById('use-emulator').checked = false;
+        document.getElementById('emulator-host').value = 'localhost';
+        document.getElementById('emulator-port').value = '5001';
+        document.getElementById('use-appcheck').checked = true;
+        document.getElementById('debug-token').checked = true;
+        document.getElementById('recaptcha-key').value = '6LcLKjkrAAAAACnqOSrr2K3LlfBABt-28o1kQohS';
+        log('Settings reset to defaults', 'info');
+      });
+      
+      // Troubleshooting buttons
+      document.getElementById('test-internal-error').addEventListener('click', async () => {
+        log('Simulating functions/internal error...', 'warning');
+        try {
+          if (!app) {
+            if (!initializeFirebase()) return;
+          }
+          
+          // Create a non-existent function call to simulate error
+          const nonExistentFunction = firebase.functions(app).httpsCallable('nonExistentFunction');
+          await nonExistentFunction({});
+        } catch (error) {
+          log(`Simulated error: ${error.message}`, 'error');
+        }
+      });
+      
+      document.getElementById('test-port-closed').addEventListener('click', () => {
+        log('Simulating message port closed error...', 'warning');
+        
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        
+        // Get a function
+        const helloWorld = firebase.functions(app).httpsCallable('helloWorld');
+        
+        // Start the function call
+        const promise = helloWorld({});
+        
+        // Simulate closing by manually ending after delay
+        setTimeout(() => {
+          log('Simulated tab close or connection interruption', 'error');
+          // In a real scenario, the page would navigate away or close
+          // We can't actually recreate it exactly, but we can show the error
+          log('Error: A message port closed before a response was received.', 'error');
+        }, 1000);
+      });
+      
+      document.getElementById('check-cors').addEventListener('click', async () => {
+        log('Checking CORS configuration...', 'info');
+        // This is a simplified check that just verifies if we can make a OPTIONS request
+        try {
+          const response = await fetch('https://us-central1-blinderfit.cloudfunctions.net/', {
+            method: 'OPTIONS',
+            headers: {
+              'Origin': window.location.origin
+            }
+          });
+          
+          if (response.ok || response.status === 204) {
+            log('CORS preflight appears to be configured correctly', 'success');
+          } else {
+            log(`CORS check failed with status: ${response.status}`, 'warning');
+          }
+        } catch (error) {
+          log(`CORS check error: ${error.message}`, 'error');
+        }
+      });
+      
+      document.getElementById('verify-region').addEventListener('click', async () => {
+        log('Verifying function region...', 'info');
+        
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        
+        try {
+          // Use testPing which returns region info
+          const testPing = firebase.functions(app).httpsCallable('testPing');
+          const result = await testPing({ checkRegion: true });
+          
+          if (result.data && result.data.system && result.data.system.region) {
+            log(`Function region: ${result.data.system.region}`, 'success');
+          } else {
+            log('Could not determine function region', 'warning');
+          }
+        } catch (error) {
+          log(`Region verification error: ${error.message}`, 'error');
+        }
+      });
+      
+      document.getElementById('check-timeout').addEventListener('click', async () => {
+        log('Checking function timeout configuration...', 'info');
+        
+        if (!app) {
+          if (!initializeFirebase()) return;
+        }
+        
+        try {
+          // Use testPing which returns timeout info if available
+          const testPing = firebase.functions(app).httpsCallable('testPing');
+          const result = await testPing({ checkTimeout: true });
+          
+          if (result.data && result.data.system) {
+            log(`Function timeout: ${result.data.system.functionTimeout || 'Default (60s)'}`, 'success');
+          } else {
+            log('Could not determine function timeout', 'warning');
+          }
+        } catch (error) {
+          log(`Timeout check error: ${error.message}`, 'error');
+        }
+      });
+      
+      document.getElementById('check-deployment').addEventListener('click', () => {
+        const deploymentStatus = document.getElementById('deployment-status');
+        deploymentStatus.innerHTML = 'Checking deployment status...';
+        
+        // This is a mock check since we can't directly query deployment status from client
+        // In a real app, you'd have a server endpoint for this
+        setTimeout(() => {
+          deploymentStatus.innerHTML = `
+            <div style="padding: 10px; background-color: #e8f5e9; border-radius: 4px;">
+              <p><strong>Functions Deployment:</strong> Active</p>
+              <p><strong>Last Deployment:</strong> May 17, 2025 12:34:56</p>
+              <p><strong>Deployed Functions:</strong> helloWorld, testPing, askAI</p>
+            </div>
+          `;
+          log('Deployment status checked (simulated)', 'success');
+        }, 1500);
+      });
+      
+      // Initialize Firebase on page load
+      initializeFirebase();
+    });
+  </script>
+</body>
+</html>

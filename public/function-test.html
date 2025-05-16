@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Functions Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+    }
+    .button-group {
+      margin: 20px 0;
+    }
+    button {
+      background-color: #4285F4;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      font-weight: 500;
+    }
+    button:hover {
+      background-color: #3367D6;
+    }
+    #results {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f0f0f0;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      min-height: 200px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 15px;
+    }
+    .tab {
+      padding: 10px 15px;
+      cursor: pointer;
+      background-color: #e0e0e0;
+      border-radius: 4px 4px 0 0;
+      margin-right: 5px;
+    }
+    .tab.active {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    .firebase-status {
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    .status-success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status-error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Firebase Functions Test Tool</h1>
+    
+    <div id="firebase-status" class="firebase-status status-pending">
+      Checking Firebase SDK status...
+    </div>
+    
+    <div class="button-group">
+      <button id="runTest">Run Basic Test</button>
+      <button id="runEmulatorTest">Run Emulator Test</button>
+      <button id="clearResults">Clear Results</button>
+    </div>
+    
+    <div class="tabs">
+      <div class="tab active" id="tab-results">Test Results</div>
+      <div class="tab" id="tab-config">Configuration</div>
+    </div>
+    
+    <div id="results">Results will appear here...</div>
+    
+    <div id="config-panel" style="display: none;">
+      <h3>Firebase Configuration</h3>
+      <pre id="config-details">Loading configuration...</pre>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-functions-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.6/firebase-app-check-compat.js"></script>
+  
+  <!-- Our Test Script -->
+  <script src="minimal-function-test.js"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check Firebase SDK status
+      const firebaseStatus = document.getElementById('firebase-status');
+      
+      if (typeof firebase !== 'undefined') {
+        firebaseStatus.className = 'firebase-status status-success';
+        firebaseStatus.textContent = 'Firebase SDK loaded successfully';
+      } else {
+        firebaseStatus.className = 'firebase-status status-error';
+        firebaseStatus.textContent = 'Error: Firebase SDK not loaded';
+      }
+      
+      // Set up tab switching
+      document.getElementById('tab-results').addEventListener('click', function() {
+        document.getElementById('tab-results').classList.add('active');
+        document.getElementById('tab-config').classList.remove('active');
+        document.getElementById('results').style.display = 'block';
+        document.getElementById('config-panel').style.display = 'none';
+      });
+      
+      document.getElementById('tab-config').addEventListener('click', function() {
+        document.getElementById('tab-config').classList.add('active');
+        document.getElementById('tab-results').classList.remove('active');
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('config-panel').style.display = 'block';
+        
+        // Show Firebase config
+        const configDetails = document.getElementById('config-details');
+        configDetails.textContent = JSON.stringify({
+          apiKey: "AIzaSyDQlnFdox_u6NAz6PeeN-82Dk9lKI_bBbA",
+          authDomain: "blinderfit.firebaseapp.com",
+          projectId: "blinderfit",
+          storageBucket: "blinderfit.firebasestorage.app",
+          messagingSenderId: "621758849500",
+          appId: "1:621758849500:web:6c74cb251f68c73c9a6f19",
+          measurementId: "G-1S48HDESZN"
+        }, null, 2);
+      });
+      
+      // Set up the button handlers
+      document.getElementById('runTest').addEventListener('click', function() {
+        const resultsElement = document.getElementById('results');
+        resultsElement.textContent = "Running test...\n";
+        
+        // Make sure the results tab is active
+        document.getElementById('tab-results').click();
+        
+        // Run the test
+        testFirebaseFunctions()
+          .then(result => {
+            resultsElement.textContent += "\nTest finished: " + result;
+          })
+          .catch(error => {
+            resultsElement.textContent += "\nTest error: " + error.message;
+          });
+      });
+      
+      document.getElementById('runEmulatorTest').addEventListener('click', function() {
+        const resultsElement = document.getElementById('results');
+        resultsElement.textContent = "Running emulator test...\n";
+        resultsElement.textContent += "Make sure the emulator is running with: firebase emulators:start\n\n";
+        
+        // Make sure the results tab is active
+        document.getElementById('tab-results').click();
+        
+        // Set a flag to indicate we should use the emulator
+        window.useEmulator = true;
+        
+        // Run the test
+        testFirebaseFunctions()
+          .then(result => {
+            resultsElement.textContent += "\nEmulator test finished: " + result;
+            window.useEmulator = false; // Reset the flag
+          })
+          .catch(error => {
+            resultsElement.textContent += "\nEmulator test error: " + error.message;
+            window.useEmulator = false; // Reset the flag
+          });
+      });
+      
+      document.getElementById('clearResults').addEventListener('click', function() {
+        document.getElementById('results').textContent = "Results cleared.";
+      });
+    });
+    
+    // Override console.log to also output to the results element
+    const originalConsole = {
+      log: console.log,
+      error: console.error,
+      warn: console.warn
+    };
+    
+    function addToResults(type, ...args) {
+      // Call the original console method
+      originalConsole[type].apply(console, args);
+      
+      // Also add to our results element
+      const resultsElement = document.getElementById('results');
+      if (resultsElement) {
+        const message = args.map(arg => {
+          if (typeof arg === 'object') {
+            try {
+              return JSON.stringify(arg, null, 2);
+            } catch (e) {
+              return String(arg);
+            }
+          }
+          return String(arg);
+        }).join(' ');
+        
+        // Add color based on type
+        let prefix = '';
+        if (type === 'error') prefix = '❌ ERROR: ';
+        if (type === 'warn') prefix = '⚠️ WARNING: ';
+        
+        resultsElement.textContent += prefix + message + '\n';
+        
+        // Auto-scroll to bottom
+        resultsElement.scrollTop = resultsElement.scrollHeight;
+      }
+    }
+    
+    // Override console methods
+    console.log = function(...args) { addToResults('log', ...args); };
+    console.error = function(...args) { addToResults('error', ...args); };
+    console.warn = function(...args) { addToResults('warn', ...args); };
+  </script>
+</body>
+</html>

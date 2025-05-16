@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -28,6 +28,8 @@ const MyZone = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [authCheckDone, setAuthCheckDone] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -62,6 +64,89 @@ const MyZone = () => {
     navigate('/', { replace: true }); // Navigate to home page instead of login
     toast.success('Logged out successfully');
   };
+  
+  // Check authentication status on initial render
+  useEffect(() => {
+    // Try to check cached auth first
+    const cachedAuthState = localStorage.getItem('blinderfit_auth_state');
+    let cachedAuth = null;
+    
+    if (cachedAuthState) {
+      try {
+        cachedAuth = JSON.parse(cachedAuthState);
+        const isRecent = Date.now() - cachedAuth.timestamp < 60 * 60 * 1000; // Within the last hour
+        
+        if (isRecent && cachedAuth.isAuthenticated) {
+          console.log('Using cached authentication state in MyZone while checking auth');
+          // Don't set isAuthChecking to false immediately as we still need to wait for Firebase
+        }
+      } catch (e) {
+        console.error('Error parsing cached auth state:', e);
+      }
+    }
+
+    const checkAuth = setTimeout(() => {
+      // If we have both cached auth and Firebase user, or just Firebase user
+      if ((cachedAuth && user) || user) {
+        setIsAuthChecking(false);
+        setAuthCheckDone(true);
+        
+        // Update profile data when user is available
+        if (user) {
+          setProfileData(prevData => ({
+            ...prevData,
+            name: user.displayName || user.name || '',
+            email: user.email || '',
+            phone: user.phone || ''
+          }));
+        }
+      } 
+      // If we have cached auth but no Firebase user yet (still loading)
+      else if (cachedAuth && !user) {
+        // Keep waiting for Firebase, but with a longer timeout
+        setTimeout(() => {
+          setIsAuthChecking(false);
+          setAuthCheckDone(true);
+        }, 2000);
+      } 
+      // No auth at all
+      else {
+        setIsAuthChecking(false);
+        setAuthCheckDone(true);
+      }
+    }, 1000); // Give Firebase auth a moment to initialize
+    
+    return () => clearTimeout(checkAuth);
+  }, [user]);
+  
+  // Store authentication status in localStorage to persist across refreshes
+  useEffect(() => {
+    if (user) {
+      // Save auth state to localStorage
+      localStorage.setItem('blinderfit_auth_state', JSON.stringify({
+        isAuthenticated: true,
+        userId: user.uid || user.id,
+        timestamp: Date.now()
+      }));
+      
+      // Update profile data when user changes
+      setProfileData(prevData => ({
+        ...prevData,
+        name: user.displayName || user.name || '',
+        email: user.email || '',
+        phone: user.phone || ''
+      }));
+    }
+  }, [user]);
+
+  // Show loading while checking auth - prevents flash of login screen on refresh
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-[calc(100vh-96px)] flex items-center justify-center bg-black">
+        <div className="animate-pulse text-gold text-xl">Loading your profile...</div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

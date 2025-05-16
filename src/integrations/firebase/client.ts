@@ -7,60 +7,62 @@ import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyAmQuXdNIb1SZvt-zhPf9VMbC6FtMCk0JE",
+  apiKey: "AIzaSyDQlnFdox_u6NAz6PeeN-82Dk9lKI_bBbA",
   authDomain: "blinderfit.firebaseapp.com",
   projectId: "blinderfit",
-  storageBucket: "blinderfit.appspot.com",
+  storageBucket: "blinderfit.firebasestorage.app",
   messagingSenderId: "621758849500",
-  appId: "1:621758849500:web:ddd64531e9d4968d9a6f19",
-  measurementId: "G-QT22TXQ9VD"
+  appId: "1:621758849500:web:6c74cb251f68c73c9a6f19",
+  measurementId: "G-1S48HDESZN"
 };
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
-
-// Enable debug tokens only in development
-if (process.env.NODE_ENV === 'development') {
-  // @ts-ignore
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-}
-// Initialize App Check with the UPDATED site key
-// Make sure the reCAPTCHA key is valid and properly configured
-export const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6LcLKjkrAAAAABkKkFwXSQ5jlxXjQ2s4FeAHh7Ip'),
-  isTokenAutoRefreshEnabled: true
-});
-
 export const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export const functions = getFunctions(app);
+export const functions = getFunctions(app, 'us-central1');
 
-// Test Firebase connection
-export const testFirebaseConnection = async () => {
-  try {
-    // Simple test to check if Firebase is initialized
-    if (app && auth && db && storage) {
-      return {
-        success: true,
-        message: 'Firebase connection successful'
-      };
-    } else {
-      return {
-        success: false,
-        message: 'Firebase initialization failed'
-      };
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message: `Firebase connection error: ${error}`
-    };
+// Initialize App Check (for development and testing)
+if (typeof window !== 'undefined') {
+  // For development only, we'll use debug tokens
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('Using AppCheck debug token for local development');
+    // @ts-ignore
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
-};
+}
+
+// Initialize AppCheck differently based on environment
+const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+let appCheck;
+
+if (isProduction) {
+  try {
+    appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider('6LcLKjkrAAAAACnqOSrr2K3LlfBABt-28o1kQohS'),
+      isTokenAutoRefreshEnabled: true
+    });
+    console.log('AppCheck initialized in production mode');
+  } catch (error) {
+    console.error('Failed to initialize AppCheck:', error);
+  }
+} else {
+  try {
+    // In development, we'll still initialize AppCheck but with debug tokens enabled
+    appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider('6LcLKjkrAAAAACnqOSrr2K3LlfBABt-28o1kQohS'),
+      isTokenAutoRefreshEnabled: true
+    });
+    console.log('AppCheck initialized in development mode with debug tokens');
+  } catch (error) {
+    console.error('Failed to initialize AppCheck in development:', error);
+  }
+}
+
+export { appCheck };
 
 
 
