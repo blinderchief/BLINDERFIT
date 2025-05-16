@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Mic, MicOff, Send, Volume2, VolumeX, Loader2, AlertCircle } from 'lucide-react';
@@ -19,6 +18,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import axios from 'axios';
+import { auth } from '@/integrations/firebase/client';
 
 // Gemini API integration
 const GEMINI_API_KEY = "AIzaSyB1NLC_Wy_P-53U1R-4rpICOIk60eehHrA";
@@ -52,8 +53,10 @@ const FitMentor = () => {
   ]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [audioEnabled, setAudioEnabled] = useState(true);
+  // Remove audioEnabled state
+  // const [audioEnabled, setAudioEnabled] = useState(false);
+  // Remove isSpeaking state
+  // const [isSpeaking, setIsSpeaking] = useState(false);
   
   // Assessment state
   const [currentStep, setCurrentStep] = useState(1);
@@ -79,31 +82,37 @@ const FitMentor = () => {
   });
 
   // Handle chat form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Add user message
     setMessages(prev => [...prev, { role: 'user', content: input }]);
-    
-    // Simulate AI response (in a real app, this would call an API)
-    setTimeout(() => {
-      const responses = [
-        "Based on your fitness goals, I recommend a split routine focusing on different muscle groups each day.",
-        "That's a great question! For optimal muscle recovery, I suggest 48-72 hours between training the same muscle group.",
-        "To improve your cardiovascular health, try incorporating 20-30 minutes of HIIT workouts 2-3 times per week.",
-        "For your weight loss goals, focus on creating a sustainable calorie deficit through both diet and exercise.",
-        "Looking at your progress, I'm seeing consistent improvement in your strength metrics. Great work!"
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      setMessages(prev => [...prev, { role: 'assistant', content: randomResponse }]);
-      
-      // If audio is enabled, speak the response
-      if (audioEnabled) {
-        speakText(randomResponse);
+
+    try {
+      // Get Firebase Auth token
+      const user = auth.currentUser;
+      if (!user) {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Please log in to use the AI coach.' }]);
+        setInput('');
+        return;
       }
-    }, 1000);
-    
+      const token = await user.getIdToken();
+      // Call the answerHealthQuestion endpoint
+      const res = await axios.post(
+        'https://us-central1-blinderfit.cloudfunctions.net/answerHealthQuestion',
+        { question: input },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const answerObj = res.data.answer;
+      let answerText = answerObj.mainAnswer || '';
+      if (answerObj.additionalInfo) answerText += '\n\n' + answerObj.additionalInfo;
+      if (answerObj.personalizedTips) answerText += '\n\n' + answerObj.personalizedTips;
+      setMessages(prev => [...prev, { role: 'assistant', content: answerText }]);
+      // Remove the text-to-speech call
+      // if (audioEnabled) speakText(answerText);
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I could not get an answer. Please try again.' }]);
+    }
     setInput('');
   };
 
@@ -139,22 +148,22 @@ const FitMentor = () => {
   };
 
   // Handle text-to-speech
-  const speakText = (text) => {
-    setIsSpeaking(true);
-    
-    // Use the Web Speech API for text-to-speech
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.onend = () => setIsSpeaking(false);
-    speechSynthesis.speak(utterance);
-  };
+  // const speakText = (text) => {
+  //   setIsSpeaking(true);
+  //   
+  //   // Use the Web Speech API for text-to-speech
+  //   const utterance = new SpeechSynthesisUtterance(text);
+  //   utterance.onend = () => setIsSpeaking(false);
+  //   speechSynthesis.speak(utterance);
+  // };
 
-  const toggleAudio = () => {
-    setAudioEnabled(!audioEnabled);
-    if (isSpeaking) {
-      speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
-  };
+  // const toggleAudio = () => {
+  //   setAudioEnabled(!audioEnabled);
+  //   if (isSpeaking) {
+  //     speechSynthesis.cancel();
+  //     setIsSpeaking(false);
+  //   }
+  // };
 
   // Assessment form functions
   const handleNext = async () => {
@@ -198,212 +207,42 @@ const FitMentor = () => {
 
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
-
     try {
-      // This would typically call an AI API like OpenAI, Anthropic, etc.
-      // For now, we'll simulate the API call with a timeout
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Generate a more personalized response based on the form data
-      const response = generatePersonalizedPlan(data);
-      
-      setFitnessPlan(response);
+      // Get Firebase Auth token
+      const user = auth.currentUser;
+      if (!user) {
+        toast({
+          variant: 'destructive',
+          title: 'Not logged in',
+          description: 'Please log in to generate your personalized plan.'
+        });
+        setIsLoading(false);
+        return;
+      }
+      const token = await user.getIdToken();
+      // Call the generatePersonalizedPlan endpoint
+      const res = await axios.post(
+        'https://us-central1-blinderfit.cloudfunctions.net/generatePersonalizedPlan',
+        data,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Assume the response has { plan: string }
+      setFitnessPlan(res.data.plan || 'No plan generated.');
       setHasSubmitted(true);
       toast({
-        title: "FMGuide Plan Generated!",
-        description: "Your personalized 7-day plan is ready.",
+        title: 'FMGuide Plan Generated!',
+        description: 'Your personalized 7-day plan is ready.'
       });
     } catch (error) {
-      console.error("Error generating plan:", error);
+      console.error('Error generating plan:', error);
       toast({
-        variant: "destructive",
-        title: "Error generating plan",
-        description: "There was a problem creating your plan. Please try again.",
+        variant: 'destructive',
+        title: 'Error generating plan',
+        description: 'There was a problem creating your plan. Please try again.'
       });
     } finally {
       setIsLoading(false);
     }
-  };
-  
-  // Function to generate personalized plan based on form data
-  const generatePersonalizedPlan = (data: FormValues): string => {
-    // Calculate estimated BMR and TDEE
-    const weight = parseFloat(data.weight);
-    const height = parseFloat(data.height);
-    const age = parseInt(data.age);
-    const isMale = data.gender === 'male';
-    
-    // Basic BMR calculation using Mifflin-St Jeor Equation
-    let bmr = 0;
-    if (isMale) {
-      bmr = 10 * weight + 6.25 * height - 5 * age + 5;
-    } else {
-      bmr = 10 * weight + 6.25 * height - 5 * age - 161;
-    }
-    
-    // Activity multiplier
-    let activityMultiplier = 1.2; // Default to sedentary
-    switch (data.activityLevel) {
-      case 'sedentary':
-        activityMultiplier = 1.2;
-        break;
-      case 'light':
-        activityMultiplier = 1.375;
-        break;
-      case 'moderate':
-        activityMultiplier = 1.55;
-        break;
-      case 'active':
-        activityMultiplier = 1.725;
-        break;
-      case 'very-active':
-        activityMultiplier = 1.9;
-        break;
-    }
-    
-    const tdee = Math.round(bmr * activityMultiplier);
-    
-    // Adjust calories based on assumed goals from the fitness goals text
-    let goalCalories = tdee;
-    let goalDescription = "maintenance";
-    const lowerGoals = data.fitnessGoals.toLowerCase();
-    
-    if (lowerGoals.includes('weight loss') || lowerGoals.includes('lose weight') || lowerGoals.includes('fat loss')) {
-      goalCalories = Math.round(tdee * 0.85); // 15% deficit
-      goalDescription = "weight loss";
-    } else if (lowerGoals.includes('muscle') || lowerGoals.includes('strength') || lowerGoals.includes('gain')) {
-      goalCalories = Math.round(tdee * 1.1); // 10% surplus
-      goalDescription = "muscle gain";
-    }
-    
-    // Macronutrient distribution
-    const proteinGrams = Math.round((goalCalories * 0.3) / 4); // 30% protein
-    const carbGrams = Math.round((goalCalories * 0.4) / 4);    // 40% carbs
-    const fatGrams = Math.round((goalCalories * 0.3) / 9);     // 30% fat
-    
-    // Generate workout schedule based on goals
-    let workoutFocus = "balanced";
-    if (lowerGoals.includes('cardio') || lowerGoals.includes('endurance')) {
-      workoutFocus = "cardio-focused";
-    } else if (lowerGoals.includes('strength') || lowerGoals.includes('muscle')) {
-      workoutFocus = "strength-focused";
-    } else if (lowerGoals.includes('flex') || lowerGoals.includes('mobility')) {
-      workoutFocus = "flexibility-focused";
-    }
-    
-    // Base template with customized values
-    return `
-# Your Personalized 7-Day FMGuide Plan
-
-## Health Assessment Summary
-Based on your profile (${data.age} years old, ${data.gender}), current weight of ${data.weight} kg, and height of ${data.height} cm, we've created a customized plan considering your ${data.activityLevel} activity level and specific goal to ${data.fitnessGoals}.
-
-## Nutritional Recommendations
-
-### Daily Caloric Target: ${goalCalories} calories (${goalDescription})
-- Protein: ${proteinGrams}g (30%)
-- Carbohydrates: ${carbGrams}g (40%)
-- Healthy Fats: ${fatGrams}g (30%)
-- Water: 3-4 liters
-
-## 7-Day Meal Plan
-
-### Day 1
-- **Breakfast**: Greek yogurt with berries and honey, 2 boiled eggs
-- **Lunch**: Grilled chicken salad with olive oil dressing
-- **Dinner**: Baked salmon with steamed vegetables
-- **Snacks**: Handful of almonds, apple
-
-### Day 2
-- **Breakfast**: Oatmeal with banana and cinnamon
-- **Lunch**: Quinoa bowl with roasted vegetables
-- **Dinner**: Turkey meatballs with zucchini noodles
-- **Snacks**: Protein shake, orange
-
-### Day 3
-- **Breakfast**: Veggie omelet with whole grain toast
-- **Lunch**: Lentil soup with side salad
-- **Dinner**: Grilled fish tacos with avocado
-- **Snacks**: Greek yogurt with honey, walnuts
-
-### Day 4
-- **Breakfast**: Protein pancakes with berries
-- **Lunch**: Chicken and vegetable stir-fry with brown rice
-- **Dinner**: Baked chicken with sweet potato and broccoli
-- **Snacks**: Hummus with carrot sticks, pear
-
-### Day 5
-- **Breakfast**: Smoothie with protein powder, spinach, banana, and almond milk
-- **Lunch**: Tuna salad wrap with whole grain tortilla
-- **Dinner**: Beef stir-fry with vegetables and quinoa
-- **Snacks**: Cottage cheese with pineapple, small handful of mixed nuts
-
-### Day 6
-- **Breakfast**: Avocado toast with poached eggs
-- **Lunch**: Mediterranean bowl with falafel, hummus, and vegetables
-- **Dinner**: Grilled steak with roasted vegetables
-- **Snacks**: Apple with almond butter, protein bar
-
-### Day 7
-- **Breakfast**: Chia seed pudding with berries
-- **Lunch**: Grilled vegetable and chicken sandwich
-- **Dinner**: Salmon with asparagus and quinoa
-- **Snacks**: Trail mix, banana
-
-## Fitness Recommendations
-
-### Workout Schedule (${workoutFocus})
-${workoutFocus === "cardio-focused" ? `
-- **Monday**: HIIT cardio (30 min)
-- **Tuesday**: Low-intensity steady state cardio (45 min)
-- **Wednesday**: Rest/light yoga
-- **Thursday**: Interval training (30 min)
-- **Friday**: Circuit training with cardio emphasis (40 min)
-- **Saturday**: Endurance workout (60 min)
-- **Sunday**: Active recovery (walking, swimming)
-` : workoutFocus === "strength-focused" ? `
-- **Monday**: Upper body strength (45 min)
-- **Tuesday**: Lower body strength (45 min)
-- **Wednesday**: Rest/light yoga
-- **Thursday**: Push exercises (45 min)
-- **Friday**: Pull exercises (45 min)
-- **Saturday**: Full body strength (60 min)
-- **Sunday**: Active recovery (walking, stretching)
-` : workoutFocus === "flexibility-focused" ? `
-- **Monday**: Dynamic stretching and yoga (45 min)
-- **Tuesday**: Light strength training (30 min)
-- **Wednesday**: Pilates (45 min)
-- **Thursday**: Yoga flow (45 min)
-- **Friday**: Mobility work (40 min)
-- **Saturday**: Combined flexibility and strength (60 min)
-- **Sunday**: Gentle yoga and meditation
-` : `
-- **Monday**: Upper body strength (45 min)
-- **Tuesday**: HIIT cardio (30 min)
-- **Wednesday**: Rest/light yoga
-- **Thursday**: Lower body strength (45 min)
-- **Friday**: Cardio & core (40 min)
-- **Saturday**: Full body workout (60 min)
-- **Sunday**: Active recovery (walking, swimming)
-`}
-
-## Wellness Recommendations
-- Aim for ${data.sleepHours} hours of sleep each night
-- Practice 10 minutes of meditation daily to manage ${data.stressLevel} stress levels
-- Schedule a 15-minute stretching routine before bed
-
-## Weekly Progress Tracking
-- Weight check: Once per week
-- Measurements: Every two weeks
-- Progress photos: Weekly
-- Energy levels: Daily (1-10 scale)
-
-## Dietary Considerations
-Based on your preferences: ${data.dietaryPreferences}
-${data.medicalConditions ? `\nTaking into account your health conditions: ${data.medicalConditions}` : ''}
-
-Remember, this plan is a starting point. Adjust as needed and listen to your body's signals.
-    `;
   };
 
   // Assessment form rendering
@@ -633,14 +472,15 @@ Remember, this plan is a starting point. Adjust as needed and listen to your bod
     }
   };
 
-  // Clean up on unmount
+  // Clean up on unmount - simplify or remove if not needed
   useEffect(() => {
     return () => {
-      if (isSpeaking) {
-        speechSynthesis.cancel();
-      }
+      // No need to check isSpeaking or cancel speech synthesis
+      // if (isSpeaking) {
+      //   speechSynthesis.cancel();
+      // }
     };
-  }, [isSpeaking]);
+  }, []);
 
   return (
     <div className="min-h-[calc(100vh-96px)] bg-black">
@@ -716,14 +556,6 @@ Remember, this plan is a starting point. Adjust as needed and listen to your bod
                         placeholder="Ask FitMentor anything..."
                         className="flex-grow bg-white/5 border-0 p-2.5 rounded-sm focus:ring-gold"
                       />
-                      
-                      <button 
-                        type="button" 
-                        onClick={toggleAudio}
-                        className="p-2.5 bg-white/10 rounded-full text-white"
-                      >
-                        {audioEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-                      </button>
                       
                       <button 
                         type="submit" 
@@ -908,6 +740,14 @@ Remember, this plan is a starting point. Adjust as needed and listen to your bod
 };
 
 export default FitMentor;
+
+
+
+
+
+
+
+
 
 
 

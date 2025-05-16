@@ -179,7 +179,7 @@ const Home = () => {
             <div className="flex flex-col items-center sm:items-start">
               <div className="flex items-center justify-center mb-6 p-4 sm:p-6 rounded-full bg-black/50 border border-gold/30">
                 <img 
-                  src="/lovable-uploads/5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
+                  src="\lovable-uploads\5f537968-f4fd-400d-9da9-a30f4127c2e6.png" 
                   alt="BlinderFit Logo" 
                   className="h-12 sm:h-16 w-auto"
                 />
@@ -282,7 +282,7 @@ const Home = () => {
 
       {/* Early Adopter Section */}
       <section className="py-16 bg-black border-t border-b border-gold/20">
-        <div className="gofit-container">
+        <div className="gofit-container" id="earlyAdopter">
           <div 
             className={`max-w-xl mx-auto text-center transition-all duration-1000 ease-out ${
               isVisible.earlyAdopter ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'

@@ -1,0 +1,16 @@
+{
+  "name": "blinderfit-scripts",
+  "version": "1.0.0",
+  "description": "Utility scripts for BlinderFit",
+  "private": true,
+  "scripts": {
+    "verify-ai": "node verify-ai-system.js",
+    "init-firestore": "node init-firestore.js",
+    "setup-env": "node setup-environment.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "firebase": "^10.8.0"
+  }
+}

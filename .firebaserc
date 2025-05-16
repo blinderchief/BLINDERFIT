@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "blinderfit"
-  }
+  },
+  "targets": {
+    "blinderfit": {
+      "hosting": {
+        "blinderfit-live": [
+          "blinderfit-live"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

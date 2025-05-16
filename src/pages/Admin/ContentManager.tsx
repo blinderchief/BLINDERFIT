@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { getPageContent, savePageContent } from '@/integrations/firebase/db';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -36,17 +36,11 @@ const ContentManager = () => {
     // Check if user has admin role
     if (!user) {
       return;
-    }
-    
+    }    
     const loadContent = async () => {
       try {
-        const { data, error } = await supabase
-          .from('page_content' as any)
-          .select('*')
-          .eq('page', 'home')
-          .single();
+        const data = await getPageContent('home');
           
-        if (error) throw error;
         if (data) {
           setPageContent(data as unknown as ContentState);
         }
@@ -76,46 +70,23 @@ const ContentManager = () => {
     
     loadContent();
   }, [user]);
-  
-  const handleSave = async () => {
+    const handleSave = async () => {
     if (!pageContent) return;
     
     setIsSaving(true);
     try {
-      // Check if content exists
-      const { data: existingData, error: checkError } = await supabase
-        .from('page_content' as any)
-        .select('id')
-        .eq('page', 'home')
-        .single();
-      
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found" error
-        throw checkError;
-      }
-      
+      // Firebase will handle both creation and updates
       const updatedContent = {
         ...pageContent,
-        updated_at: new Date().toISOString()
+        // Firebase will handle timestamp server-side
       };
       
-      if (existingData && 'id' in existingData) {
-        // Update existing record
-        const { error } = await supabase
-          .from('page_content' as any)
-          .update(updatedContent)
-          .eq('id', existingData.id);
-          
-        if (error) throw error;
-      } else {
-        // Insert new record
-        const { error } = await supabase
-          .from('page_content' as any)
-          .insert({
-            ...updatedContent,
-            created_at: new Date().toISOString()
-          });
-          
-        if (error) throw error;
+      // Save the content (Firebase will merge if exists or create if not)
+      await savePageContent('home', updatedContent);
+      
+      // Add created_at if this might be a new document
+      if (!pageContent.created_at) {
+        updatedContent.created_at = new Date().toISOString();
       }
       
       toast({

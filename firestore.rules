@@ -1,11 +1,92 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // Allow read/write access to all users under any conditions
-      // Warning: Your security rules are not secure. Anyone can read and write to your database
-      // This is only for testing and should not be used in production
-      allow read, write: if true;
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users collection - AI-enhanced structure
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      
+      // Sub-collections
+      match /plans/{planId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+      
+      match /progress/{progressId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId);
+      }
+      
+      match /mood_logs/{logId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId);
+      }
+    }
+    
+    // AI Personalization data - system generated, user readable
+    match /ai_personalization/{userId} {
+      allow read: if isOwner(userId);
+      // Only cloud functions can write personalization data
+      allow write: if false;
+    }
+    
+    // User interactions - tracked for personalization
+    match /interactions/{interactionId} {
+      allow read: if request.auth != null && 
+                   resource.data.userId == request.auth.uid;
+      
+      // Users can create their own interaction records
+      allow create: if request.auth != null && 
+                      request.resource.data.userId == request.auth.uid;
+      
+      // But can't modify them after creation (for data integrity)
+      allow update, delete: if false;
+    }
+    
+    // AI queries - user questions and AI responses
+    match /ai_queries/{queryId} {
+      allow read: if request.auth != null && 
+                   resource.data.userId == request.auth.uid;
+      
+      // Users can create queries (typically through cloud functions)
+      allow create: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+      
+      // Historical record, no updates
+      allow update, delete: if false;
+    }
+    
+    // AI response cache - shared across users, read-only
+    match /ai_cache/{cacheId} {
+      // All users can read the cache
+      allow read: if isSignedIn();
+      
+      // Only cloud functions can write to cache
+      allow write: if false;
+    }
+    
+    // Community features with AI enhancements
+    match /community/{postId} {
+      allow read: if isSignedIn();
+      
+      // Any signed-in user can create posts
+      allow create: if isSignedIn() &&
+                     request.resource.data.userId == request.auth.uid;
+      
+      // Only post creator can update/delete
+      allow update, delete: if isSignedIn() &&
+                             resource.data.userId == request.auth.uid;
     }
   }
 }

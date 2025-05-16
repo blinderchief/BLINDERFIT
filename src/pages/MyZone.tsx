@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,9 +49,9 @@ const MyZone = () => {
       
       setIsEditing(false);
       toast.success('Profile updated successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      toast.error('Failed to update profile' + (error?.message ? `: ${error.message}` : ''));
     } finally {
       setIsSaving(false);
     }

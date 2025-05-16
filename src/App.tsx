@@ -1,6 +1,7 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+// UI component imports temporarily removed for production build
+// import { Toaster } from "@/components/ui/toaster";
+// import { Toaster as Sonner } from "@/components/ui/sonner";
+// import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -20,8 +21,10 @@ import MyZone from "./pages/MyZone";
 import FitLearnContent from "./pages/FitLearnContent";
 import MindShift from "./pages/MindShift";
 import FitMentor from "./pages/FitMentor";
+import AIAssistantPage from "./pages/AIAssistant";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
+import CookiesInfo from "./pages/CookiesInfo";
 import { useState, useEffect } from "react";
 import SplashScreen from "./components/SplashScreen";
 import Chatbot from "./components/Chatbot";
@@ -86,14 +89,14 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <HealthDataProvider>
-          <TooltipProvider>
+          {/* <TooltipProvider> */}
             {/* Only show splash screen when needed */}
             {showSplash && <SplashScreen onFinished={handleSplashFinished} />}
             
             {/* Always render content, but control opacity */}
             <div className={`transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-              <Toaster />
-              <Sonner />
+              {/* <Toaster /> */}
+              {/* <Sonner /> */}
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Layout />}>
@@ -104,6 +107,7 @@ const App = () => {
                     <Route path="reset-password" element={<ResetPassword />} />
                     <Route path="fitlearn" element={<FitLearn />} />
                     <Route path="fitlearn-content" element={<FitLearnContent />} />
+                    <Route path="cookies" element={<CookiesInfo />} />
                     
                     {/* Protected routes - require authentication */}
                     <Route element={<ProtectedRoute />}>
@@ -114,6 +118,7 @@ const App = () => {
                       <Route path="mindshift" element={<MindShift />} />
                       <Route path="fitmentor" element={<FitMentor />} />
                       <Route path="tribevibe" element={<TribeVibe />} />
+                      <Route path="ai-assistant" element={<AIAssistantPage />} />
                       <Route path="firebase-test" element={<FirebaseTest />} />
                     </Route>
                     
@@ -124,7 +129,7 @@ const App = () => {
               </BrowserRouter>
               <Chatbot />
             </div>
-          </TooltipProvider>
+          {/* </TooltipProvider> */}
         </HealthDataProvider>
       </AuthProvider>
     </QueryClientProvider>

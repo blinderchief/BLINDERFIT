@@ -1,5 +1,30 @@
 {
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "runtime": "nodejs20",
+      "codebase": "default",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" install"
+      ],
+      "timeoutSeconds": 180,
+      "minInstances": 0,
+      "maxInstances": 10,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
   "hosting": {
+    "target": "blinderfit-live", 
     "public": "dist",
     "ignore": [
       "firebase.json",
@@ -8,9 +33,29 @@
     ],
     "rewrites": [
       {
+        "source": "/api/**",
+        "function": "app"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
     ]
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8081
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "ui": {
+      "port": 4000
+    }
   }
 }
+
+

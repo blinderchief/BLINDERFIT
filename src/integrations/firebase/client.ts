@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -7,7 +8,7 @@ import { getStorage } from "firebase/storage";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDQlnFdox_u6NAz6PeeN-82Dk9lKI_bBbA",
+  apiKey: "AIzaSyAmQuXdNIb1SZvt-zhPf9VMbC6FtMCk0JE",
   authDomain: "blinderfit.firebaseapp.com",
   projectId: "blinderfit",
   storageBucket: "blinderfit.appspot.com",
@@ -18,6 +19,18 @@ const firebaseConfig = {
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
+
+// Enable debug tokens only in development
+if (process.env.NODE_ENV === 'development') {
+  // @ts-ignore
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
+// Initialize App Check with the UPDATED site key
+export const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LcLKjkrAAAAABkKkFwXSQ5jlxXjQ2s4FeAHh7Ip'),
+  isTokenAutoRefreshEnabled: true
+});
+
 export const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 export const db = getFirestore(app);

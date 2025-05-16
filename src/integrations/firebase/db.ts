@@ -34,11 +34,24 @@ export const getUserProfile = async (userId: string) => {
 
 export const updateUserProfile = async (userId: string, data: any) => {
   const userRef = doc(db, 'users', userId);
-  await updateDoc(userRef, {
-    ...data,
-    updatedAt: serverTimestamp()
-  });
-  return true;
+  try {
+    await updateDoc(userRef, {
+      ...data,
+      updatedAt: serverTimestamp()
+    });
+    return true;
+  } catch (error: any) {
+    // If the document does not exist, fallback to setDoc with merge
+    if (error.code === 'not-found' || error.message?.includes('No document to update')) {
+      await setDoc(userRef, {
+        ...data,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      return true;
+    }
+    // Rethrow for UI to handle
+    throw error;
+  }
 };
 
 // Health data functions
@@ -95,4 +108,26 @@ export const getContent = async (contentType: string, limitCount: number = 10) =
     id: doc.id,
     ...doc.data()
   }));
+};
+
+// Page content functions
+export const getPageContent = async (pageName: string) => {
+  const contentRef = doc(db, 'page_content', pageName);
+  const contentSnap = await getDoc(contentRef);
+  
+  if (contentSnap.exists()) {
+    return { id: contentSnap.id, ...contentSnap.data() };
+  } else {
+    return null;
+  }
+};
+
+export const savePageContent = async (pageName: string, data: any) => {
+  const contentRef = doc(db, 'page_content', pageName);
+  await setDoc(contentRef, {
+    ...data,
+    page: pageName,
+    updated_at: serverTimestamp()
+  }, { merge: true });
+  return true;
 };

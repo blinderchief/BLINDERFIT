@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealthData } from '@/contexts/HealthDataContext';
 import { FitnessService } from '@/services/FitnessService';
+import { db } from '@/integrations/firebase/client';
+import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { 
   Dumbbell, BookOpen, ChevronRight, Brain, Activity, 
   Flame, Heart, Trophy, Target, ArrowUpRight, CalendarDays, Timer,
@@ -29,6 +31,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import HealthForm from '@/components/HealthForm';
 
 // Sample data for charts
 const activityData = [
@@ -39,13 +42,6 @@ const activityData = [
   { day: 'Fri', steps: 10200, calories: 2450, active: 92 },
   { day: 'Sat', steps: 11500, calories: 2600, active: 95 },
   { day: 'Sun', steps: 5600, calories: 1750, active: 52 },
-];
-
-const weeklyProgress = [
-  { name: 'Strength', completed: 3, total: 4 },
-  { name: 'Cardio', completed: 2, total: 3 },
-  { name: 'Flexibility', completed: 1, total: 2 },
-  { name: 'Recovery', completed: 3, total: 3 },
 ];
 
 const macroData = [
@@ -106,51 +102,48 @@ const Dashboard = () => {
     target: 5,
     percentage: 60
   });
+  const [weeklyProgress, setWeeklyProgress] = useState([
+    { name: 'Strength', completed: 3, total: 4 },
+    { name: 'Cardio', completed: 2, total: 3 },
+    { name: 'Flexibility', completed: 1, total: 2 },
+    { name: 'Recovery', completed: 3, total: 3 },
+  ]);
 
+  // Firestore real-time sync for plan/goals/progress
   useEffect(() => {
-    const loadFitnessPlan = async () => {
-      if (hasSubmittedHealthData && healthData) {
-        try {
-          const storedPlan = localStorage.getItem(`gofit_fitness_plan_${user?.id}`);
-          
-          if (storedPlan) {
-            setFitnessPlan(JSON.parse(storedPlan));
-          } else {
-            const plan = await FitnessService.generateFitnessPlan(healthData);
-            setFitnessPlan(plan);
-            localStorage.setItem(`gofit_fitness_plan_${user?.id}`, JSON.stringify(plan));
-          }
-          
-          // Simulate stats data
-          setStats({
-            workoutCompleted: Math.floor(Math.random() * 15) + 5,
-            daysStreak: Math.floor(Math.random() * 7) + 3,
-            focusScore: Math.floor(Math.random() * 20) + 75,
-            totalPoints: Math.floor(Math.random() * 500) + 300,
-            weeklyGoalProgress: Math.floor(Math.random() * 30) + 60,
-            nextSessionTime: "09:30",
-            heartRate: { 
-              current: Math.floor(Math.random() * 10) + 68, 
-              resting: Math.floor(Math.random() * 10) + 58, 
-              max: Math.floor(Math.random() * 10) + 160 
-            },
-            hydration: Math.floor(Math.random() * 20) + 60,
-            sleep: { 
-              average: Number((Math.random() * 2 + 6).toFixed(1)), 
-              quality: Math.floor(Math.random() * 15) + 75 
-            }
-          });
-        } catch (error) {
-          console.error('Error loading fitness plan:', error);
-        }
+    if (!user) return;
+    setLoading(true);
+    const userDocRef = doc(db, 'users', user.id);
+    const unsub = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setFitnessPlan(data.fitnessPlan || null);
+        setStats(data.stats || stats);
+        setWeeklyTarget(data.weeklyTarget || weeklyTarget);
+        setWeeklyProgress(data.weeklyProgress || weeklyProgress);
+        setChallengeProgress(data.challengeProgress || 0);
       }
-      
       setLoading(false);
-    };
-    
-    loadFitnessPlan();
-  }, [user, healthData, hasSubmittedHealthData]);
-  
+    });
+    return () => unsub();
+  }, [user]);
+
+  // Save plan/progress to Firestore if changed
+  const updateUserData = async (updates: any) => {
+    if (!user) return;
+    const userDocRef = doc(db, 'users', user.id);
+    await updateDoc(userDocRef, updates);
+  };
+
+  // Tick/check for weekly goals (toggle complete)
+  const handleGoalCheck = async (index: number) => {
+    const updated = [...weeklyProgress];
+    if (updated[index].completed < updated[index].total) {
+      updated[index].completed += 1;
+      await updateUserData({ weeklyProgress: updated });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-[calc(100vh-96px)] flex items-center justify-center bg-black">
@@ -158,28 +151,7 @@ const Dashboard = () => {
       </div>
     );
   }
-  
-  if (!hasSubmittedHealthData) {
-    return (
-      <div className="min-h-[calc(100vh-96px)] py-12 bg-black">
-        <div className="gofit-container">
-          <div className="max-w-3xl mx-auto p-10 border border-gold/20 text-center bg-black/80 backdrop-blur-sm">
-            <Brain className="h-16 w-16 text-gold mx-auto mb-6" />
-            <h2 className="text-3xl font-light tracking-wider text-white mb-4">
-              Begin Your Clarity Journey
-            </h2>
-            <p className="text-gray-300 mb-8">
-              To create your personalized vision plan, we need to understand your unique physical profile and aspirations.
-            </p>
-            <Link to="/health-form" className="gofit-button inline-flex items-center">
-              Start Vision Assessment <ChevronRight className="ml-2 h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
+
   return (
     <div className="min-h-[calc(100vh-96px)] py-8 bg-black">
       <div className="gofit-container">
@@ -478,11 +450,25 @@ const Dashboard = () => {
                           <h4 className="text-white">{item.name}</h4>
                           <p className="text-sm text-gray-400">{item.completed} of {item.total} completed</p>
                         </div>
-                        <Progress 
-                          value={(item.completed / item.total) * 100} 
-                          className="h-1.5 w-20 bg-white/10" 
-                          indicatorClassName="bg-gold" 
-                        />
+                        <div className="flex items-center gap-2">
+                          <Progress 
+                            value={(item.completed / item.total) * 100} 
+                            className="h-1.5 w-20 bg-white/10" 
+                            indicatorClassName="bg-gold" 
+                          />
+                          <button
+                            className={`ml-2 rounded-full border-2 ${item.completed === item.total ? 'border-emerald-500 bg-emerald-900/30' : 'border-gold bg-black/40'} p-1.5 transition-colors`}
+                            onClick={() => handleGoalCheck(index)}
+                            disabled={item.completed === item.total}
+                            aria-label="Mark goal as complete"
+                          >
+                            {item.completed === item.total ? (
+                              <CheckCircle className="h-5 w-5 text-emerald-500" />
+                            ) : (
+                              <CheckCircle className="h-5 w-5 text-gold opacity-70" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
