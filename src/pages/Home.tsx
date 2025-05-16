@@ -16,6 +16,7 @@ const Home = () => {
   const [isVisible, setIsVisible] = useState({
     hero: false,
     features: false,
+    vision: false,
     about: false,
     earlyAdopter: false,
     cta: false
@@ -45,10 +46,16 @@ const Home = () => {
   ];
 
   useEffect(() => {
+    // Set initial visibility for hero section
     setTimeout(() => {
       setIsVisible(prev => ({ ...prev, hero: true }));
     }, 100);
-
+    
+    // Set visibility for earlyAdopter section after a delay
+    setTimeout(() => {
+      setIsVisible(prev => ({ ...prev, earlyAdopter: true }));
+    }, 1500);
+    
     const hasCookieConsent = localStorage.getItem('cookieConsent');
     if (!hasCookieConsent) {
       setShowCookieBanner(true);
@@ -59,9 +66,11 @@ const Home = () => {
       rootMargin: '0px 0px -100px 0px'
     };
 
+    // Make sure to include all sections we want to observe
     const sectionsToObserve = [
       { id: 'features', ref: document.getElementById('features') },
       { id: 'earlyAdopter', ref: document.getElementById('earlyAdopter') },
+      { id: 'vision', ref: document.getElementById('vision') },
       { id: 'cta', ref: document.getElementById('cta') }
     ];
 
@@ -74,11 +83,17 @@ const Home = () => {
       });
     }, observerOptions);
 
-    sectionsToObserve.forEach(section => {
-      if (section.ref) {
-        observer.observe(section.ref);
-      }
-    });
+    // Delay the observer setup to ensure DOM elements are ready
+    setTimeout(() => {
+      sectionsToObserve.forEach(section => {
+        const element = section.ref || document.getElementById(section.id);
+        if (element) {
+          observer.observe(element);
+        } else {
+          console.warn(`Element with id ${section.id} not found`);
+        }
+      });
+    }, 500);
 
     const carouselInterval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroImages.length);
@@ -86,8 +101,9 @@ const Home = () => {
 
     return () => {
       sectionsToObserve.forEach(section => {
-        if (section.ref) {
-          observer.unobserve(section.ref);
+        const element = section.ref || document.getElementById(section.id);
+        if (element) {
+          observer.unobserve(element);
         }
       });
       clearInterval(carouselInterval);
@@ -281,8 +297,8 @@ const Home = () => {
       </section>
 
       {/* Early Adopter Section */}
-      <section className="py-16 bg-black border-t border-b border-gold/20">
-        <div className="gofit-container" id="earlyAdopter">
+      <section id="earlyAdopter" className="py-16 bg-black border-t border-b border-gold/20">
+        <div className="gofit-container">
           <div 
             className={`max-w-xl mx-auto text-center transition-all duration-1000 ease-out ${
               isVisible.earlyAdopter ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
@@ -321,6 +337,12 @@ const Home = () => {
                 </button>
               </div>
             </form>
+            
+            {showSuccess && (
+              <div className="mt-4 p-3 bg-green-900/30 border border-green-500/30 text-green-400">
+                Thank you for joining! We'll be in touch soon.
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -432,6 +454,14 @@ const Home = () => {
 };
 
 export default Home;
+
+
+
+
+
+
+
+
 
 
 

@@ -9,7 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Brain, Activity, Apple, Goal, LineChart, Send, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import useAI from '@/hooks/use-ai';
+import { useAI } from '@/hooks/use-ai';
 
 export const PersonalizedAI = () => {
   const { user } = useAuth();

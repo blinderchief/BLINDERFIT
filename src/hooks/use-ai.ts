@@ -1,91 +1,75 @@
-import { useState, useCallback } from 'react';
-import apiConfig from '../utils/api-config';
+import { useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/integrations/firebase/client';
 
 interface UseAIOptions {
-  onStart?: () => void;
-  onComplete?: () => void;
   onError?: (error: Error) => void;
+}
+
+interface PlanPreferences {
+  focusArea: string;
+  duration: string;
+  daysPerWeek: number;
 }
 
 export const useAI = (options: UseAIOptions = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  /**
-   * Ask a question to the AI assistant
-   */
-  const askAI = useCallback(async (question: string) => {
+  const askAI = async (question: string, chatHistory: any[] = []) => {
     setIsLoading(true);
     setError(null);
-    
-    options.onStart?.();
-    
+
     try {
-      const response = await apiConfig.fetchWithAuth('/ask', {
-        method: 'POST',
-        body: JSON.stringify({ question })
+      const answerHealthQuestion = httpsCallable(functions, 'answerHealthQuestion');
+      const result = await answerHealthQuestion({ 
+        question, 
+        chatHistory 
       });
       
-      options.onComplete?.();
       setIsLoading(false);
-      return response;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      setError(error);
-      options.onError?.(error);
+      return result.data;
+    } catch (err: any) {
       setIsLoading(false);
-      return null;
+      setError(err);
+      
+      if (options.onError) {
+        options.onError(err);
+      }
+      
+      throw err;
     }
-  }, [options]);
+  };
 
-  /**
-   * Generate a personalized fitness plan
-   */
-  const generatePlan = useCallback(async (userProfile: any) => {
+  const generatePlan = async (preferences: PlanPreferences, userData: any = {}) => {
     setIsLoading(true);
     setError(null);
-    
-    options.onStart?.();
-    
+
     try {
-      const response = await apiConfig.fetchWithAuth('/generate-plan', {
-        method: 'POST',
-        body: JSON.stringify({ userProfile })
+      const generateFitnessPlan = httpsCallable(functions, 'generateFitnessPlan');
+      const result = await generateFitnessPlan({ 
+        preferences,
+        userData 
       });
       
-      options.onComplete?.();
       setIsLoading(false);
-      return response;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      setError(error);
-      options.onError?.(error);
+      return result.data;
+    } catch (err: any) {
       setIsLoading(false);
-      return null;
+      setError(err);
+      
+      if (options.onError) {
+        options.onError(err);
+      }
+      
+      throw err;
     }
-  }, [options]);
-
-  /**
-   * Check the health status of the AI service
-   */
-  const checkAIHealth = useCallback(async () => {
-    try {
-      const response = await fetch(apiConfig.endpoint('/health'));
-      const data = await response.json();
-      return data.status === 'ok';
-    } catch (err) {
-      console.error('AI health check failed:', err);
-      return false;
-    }
-  }, []);
+  };
 
   return {
     askAI,
     generatePlan,
-    checkAIHealth,
     isLoading,
     error
   };
 };
-
-export default useAI;

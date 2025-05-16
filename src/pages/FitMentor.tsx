@@ -1,49 +1,48 @@
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Mic, MicOff, Send, Volume2, VolumeX, Loader2, AlertCircle } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
+import React, { useState, useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import axios from 'axios';
+import { auth } from '@/integrations/firebase/client';
+import { storage } from '@/integrations/firebase/client';
+import { db } from '@/integrations/firebase/client';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
+import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from "@/contexts/AuthContext"; // Using the primary AuthContext
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Menu, X, Send, Mic, MicOff, ImageIcon, FileText } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
+import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
-  FormMessage 
+  FormMessage
 } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import axios from 'axios';
-import { auth } from '@/integrations/firebase/client';
-
-// Gemini API integration
-const GEMINI_API_KEY = "AIzaSyB1NLC_Wy_P-53U1R-4rpICOIk60eehHrA";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
-const GEMINI_VISION_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent";
-
-// Create a schema for health assessment form validation
-const formSchema = z.object({
-  age: z.string().min(1, "Age is required"),
-  gender: z.string().min(1, "Gender is required"),
-  weight: z.string().min(1, "Weight is required"),
-  height: z.string().min(1, "Height is required"),
-  activityLevel: z.string().min(1, "Activity level is required"),
-  fitnessGoals: z.string().min(1, "Fitness goals are required").max(500, "Fitness goals are too long"),
-  medicalConditions: z.string().optional(),
-  dietaryPreferences: z.string().min(1, "Dietary preferences are required"),
-  sleepHours: z.string().min(1, "Sleep hours are required"),
-  stressLevel: z.string().min(1, "Stress level is required")
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const FitMentor = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  const [sessionId, setSessionId] = useState(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [showSessionDrawer, setShowSessionDrawer] = useState(false);
+  const [userSessions, setUserSessions] = useState([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+
   const [activeTab, setActiveTab] = useState('chat');
   const [messages, setMessages] = useState([
     { 
@@ -53,19 +52,31 @@ const FitMentor = () => {
   ]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  // Remove audioEnabled state
-  // const [audioEnabled, setAudioEnabled] = useState(false);
-  // Remove isSpeaking state
-  // const [isSpeaking, setIsSpeaking] = useState(false);
-  
-  // Assessment state
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [fitnessPlan, setFitnessPlan] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Initialize form with react-hook-form and zod validation
-  const form = useForm<FormValues>({
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+  const documentInputRef = useRef(null);
+
+  const formSchema = z.object({
+    age: z.string().min(1, "Age is required"),
+    gender: z.string().min(1, "Gender is required"),
+    weight: z.string().min(1, "Weight is required"),
+    height: z.string().min(1, "Height is required"),
+    activityLevel: z.string().min(1, "Activity level is required"),
+    fitnessGoals: z.string().min(1, "Fitness goals are required").max(500, "Fitness goals are too long"),
+    medicalConditions: z.string().optional(),
+    dietaryPreferences: z.string().min(1, "Dietary preferences are required"),
+    sleepHours: z.string().min(1, "Sleep hours are required"),
+    stressLevel: z.string().min(1, "Stress level is required")
+  });
+
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       age: '',
@@ -81,42 +92,316 @@ const FitMentor = () => {
     }
   });
 
-  // Handle chat form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-
-    setMessages(prev => [...prev, { role: 'user', content: input }]);
-
+  const loadUserSessions = async () => {
+    if (!user) return;
+    
+    setIsLoadingSessions(true);
+    
     try {
-      // Get Firebase Auth token
-      const user = auth.currentUser;
-      if (!user) {
-        setMessages(prev => [...prev, { role: 'assistant', content: 'Please log in to use the AI coach.' }]);
-        setInput('');
-        return;
-      }
-      const token = await user.getIdToken();
-      // Call the answerHealthQuestion endpoint
-      const res = await axios.post(
-        'https://us-central1-blinderfit.cloudfunctions.net/answerHealthQuestion',
-        { question: input },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const sessionsQuery = query(
+        collection(db, 'chat_sessions'),
+        where('userId', '==', user.uid),
+        orderBy('lastUpdatedAt', 'desc'),
+        limit(20)
       );
-      const answerObj = res.data.answer;
-      let answerText = answerObj.mainAnswer || '';
-      if (answerObj.additionalInfo) answerText += '\n\n' + answerObj.additionalInfo;
-      if (answerObj.personalizedTips) answerText += '\n\n' + answerObj.personalizedTips;
-      setMessages(prev => [...prev, { role: 'assistant', content: answerText }]);
-      // Remove the text-to-speech call
-      // if (audioEnabled) speakText(answerText);
-    } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I could not get an answer. Please try again.' }]);
+      
+      const sessionsSnapshot = await getDocs(sessionsQuery);
+      const sessions = [];
+      
+      for (const sessionDoc of sessionsSnapshot.docs) {
+        const sessionData = sessionDoc.data();
+        
+        const firstMessageQuery = query(
+          collection(db, 'chat_sessions', sessionDoc.id, 'messages'),
+          orderBy('timestamp', 'asc'),
+          limit(1)
+        );
+        
+        const firstMessageSnapshot = await getDocs(firstMessageQuery);
+        let sessionTitle = 'New Conversation';
+        
+        if (!firstMessageSnapshot.empty) {
+          const firstMessage = firstMessageSnapshot.docs[0].data();
+          sessionTitle = firstMessage.content.substring(0, 30) + (firstMessage.content.length > 30 ? '...' : '');
+        }
+        
+        sessions.push({
+          id: sessionDoc.id,
+          title: sessionTitle,
+          messageCount: sessionData.messageCount || 0,
+          lastUpdatedAt: sessionData.lastUpdatedAt?.toDate() || new Date(),
+          isActive: sessionDoc.id === sessionId
+        });
+      }
+      
+      setUserSessions(sessions);
+    } catch (error) {
+      console.error("Error loading user sessions:", error);
+    } finally {
+      setIsLoadingSessions(false);
     }
-    setInput('');
   };
 
-  // Handle voice recording
+  useEffect(() => {
+    if (showSessionDrawer) {
+      loadUserSessions();
+    }
+  }, [showSessionDrawer, user]);
+
+  const switchSession = async (newSessionId) => {
+    if (newSessionId === sessionId) return;
+    
+    setIsLoadingHistory(true);
+    
+    try {
+      setSessionId(newSessionId);
+      localStorage.setItem('fitmentor_session_id', newSessionId);
+      
+      const messagesQuery = query(
+        collection(db, 'chat_sessions', newSessionId, 'messages'),
+        orderBy('timestamp', 'asc')
+      );
+      
+      const messagesSnapshot = await getDocs(messagesQuery);
+      const loadedMessages = messagesSnapshot.docs.map(doc => doc.data());
+      
+      setMessages(loadedMessages);
+      
+      setShowSessionDrawer(false);
+    } catch (error) {
+      console.error("Error switching sessions:", error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const startNewSession = async () => {
+    try {
+      const newSessionRef = doc(collection(db, 'chat_sessions'));
+      const newSessionId = newSessionRef.id;
+      
+      await setDoc(newSessionRef, {
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        lastUpdatedAt: serverTimestamp(),
+        messageCount: 0
+      });
+      
+      setSessionId(newSessionId);
+      localStorage.setItem('fitmentor_session_id', newSessionId);
+      
+      setMessages([]);
+      
+      setShowSessionDrawer(false);
+    } catch (error) {
+      console.error("Error creating new chat session:", error);
+    }
+  };
+
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      if (!user) {
+        setIsLoadingHistory(false);
+        return;
+      }
+      
+      setIsLoadingHistory(true);
+      
+      try {
+        const storedSessionId = localStorage.getItem('fitmentor_session_id');
+        
+        if (storedSessionId) {
+          const sessionDoc = await getDoc(doc(db, 'chat_sessions', storedSessionId));
+          
+          if (sessionDoc.exists() && sessionDoc.data().userId === user.uid) {
+            setSessionId(storedSessionId);
+            
+            const messagesQuery = query(
+              collection(db, 'chat_sessions', storedSessionId, 'messages'),
+              orderBy('timestamp', 'asc')
+            );
+            
+            const messagesSnapshot = await getDocs(messagesQuery);
+            const loadedMessages = messagesSnapshot.docs.map(doc => doc.data());
+            
+            if (loadedMessages.length > 0) {
+              setMessages(loadedMessages);
+            }
+          } else {
+            await createNewSession();
+          }
+        } else {
+          await createNewSession();
+        }
+      } catch (error) {
+        console.error("Error loading chat history:", error);
+        await createNewSession();
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    
+    const createNewSession = async () => {
+      try {
+        const newSessionRef = doc(collection(db, 'chat_sessions'));
+        const newSessionId = newSessionRef.id;
+        
+        await setDoc(newSessionRef, {
+          userId: user.uid,
+          createdAt: serverTimestamp(),
+          lastUpdatedAt: serverTimestamp(),
+          messageCount: 0
+        });
+        
+        setSessionId(newSessionId);
+        localStorage.setItem('fitmentor_session_id', newSessionId);
+        
+        setMessages([]);
+      } catch (error) {
+        console.error("Error creating new chat session:", error);
+      }
+    };
+    
+    loadChatHistory();
+  }, [user]);
+
+  const saveMessageToFirestore = async (message, isUserMessage = false) => {
+    if (!user || !sessionId) return;
+    
+    try {
+      const messageRef = doc(collection(db, 'chat_sessions', sessionId, 'messages'));
+      
+      await setDoc(messageRef, {
+        ...message,
+        id: messageRef.id,
+        timestamp: serverTimestamp()
+      });
+      
+      await setDoc(doc(db, 'chat_sessions', sessionId), {
+        lastUpdatedAt: serverTimestamp(),
+        messageCount: messages.length + 1
+      }, { merge: true });
+      
+      if (isUserMessage) {
+        await addDoc(collection(db, 'user_queries'), {
+          userId: user.uid,
+          sessionId: sessionId,
+          query: message.content,
+          files: message.files || [],
+          timestamp: serverTimestamp()
+        });
+      }
+    } catch (error) {
+      console.error("Error saving message to Firestore:", error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!input.trim() && uploadedFiles.length === 0) return;
+    
+    const userMessage = { 
+      role: 'user', 
+      content: input,
+      files: uploadedFiles.length > 0 ? [...uploadedFiles] : undefined
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    
+    await saveMessageToFirestore(userMessage, true);
+    
+    const questionText = input;
+    setInput('');
+    setIsLoading(true);
+    
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        const errorMessage = { role: 'assistant', content: 'Please log in to use the AI coach.' };
+        setMessages(prev => [...prev, errorMessage]);
+        await saveMessageToFirestore(errorMessage);
+        setIsLoading(false);
+        return;
+      }
+      
+      const recentMessages = messages.slice(-10).map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      
+      const token = await user.getIdToken();
+      
+      let endpoint = 'https://us-central1-blinderfit.cloudfunctions.net/answerHealthQuestion';
+      let payload = { 
+        question: questionText,
+        chatHistory: recentMessages
+      };
+      
+      if (uploadedFiles.length > 0) {
+        endpoint = 'https://us-central1-blinderfit.cloudfunctions.net/processFilesAndAnswer';
+        payload = { 
+          question: questionText,
+          files: uploadedFiles.map(file => ({
+            id: file.id,
+            name: file.name,
+            type: file.type,
+            url: file.url
+          })),
+          chatHistory: recentMessages
+        };
+      }
+      
+      const res = await axios.post(
+        endpoint,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const { answer } = res.data;
+      
+      if (!answer) {
+        throw new Error("Invalid response format from AI service");
+      }
+      
+      let formattedResponse = '';
+      
+      if (answer.mainAnswer) {
+        formattedResponse += answer.mainAnswer + '\n\n';
+      }
+      
+      if (answer.additionalInfo) {
+        formattedResponse += '**Additional Information:**\n' + answer.additionalInfo + '\n\n';
+      }
+      
+      if (answer.personalizedTips) {
+        formattedResponse += '**Personalized Tips:**\n' + answer.personalizedTips;
+      }
+      
+      const assistantMessage = { 
+        role: 'assistant', 
+        content: formattedResponse.trim() || "I'm sorry, I couldn't generate a proper response. Please try asking again."
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      
+      await saveMessageToFirestore(assistantMessage);
+      
+      setUploadedFiles([]);
+      
+    } catch (error) {
+      console.error("Error getting AI response:", error);
+      const errorMessage = { 
+        role: 'assistant', 
+        content: "I'm sorry, I encountered an error while processing your question. Please try again later."
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      await saveMessageToFirestore(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -127,16 +412,12 @@ const FitMentor = () => {
   };
 
   const startRecording = () => {
-    // Simulated voice recording
     console.log('Starting voice recording...');
-    // In a real implementation, this would use the Web Speech API
   };
 
   const stopRecording = () => {
-    // Simulated voice recording stop
     console.log('Stopping voice recording...');
     
-    // Simulate transcription result
     setTimeout(() => {
       const possibleInputs = [
         "How many days per week should I work out?",
@@ -147,29 +428,9 @@ const FitMentor = () => {
     }, 500);
   };
 
-  // Handle text-to-speech
-  // const speakText = (text) => {
-  //   setIsSpeaking(true);
-  //   
-  //   // Use the Web Speech API for text-to-speech
-  //   const utterance = new SpeechSynthesisUtterance(text);
-  //   utterance.onend = () => setIsSpeaking(false);
-  //   speechSynthesis.speak(utterance);
-  // };
-
-  // const toggleAudio = () => {
-  //   setAudioEnabled(!audioEnabled);
-  //   if (isSpeaking) {
-  //     speechSynthesis.cancel();
-  //     setIsSpeaking(false);
-  //   }
-  // };
-
-  // Assessment form functions
   const handleNext = async () => {
-    const fields: (keyof FormValues)[] = [];
+    const fields = [];
     
-    // Determine which fields to validate based on current step
     switch (currentStep) {
       case 1:
         fields.push('age', 'gender', 'weight', 'height');
@@ -185,7 +446,6 @@ const FitMentor = () => {
         break;
     }
     
-    // Trigger validation only for the fields in the current step
     const result = await form.trigger(fields);
     
     if (result && currentStep < 4) {
@@ -205,10 +465,9 @@ const FitMentor = () => {
     }
   };
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      // Get Firebase Auth token
       const user = auth.currentUser;
       if (!user) {
         toast({
@@ -220,13 +479,11 @@ const FitMentor = () => {
         return;
       }
       const token = await user.getIdToken();
-      // Call the generatePersonalizedPlan endpoint
       const res = await axios.post(
         'https://us-central1-blinderfit.cloudfunctions.net/generatePersonalizedPlan',
         data,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // Assume the response has { plan: string }
       setFitnessPlan(res.data.plan || 'No plan generated.');
       setHasSubmitted(true);
       toast({
@@ -245,7 +502,103 @@ const FitMentor = () => {
     }
   };
 
-  // Assessment form rendering
+  const handleImageUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setIsUploading(true);
+    
+    try {
+      const newFiles = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        if (!file.type.startsWith('image/')) {
+          console.error("File is not an image:", file.name);
+          continue;
+        }
+        
+        const fileId = uuidv4();
+        const fileRef = ref(storage, `user-uploads/${auth.currentUser.uid}/images/${fileId}-${file.name}`);
+        
+        await uploadBytes(fileRef, file);
+        
+        const downloadURL = await getDownloadURL(fileRef);
+        
+        newFiles.push({
+          id: fileId,
+          name: file.name,
+          type: 'image',
+          url: downloadURL,
+          size: file.size,
+          uploadedAt: new Date().toISOString()
+        });
+      }
+      
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDocumentUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setIsUploading(true);
+    
+    try {
+      const newFiles = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+        if (!validTypes.includes(file.type)) {
+          console.error("Invalid document type:", file.name);
+          continue;
+        }
+        
+        const fileId = uuidv4();
+        const fileRef = ref(storage, `user-uploads/${auth.currentUser.uid}/documents/${fileId}-${file.name}`);
+        
+        await uploadBytes(fileRef, file);
+        
+        const downloadURL = await getDownloadURL(fileRef);
+        
+        newFiles.push({
+          id: fileId,
+          name: file.name,
+          type: 'document',
+          url: downloadURL,
+          size: file.size,
+          uploadedAt: new Date().toISOString()
+        });
+      }
+      
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      
+      if (documentInputRef.current) {
+        documentInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error uploading document:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const removeFile = (fileId) => {
+    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
   const renderFormStep = () => {
     switch (currentStep) {
       case 1:
@@ -472,14 +825,8 @@ const FitMentor = () => {
     }
   };
 
-  // Clean up on unmount - simplify or remove if not needed
   useEffect(() => {
-    return () => {
-      // No need to check isSpeaking or cancel speech synthesis
-      // if (isSpeaking) {
-      //   speechSynthesis.cancel();
-      // }
-    };
+    return () => {};
   }, []);
 
   return (
@@ -499,76 +846,200 @@ const FitMentor = () => {
           </TabsList>
           
           <TabsContent value="chat" className="m-0">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* Sidebar with suggestions */}
-              <div className="col-span-1">
-                <div className="bg-[#111] border border-white/10 p-6 rounded-sm">
-                  <h3 className="text-xl font-light mb-4">Try asking about:</h3>
-                  <ul className="space-y-3 text-silver">
-                    <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Workout routines</li>
-                    <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Nutrition advice</li>
-                    <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Recovery techniques</li>
-                    <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Fitness goals</li>
-                    <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Supplement guidance</li>
-                    <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Exercise technique</li>
-                  </ul>
+            <div className="flex h-full">
+              <div 
+                className={`fixed inset-y-0 left-0 z-40 w-64 bg-black/90 border-r border-white/10 transform ${
+                  showSessionDrawer ? 'translate-x-0' : '-translate-x-full'
+                } transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+                  showSessionDrawer ? 'md:block' : 'md:hidden'
+                }`}
+              >
+                <div className="p-4 border-b border-white/10">
+                  <h2 className="text-xl font-bold text-white">Chat History</h2>
+                  <button
+                    onClick={startNewSession}
+                    className="mt-2 w-full py-2 px-4 bg-gold text-black rounded-md hover:bg-gold/80 transition-colors"
+                  >
+                    New Chat
+                  </button>
+                </div>
+                
+                <div className="overflow-y-auto h-[calc(100%-80px)]">
+                  {isLoadingSessions ? (
+                    <div className="flex justify-center items-center h-20">
+                      <Loader2 className="h-6 w-6 animate-spin text-gold" />
+                    </div>
+                  ) : (
+                    <ul className="space-y-1 p-2">
+                      {userSessions.map(session => (
+                        <li key={session.id}>
+                          <button
+                            onClick={() => switchSession(session.id)}
+                            className={`w-full text-left py-2 px-3 rounded-md hover:bg-white/10 transition-colors ${
+                              session.isActive ? 'bg-white/10 border-l-2 border-gold' : ''
+                            }`}
+                          >
+                            <div className="text-sm font-medium truncate">{session.title}</div>
+                            <div className="text-xs text-gray-400 flex justify-between">
+                              <span>{session.messageCount} messages</span>
+                              <span>{formatDate(session.lastUpdatedAt)}</span>
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                      
+                      {userSessions.length === 0 && (
+                        <li className="text-center py-4 text-gray-400 text-sm">
+                          No previous conversations
+                        </li>
+                      )}
+                    </ul>
+                  )}
                 </div>
               </div>
               
-              {/* Chat area */}
-              <div className="col-span-1 lg:col-span-3">
-                <div className="bg-[#111] border border-white/10 rounded-sm flex flex-col h-[600px]">
-                  {/* Chat messages */}
-                  <div className="flex-grow p-6 overflow-y-auto space-y-6">
-                    {messages.map((message, index) => (
-                      <div 
-                        key={index} 
-                        className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div 
-                          className={`max-w-[80%] p-4 rounded-lg ${
-                            message.role === 'user' 
-                              ? 'bg-gold/20 text-white' 
-                              : 'bg-white/5 text-white'
-                          }`}
-                        >
-                          {message.content}
-                        </div>
-                      </div>
-                    ))}
+              <div className="flex-1 flex flex-col h-full">
+                <button
+                  onClick={() => setShowSessionDrawer(!showSessionDrawer)}
+                  className="md:hidden absolute top-4 left-4 z-50 p-2 rounded-md bg-black/50 text-white"
+                >
+                  {showSessionDrawer ? <X size={20} /> : <Menu size={20} />}
+                </button>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                  <div className="col-span-1">
+                    <div className="bg-[#111] border border-white/10 p-6 rounded-sm">
+                      <h3 className="text-xl font-light mb-4">Try asking about:</h3>
+                      <ul className="space-y-3 text-silver">
+                        <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Workout routines</li>
+                        <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Nutrition advice</li>
+                        <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Recovery techniques</li>
+                        <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Fitness goals</li>
+                        <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Supplement guidance</li>
+                        <li className="p-2 hover:bg-white/5 cursor-pointer transition-colors">Exercise technique</li>
+                      </ul>
+                    </div>
                   </div>
                   
-                  {/* Input area */}
-                  <div className="p-4 border-t border-white/10">
-                    <form onSubmit={handleSubmit} className="flex gap-2">
-                      <button 
-                        type="button" 
-                        onClick={toggleRecording}
-                        className={`p-2.5 rounded-full ${isRecording ? 'bg-red-500 text-white' : 'bg-white/10 text-white'}`}
-                      >
-                        {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-                      </button>
+                  <div className="col-span-1 lg:col-span-3">
+                    <div className="bg-[#111] border border-white/10 rounded-sm flex flex-col h-[600px]">
+                      <div className="flex-grow p-6 overflow-y-auto space-y-6">
+                        {messages.map((message, index) => (
+                          <div
+                            key={index}
+                            className={`flex ${
+                              message.role === "assistant" ? "justify-start" : "justify-end"
+                            } mb-4`}
+                          >
+                            <div
+                              className={`max-w-[80%] rounded-lg p-4 ${
+                                message.role === "assistant"
+                                  ? "bg-black/30 text-white"
+                                  : "bg-gold/10 text-white"
+                              }`}
+                            >
+                              <div className="whitespace-pre-line">
+                                {message.content}
+                              </div>
+                              
+                              {message.files && message.files.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-white/10">
+                                  <div className="text-xs text-gray-400 mb-2">
+                                    Uploaded files:
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {message.files.map(file => (
+                                      <a
+                                        key={file.id}
+                                        href={file.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center bg-black/30 rounded px-2 py-1 text-xs hover:bg-black/50 transition-colors"
+                                      >
+                                        {file.type === 'image' ? (
+                                          <ImageIcon size={12} className="mr-1 text-gold" />
+                                        ) : (
+                                          <FileText size={12} className="mr-1 text-gold" />
+                                        )}
+                                        <span className="truncate max-w-[100px]">{file.name}</span>
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                       
-                      <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask FitMentor anything..."
-                        className="flex-grow bg-white/5 border-0 p-2.5 rounded-sm focus:ring-gold"
-                      />
-                      
-                      <button 
-                        type="submit" 
-                        className="p-2.5 bg-gold text-black rounded-full"
-                      >
-                        <Send size={20} />
-                      </button>
-                    </form>
+                      <div className="p-4 border-t border-white/10">
+                        <form onSubmit={handleSubmit} className="flex gap-2">
+                          <button 
+                            type="button" 
+                            onClick={toggleRecording}
+                            className={`p-2.5 rounded-full ${isRecording ? 'bg-red-500 text-white' : 'bg-white/10 text-white'}`}
+                          >
+                            {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+                          </button>
+                          
+                          <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Ask FitMentor anything..."
+                            className="flex-grow bg-white/5 border-0 p-2.5 rounded-sm focus:ring-gold"
+                          />
+                          
+                          <div className="flex items-center space-x-2 mr-2">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="p-2 rounded-full text-gray-400 hover:text-gold hover:bg-black/20 transition-colors"
+                              title="Upload image"
+                            >
+                              <ImageIcon size={20} />
+                            </button>
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              onChange={handleImageUpload}
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                            />
+                            
+                            <button
+                              type="button"
+                              onClick={() => documentInputRef.current?.click()}
+                              className="p-2 rounded-full text-gray-400 hover:text-gold hover:bg-black/20 transition-colors"
+                              title="Upload document"
+                            >
+                              <FileText size={20} />
+                            </button>
+                            <input
+                              type="file"
+                              ref={documentInputRef}
+                              onChange={handleDocumentUpload}
+                              accept=".pdf,.docx,.txt"
+                              multiple
+                              className="hidden"
+                            />
+                          </div>
+
+                          <button 
+                            type="submit" 
+                            className="p-2.5 bg-gold text-black rounded-full"
+                          >
+                            <Send size={20} />
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 text-sm text-silver">
+                      <p>FitMentor uses AI technology to provide personalized fitness advice. While helpful, always consult with healthcare professionals for medical decisions.</p>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="mt-6 text-sm text-silver">
-                  <p>FitMentor uses AI technology to provide personalized fitness advice. While helpful, always consult with healthcare professionals for medical decisions.</p>
                 </div>
               </div>
             </div>
@@ -739,7 +1210,25 @@ const FitMentor = () => {
   );
 };
 
+const formatDate = (date) => {
+  if (!date) return '';
+  
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  
+  if (diff < 24 * 60 * 60 * 1000) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  
+  if (diff < 7 * 24 * 60 * 60 * 1000) {
+    return date.toLocaleDateString([], { weekday: 'short' });
+  }
+  
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
+
 export default FitMentor;
+
 
 
 

@@ -4,6 +4,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getFunctions } from "firebase/functions";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -26,6 +27,7 @@ if (process.env.NODE_ENV === 'development') {
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 }
 // Initialize App Check with the UPDATED site key
+// Make sure the reCAPTCHA key is valid and properly configured
 export const appCheck = initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider('6LcLKjkrAAAAABkKkFwXSQ5jlxXjQ2s4FeAHh7Ip'),
   isTokenAutoRefreshEnabled: true
@@ -35,6 +37,7 @@ export const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app);
 
 // Test Firebase connection
 export const testFirebaseConnection = async () => {
@@ -58,6 +61,7 @@ export const testFirebaseConnection = async () => {
     };
   }
 };
+
 
 
 

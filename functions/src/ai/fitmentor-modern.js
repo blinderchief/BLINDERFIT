@@ -21,27 +21,40 @@ Format your response in three sections:
 
 // Define the answer health question flow
 const defineAnswerHealthQuestionFlow = (ai) => {
-  return ai.defineFlow('answerHealthQuestion', async (question, userContext = '') => {
-    // Create the prompt
-    const prompt = `
-User question: ${question}
-${userContext ? `\nUser context: ${userContext}` : ''}
-    `;
+  return ai.defineFlow('answerHealthQuestion', async (question, userContext = '', chatHistory = '') => {
+    console.log(`Processing question: "${question}" with user context length: ${userContext.length} and chat history length: ${chatHistory.length}`);
     
-    const { text: aiContent } = await ai.generate(prompt, {
-      systemPrompt: FITMENTOR_SYSTEM_PROMPT,
-      temperature: 0.2,
+    // Create a more direct prompt that ensures the response is relevant to the question
+    // and incorporates chat history for context
+    const prompt = `
+Question: ${question}
+${userContext ? `\nUser context: ${userContext}` : ''}
+${chatHistory ? `\nChat history: ${chatHistory}` : ''}
+
+Please provide a detailed, accurate, and DIRECT answer to this SPECIFIC question.
+Your answer must be tailored specifically to what was asked.
+If chat history is provided, use it to provide context-aware responses that build on previous interactions.
+
+Format your response in three sections:
+1. MAIN ANSWER: A direct, comprehensive answer to the question
+2. ADDITIONAL INFO: Relevant scientific or contextual information
+3. PERSONALIZED TIPS: Actionable advice based on the user's profile and history
+`;
+
+    // Generate the response
+    const { text } = await ai.generate(prompt, {
+      systemPrompt: "You are BlinderFit AI, a fitness and nutrition expert. You provide accurate, personalized, and science-based answers to health and fitness questions. Always be direct and specific in your responses.",
+      temperature: 0.3,
       maxOutputTokens: 1000,
     });
-    
+
     // Parse the structured response
-    const mainAnswerMatch = aiContent.match(/MAIN ANSWER:?([\s\S]*?)(?=ADDITIONAL INFO|$)/i);
-    const additionalInfoMatch = aiContent.match(/ADDITIONAL INFO:?([\s\S]*?)(?=PERSONALIZED TIPS|$)/i);
-    const tipsMatch = aiContent.match(/PERSONALIZED TIPS:?([\s\S]*?)$/i);
-    
-    // Structure the response
+    const mainAnswerMatch = text.match(/MAIN ANSWER:?([\s\S]*?)(?=ADDITIONAL INFO|$)/i);
+    const additionalInfoMatch = text.match(/ADDITIONAL INFO:?([\s\S]*?)(?=PERSONALIZED TIPS|$)/i);
+    const tipsMatch = text.match(/PERSONALIZED TIPS:?([\s\S]*?)$/i);
+
     return {
-      mainAnswer: mainAnswerMatch ? mainAnswerMatch[1].trim() : aiContent,
+      mainAnswer: mainAnswerMatch ? mainAnswerMatch[1].trim() : text,
       additionalInfo: additionalInfoMatch ? additionalInfoMatch[1].trim() : "",
       personalizedTips: tipsMatch ? tipsMatch[1].trim() : ""
     };
@@ -79,41 +92,30 @@ ${userContext ? `\nUser context: ${userContext}` : ''}
 
 // Helper to detect the type of the question for better tracking
 function detectQuestionType(question) {
-  const lowercase = question.toLowerCase();
+  const lowerQuestion = question.toLowerCase();
   
   // Define categories and their keywords
   const categories = {
-    nutrition: ['food', 'diet', 'meal', 'eat', 'protein', 'carb', 'fat', 'calorie', 'vitamin', 'mineral', 'supplement', 'nutrition'],
-    workout: ['exercise', 'workout', 'training', 'cardio', 'strength', 'muscle', 'lift', 'weight', 'reps', 'sets', 'gym', 'routine'],
-    recovery: ['sleep', 'rest', 'recovery', 'injury', 'pain', 'muscle soreness', 'stretching', 'flexibility'],
-    mentalHealth: ['stress', 'anxiety', 'motivation', 'mental', 'mind', 'mood', 'habit', 'meditation', 'mindfulness'],
-    weightManagement: ['weight loss', 'fat loss', 'lose weight', 'gain weight', 'build muscle', 'bulk', 'cut', 'lean', 'bmi'],
-    healthCondition: ['condition', 'disease', 'syndrome', 'disorder', 'chronic', 'diabetes', 'blood pressure', 'cholesterol']
+    nutrition: ['food', 'diet', 'eat', 'meal', 'protein', 'carb', 'fat', 'calorie', 'nutrition', 'vitamin', 'mineral', 'supplement'],
+    workout: ['exercise', 'workout', 'training', 'cardio', 'strength', 'weight', 'lift', 'muscle', 'gym', 'fitness', 'routine'],
+    recovery: ['recovery', 'rest', 'sleep', 'injury', 'pain', 'sore', 'stretch', 'flexibility', 'mobility'],
+    goals: ['goal', 'weight loss', 'muscle gain', 'build muscle', 'lose weight', 'tone', 'endurance', 'performance'],
+    health: ['health', 'medical', 'condition', 'disease', 'symptom', 'diagnosis', 'doctor', 'medication']
   };
   
-  // Count matches for each category
-  const scores = {};
+  // Check each category
+  const matchedCategories = [];
   for (const [category, keywords] of Object.entries(categories)) {
-    scores[category] = 0;
     for (const keyword of keywords) {
-      if (lowercase.includes(keyword)) {
-        scores[category]++;
+      if (lowerQuestion.includes(keyword)) {
+        matchedCategories.push(category);
+        break;
       }
     }
   }
   
-  // Find the category with the highest score
-  let maxScore = 0;
-  let detectedType = 'general';
-  
-  for (const [category, score] of Object.entries(scores)) {
-    if (score > maxScore) {
-      maxScore = score;
-      detectedType = category;
-    }
-  }
-  
-  return detectedType;
+  // Return the matched categories or 'general' if none matched
+  return matchedCategories.length > 0 ? matchedCategories : ['general'];
 }
 
 /**
@@ -122,6 +124,7 @@ function detectQuestionType(question) {
 exports.answerHealthQuestion = functions.https.onCall(async (data, context) => {
   // Extract question with robust extraction
   let question = '';
+  let chatHistory = [];
   
   if (typeof data === 'string') {
     question = data;
@@ -130,6 +133,13 @@ exports.answerHealthQuestion = functions.https.onCall(async (data, context) => {
       question = data.question;
     } else if (data.data && data.data.question) {
       question = data.data.question;
+    }
+    
+    // Extract chat history if available
+    if (data.chatHistory && Array.isArray(data.chatHistory)) {
+      chatHistory = data.chatHistory;
+    } else if (data.data && data.data.chatHistory && Array.isArray(data.data.chatHistory)) {
+      chatHistory = data.data.chatHistory;
     }
   }
   
@@ -142,24 +152,72 @@ exports.answerHealthQuestion = functions.https.onCall(async (data, context) => {
     );
   }
   
+  console.log(`Processing question request: "${question}" with ${chatHistory.length} history messages`);
+  
   try {
-    // Get user context if authenticated
-    let userContext = '';
+    // Get user data for personalization if authenticated
     let userData = null;
+    let userContext = '';
     let userId = null;
     
     if (context.auth) {
       userId = context.auth.uid;
-      // Get comprehensive user data for personalization
-      userData = await getUserPersonalizationData(userId);
+      console.log(`Authenticated user: ${userId}`);
+      userData = await getUserData(userId);
+      
       if (userData) {
-        // Create a context string for the AI to understand the user
-        userContext = `
-User Profile: ${JSON.stringify(userData.profile || {})}
-Health Data: ${JSON.stringify(userData.healthData || {})}
-Recent Activities: ${JSON.stringify(userData.activities?.slice(0, 3) || [])}
-Active Goals: ${JSON.stringify(userData.goals || [])}
-        `;
+        userContext = `User Profile: ${JSON.stringify(userData.profile || {})}
+        Assessment Data: ${JSON.stringify(userData.assessmentData || {})}
+        Recent Progress: ${JSON.stringify(userData.progressData || [])}`;
+        
+        console.log(`Retrieved personalization data for user ${userId}`);
+      }
+      
+      // Get additional user query history for better personalization
+      if (chatHistory.length < 5) {
+        const userQueriesSnapshot = await admin.firestore()
+          .collection('user_queries')
+          .where('userId', '==', userId)
+          .orderBy('timestamp', 'desc')
+          .limit(10)
+          .get();
+        
+        if (!userQueriesSnapshot.empty) {
+          const additionalHistory = [];
+          
+          userQueriesSnapshot.forEach(doc => {
+            const queryData = doc.data();
+            
+            // Only add queries that aren't already in the chat history
+            const queryContent = queryData.query;
+            const isAlreadyInHistory = chatHistory.some(msg => 
+              msg.role === 'user' && msg.content === queryContent
+            );
+            
+            if (!isAlreadyInHistory) {
+              additionalHistory.push({
+                role: 'user',
+                content: queryContent
+              });
+              
+              // If there's a response stored, add that too
+              if (queryData.response) {
+                additionalHistory.push({
+                  role: 'assistant',
+                  content: typeof queryData.response === 'string' 
+                    ? queryData.response 
+                    : JSON.stringify(queryData.response)
+                });
+              }
+            }
+          });
+          
+          // Add the additional history to the context
+          if (additionalHistory.length > 0) {
+            console.log(`Adding ${additionalHistory.length} additional history items from user query history`);
+            userContext += `\n\nPrevious Relevant Interactions:\n${JSON.stringify(additionalHistory)}`;
+          }
+        }
       }
     }
     
@@ -167,8 +225,24 @@ Active Goals: ${JSON.stringify(userData.goals || [])}
     const ai = getGenkitInstance();
     const answerHealthQuestionFlow = defineAnswerHealthQuestionFlow(ai);
     
-    // Execute the flow
-    const answer = await answerHealthQuestionFlow(question, userContext);
+    // Prepare the chat history in a format suitable for the AI
+    let formattedChatHistory = '';
+    if (chatHistory && chatHistory.length > 0) {
+      formattedChatHistory = chatHistory.map(msg => 
+        `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`
+      ).join('\n\n');
+      
+      console.log(`Formatted chat history with ${chatHistory.length} messages`);
+    }
+    
+    // Execute the flow with direct question passing and chat history
+    console.log("Calling GenKit API...");
+    const answer = await answerHealthQuestionFlow(
+      question, 
+      userContext,
+      formattedChatHistory
+    );
+    console.log("Received response from GenKit API");
     
     // Personalize the response if user data is available
     let personalizedAnswer = answer;
@@ -185,7 +259,10 @@ Active Goals: ${JSON.stringify(userData.goals || [])}
         await logAIInteraction(userId, {
           prompt: question,
           responseType: 'health_question',
-          metadata: { questionType: detectQuestionType(question) }
+          metadata: { 
+            questionType: detectQuestionType(question),
+            hadChatHistory: chatHistory.length > 0
+          }
         });
       }
     }
@@ -195,7 +272,9 @@ Active Goals: ${JSON.stringify(userData.goals || [])}
       answer: personalizedAnswer,
       fromCache: false,
       timestamp: new Date().toISOString(),
-      personalized: !!userData
+      personalized: !!userData,
+      questionAsked: question, // Include the original question for verification
+      usedChatHistory: chatHistory.length > 0 // Indicate if chat history was used
     };
     
     // Log the interaction if user is authenticated
@@ -203,6 +282,7 @@ Active Goals: ${JSON.stringify(userData.goals || [])}
       await admin.firestore().collection('ai_queries').add({
         userId: context.auth.uid,
         question,
+        chatHistoryLength: chatHistory.length,
         response: structuredResponse,
         timestamp: admin.firestore.FieldValue.serverTimestamp()
       });
@@ -462,3 +542,5 @@ Health Goals: ${JSON.stringify(userData.goals?.filter(g => g.type === 'health') 
 Known Health Conditions: ${userData.healthData?.conditions || 'none reported'}
   `;
 }
+
+

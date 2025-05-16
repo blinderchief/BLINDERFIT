@@ -12,7 +12,7 @@ const fitnessArticles = [
     id: 1,
     title: "The Science Behind High-Intensity Interval Training",
     excerpt: "Discover why HIIT workouts are so effective for fat loss and cardiovascular health.",
-    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80",
+    image: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80",
     category: "training",
     readTime: 8,
     publishedAt: "2025-04-10T09:00:00Z",
@@ -251,45 +251,78 @@ While nothing replaces the fundamentals of consistent training and nutrition, th
     id: 7,
     title: "Diabetes and Exercise: Managing Blood Glucose Through Movement",
     excerpt: "Learn how physical activity affects insulin sensitivity and blood sugar control for both prevention and management.",
-    image: "https://images.unsplash.com/photo-1573757801565-85dfe2b13e6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1769&q=80",
+    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80",
     category: "health",
     readTime: 8,
-    publishedAt: "2025-04-18T13:40:00Z",
+    publishedAt: "2025-04-18T10:30:00Z",
     isBookmarked: false,
-    externalLink: "https://care.diabetesjournals.org/content/39/11/2065",
+    externalLink: "https://www.diabetes.org/fitness/get-and-stay-fit/fitness-tips-to-get-started",
     content: `
 # Diabetes and Exercise: Managing Blood Glucose Through Movement
 
-Physical activity is a powerful tool for both preventing type 2 diabetes and managing existing diabetes. Understanding the relationship between exercise and blood glucose can help optimize your approach.
+Physical activity plays a crucial role in managing diabetes and preventing complications. Regular exercise improves insulin sensitivity, helps maintain healthy body weight, and reduces cardiovascular risk factors.
 
-## Immediate Effects of Exercise
+## How Exercise Affects Blood Glucose
 
-During exercise, your muscles use glucose for energy, which can lower blood sugar levels. Additionally, exercise increases insulin sensitivity, allowing your cells to use insulin more effectively.
+When you exercise, your muscles use glucose for energy, which can lower your blood sugar levels. Additionally, moderate exercise increases insulin sensitivity, making it easier for cells to use available insulin to take up glucose during and after activity.
 
-For people with type 2 diabetes, a single bout of exercise can:
-- Reduce blood glucose for up to 24 hours
-- Improve insulin sensitivity for up to 72 hours
-
-## Long-Term Benefits
-
-Regular physical activity provides substantial benefits:
-
-- Reduced HbA1c levels (a measure of long-term blood glucose control)
-- Decreased insulin resistance
+### Benefits for Type 1 Diabetes
 - Improved cardiovascular health
-- Reduced risk of diabetes complications
+- Better insulin sensitivity
+- Reduced insulin requirements
+- Improved blood pressure and cholesterol levels
 
-## Exercise Recommendations for Diabetes
+### Benefits for Type 2 Diabetes
+- Enhanced insulin sensitivity
+- Potential for reduced medication needs
+- Weight management
+- Improved glycemic control
 
-The American Diabetes Association recommends:
+## Exercise Guidelines for People with Diabetes
 
-- 150 minutes of moderate-to-vigorous aerobic activity weekly, spread over at least 3 days
-- 2-3 sessions of resistance training per week
-- No more than 2 consecutive days without activity
+### Before Starting
+- Consult with your healthcare provider
+- Check your blood glucose before, during, and after exercise
+- Have fast-acting carbohydrates available
+- Stay hydrated
 
-For those with type 1 diabetes, additional monitoring is necessary to prevent hypoglycemia during and after exercise.
+### Recommended Activities
+- Aerobic exercises: walking, swimming, cycling
+- Resistance training: weight lifting, resistance bands
+- Flexibility and balance: yoga, tai chi
 
-Remember that consistency is key, and any movement is better than none. Always consult with your healthcare provider before beginning a new exercise program, especially if you have diabetes complications.
+### Timing Considerations
+- Exercise 1-3 hours after meals when possible
+- Avoid exercise during peak insulin action
+- Morning exercise may help reduce post-meal blood glucose spikes
+
+## Managing Blood Glucose During Exercise
+
+### For Type 1 Diabetes
+- Monitor glucose before, during, and after exercise
+- Adjust insulin dosage as recommended by your healthcare team
+- Consider carbohydrate intake based on exercise intensity and duration
+
+### For Type 2 Diabetes
+- Be aware of hypoglycemia risk, especially if taking insulin or sulfonylureas
+- Adjust medication timing as advised by your healthcare provider
+- Monitor for symptoms of low blood sugar
+
+## Special Considerations
+
+### Hyperglycemia
+- If blood glucose is above 250 mg/dL and ketones are present, avoid vigorous activity
+- Hydrate well and monitor closely
+
+### Hypoglycemia
+- If blood glucose is below 100 mg/dL, consume 15-30g of carbohydrates before exercise
+- Recheck blood glucose after 15 minutes
+
+## Building a Sustainable Routine
+
+The best exercise program is one you can maintain consistently. Start slowly and gradually increase intensity and duration. Find activities you enjoy and consider exercising with friends or family for added motivation and safety.
+
+Remember that different types of exercise affect blood glucose differently. Keep records of how your body responds to various activities to help you and your healthcare team optimize your diabetes management plan.
     `
   },
   {
@@ -624,6 +657,17 @@ const FitLearn = () => {
     setSelectedArticle(null);
   };
 
+  // Add this useEffect to preload images
+  useEffect(() => {
+    // Preload article images
+    fitnessArticles.forEach(article => {
+      if (article.image) {
+        const img = new Image();
+        img.src = article.image;
+      }
+    });
+  }, []);
+
   return (
     <div className="min-h-[calc(100vh-96px)] bg-black">
       <div className="gofit-container py-12">
@@ -744,6 +788,11 @@ const FitLearn = () => {
                     src={selectedArticle.image} 
                     alt={selectedArticle.title}
                     className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      // Fallback image if the original fails to load
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80";
+                      console.log(`Failed to load image for article view: ${selectedArticle.title}`);
+                    }}
                   />
                 </div>
                 
@@ -800,6 +849,11 @@ const FitLearn = () => {
                           src={article.image} 
                           alt={article.title}
                           className="w-full h-full object-cover transition-transform hover:scale-105" 
+                          onError={(e) => {
+                            // Fallback image if the original fails to load
+                            e.currentTarget.src = "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80";
+                            console.log(`Failed to load image for article: ${article.title}`);
+                          }}
                         />
                         <div className="absolute top-2 right-2">
                           <button 
@@ -923,6 +977,15 @@ const FitLearn = () => {
 };
 
 export default FitLearn;
+
+
+
+
+
+
+
+
+
 
 
 

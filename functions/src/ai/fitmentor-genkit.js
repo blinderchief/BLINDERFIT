@@ -71,16 +71,16 @@ exports.answerHealthQuestion = functions.https.onCall(async (data, context) => {
     const genAI = getGenkitClient();
     const model = genAI.getGenerativeModel({ model: config.model });
     
-    // Generate content
+    // Generate content with a more direct approach
     const chat = model.startChat({
       history: [
         {
           role: 'user',
-          parts: [{ text: 'I need fitness and nutrition advice' }],
+          parts: [{ text: 'I need specific fitness and nutrition advice' }],
         },
         {
           role: 'model',
-          parts: [{ text: 'I\'m BlinderFit AI, your fitness and nutrition expert. How can I help you today?' }],
+          parts: [{ text: 'I\'m BlinderFit AI, your fitness and nutrition expert. I\'ll provide specific answers to your questions. What would you like to know?' }],
         },
       ],
       generationConfig: {
@@ -89,12 +89,14 @@ exports.answerHealthQuestion = functions.https.onCall(async (data, context) => {
       },
     });
     
-    // Send the message with user context if available
+    // Send the message with user context if available and emphasize direct response
     const result = await chat.sendMessage(`
       ${userContext ? `User Context:\n${userContext}\n\n` : ''}
       Question: ${question}
       
-      Please provide a detailed, accurate, and direct answer to this specific question.
+      Please provide a detailed, accurate, and DIRECT answer to this SPECIFIC question.
+      Do NOT provide generic pre-written responses.
+      Your answer must be tailored specifically to what was asked.
     `);
     const response = await result.response;
     const aiContent = response.text();
@@ -108,15 +110,26 @@ exports.answerHealthQuestion = functions.https.onCall(async (data, context) => {
     if (!mainAnswerMatch) {
       console.error("AI response doesn't match expected format:", aiContent);
       
-      // Attempt to structure the response anyway
+      // Format the response manually
+      const formattedResponse = {
+        mainAnswer: aiContent,
+        additionalInfo: "",
+        personalizedTips: ""
+      };
+      
+      // Try to extract sections if possible
+      const sections = aiContent.split('\n\n');
+      if (sections.length >= 3) {
+        formattedResponse.mainAnswer = sections[0];
+        formattedResponse.additionalInfo = sections[1];
+        formattedResponse.personalizedTips = sections.slice(2).join('\n\n');
+      }
+      
       return {
-        answer: {
-          mainAnswer: aiContent,
-          additionalInfo: "Information not structured in the expected format.",
-          personalizedTips: "Please ask again for more specific advice."
-        },
+        answer: formattedResponse,
         fromCache: false,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        questionAsked: question // Include original question for verification
       };
     }
     
@@ -128,7 +141,8 @@ exports.answerHealthQuestion = functions.https.onCall(async (data, context) => {
         personalizedTips: tipsMatch ? tipsMatch[1].trim() : ""
       },
       fromCache: false,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      questionAsked: question // Include original question for verification
     };
     
     // Log the interaction if user is authenticated
@@ -295,6 +309,9 @@ exports.getRealTimeFitnessInsights = functions.https.onCall(async (data, context
     );
   }
 });
+
+
+
 
 
 

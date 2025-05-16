@@ -1,11 +1,15 @@
 
-import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect, ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Menu, X, User, Facebook, Instagram, Linkedin, Youtube, Twitter, ChevronsUp } from 'lucide-react';
 import Chatbot from './Chatbot';
 
-const Layout = () => {
+interface LayoutProps {
+  children?: ReactNode;
+}
+
+const Layout = ({ children }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -209,7 +213,7 @@ const Layout = () => {
 
       {/* Main Content */}
       <main className="flex-grow pt-24">
-        <Outlet />
+        {children}
       </main>
 
       {/* Newsletter Section - Only show on home page */}

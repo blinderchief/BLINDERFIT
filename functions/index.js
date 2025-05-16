@@ -59,6 +59,32 @@ exports.askAI = onCall(async (data) => {
   }
 });
 
+// Test function to verify AI responses are relevant to questions
+exports.testAIResponse = onCall(async (data) => {
+  try {
+    const question = data.question || "What are the benefits of regular exercise?";
+    console.log(`Testing AI with question: "${question}"`);
+    
+    // Use Genkit to generate a response with the new API syntax
+    const { text } = await genkitClient.generate(question, {
+      systemPrompt: "You are a helpful fitness assistant. Provide accurate and direct answers to the specific question asked. Do not provide generic pre-written responses.",
+      temperature: 0.3,
+      maxOutputTokens: 500,
+    });
+    
+    console.log(`AI response: "${text.substring(0, 100)}..."`);
+    
+    return {
+      question: question,
+      answer: text,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error("Error testing AI:", error);
+    throw new Error(`Failed to process your request: ${error.message}`);
+  }
+});
+
 // For backward compatibility, keep the testPing function
 exports.testPing = onRequest((request, response) => {
   response.status(200).send({
@@ -106,3 +132,4 @@ exports.getPersonalizedInsights = onCall(async (data, context) => {
     throw new Error(`Failed to get personalized insights: ${error.message}`);
   }
 });
+

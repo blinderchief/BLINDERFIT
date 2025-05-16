@@ -94,6 +94,12 @@ const EducationalContent = () => {
                 src={article.image} 
                 alt={article.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
+                onError={(e) => {
+                  // Fallback image if the original fails to load
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80";
+                  console.log(`Failed to load image for article: ${article.title}`);
+                }}
               />
               <div className="absolute top-4 left-4 bg-gold/90 text-black text-xs font-medium px-3 py-1">
                 {article.category}
@@ -123,3 +129,5 @@ const EducationalContent = () => {
 };
 
 export default EducationalContent;
+
+
