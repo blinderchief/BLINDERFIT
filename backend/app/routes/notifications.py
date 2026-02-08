@@ -7,14 +7,14 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
-from app.core.database import get_firestore_client
+from app.core.database import db_service
 from app.routes.auth import get_current_user
 
 router = APIRouter(tags=["notifications"])
 
 
 def _get_svc():
-    """Lazy import notification service to avoid module-level Firebase init"""
+    """Lazy import notification service"""
     from app.services.notification_service import notification_service
     return notification_service
 
@@ -25,10 +25,6 @@ class NotificationRequest(BaseModel):
     notification_type: str = Field("general", description="Type of notification")
     data: Optional[Dict[str, Any]] = Field(None, description="Additional data")
     scheduled_at: Optional[datetime] = Field(None, description="Scheduled time")
-
-
-class FCMTokenUpdate(BaseModel):
-    fcm_token: str = Field(..., description="Firebase Cloud Messaging token")
 
 
 class NotificationPreferences(BaseModel):
@@ -84,9 +80,8 @@ async def send_exercise_reminder(current_user: str = Depends(get_current_user)):
 @router.post("/motivational")
 async def send_motivational_message(current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        user_doc = db.collection('users').document(current_user).get()
-        streak = user_doc.to_dict().get('current_streak', 0) if user_doc.exists else 0
+        user_data = db_service.get_user(current_user)
+        streak = user_data.get('current_streak', 0) if user_data else 0
         svc = _get_svc()
         nid = await svc.send_motivational_message(user_id=current_user, streak=streak)
         return {"notification_id": nid}
@@ -124,25 +119,12 @@ async def schedule_daily_notifications(background_tasks: BackgroundTasks, curren
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/fcm-token")
-async def update_fcm_token(request: FCMTokenUpdate, current_user: str = Depends(get_current_user)):
-    try:
-        svc = _get_svc()
-        success = await svc.update_fcm_token(user_id=current_user, fcm_token=request.fcm_token)
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to update FCM token")
-        return {"message": "FCM token updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.put("/preferences")
 async def update_notification_preferences(preferences: NotificationPreferences, current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        db.collection('users').document(current_user).update({
+        db_service.update_user(current_user, {
             'notification_preferences': preferences.dict(),
-            'preferences_updated_at': datetime.utcnow()
+            'preferences_updated_at': datetime.utcnow().isoformat()
         })
         return {"message": "Notification preferences updated successfully"}
     except Exception as e:
@@ -173,10 +155,7 @@ async def get_unread_notifications(current_user: str = Depends(get_current_user)
 @router.get("/history")
 async def get_notification_history(limit: int = 50, current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        ref = db.collection('users').document(current_user).collection('notifications')
-        docs = ref.order_by('created_at', direction='DESCENDING').limit(limit).get()
-        return [doc.to_dict() for doc in docs]
+        return db_service.query_user_docs(current_user, "notifications", order_by="created_at", order_dir="DESC", limit_count=limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -196,8 +175,7 @@ async def send_bulk_notifications(request: BulkNotificationRequest, current_user
 @router.delete("/{notification_id}")
 async def delete_notification(notification_id: str, current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        db.collection('users').document(current_user).collection('notifications').document(notification_id).delete()
+        db_service.delete_user_doc(current_user, "notifications", notification_id)
         return {"message": "Notification deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -206,14 +184,12 @@ async def delete_notification(notification_id: str, current_user: str = Depends(
 @router.get("/stats")
 async def get_notification_stats(current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        ref = db.collection('users').document(current_user).collection('notifications')
-        all_docs = list(ref.get())
-        total = len(all_docs)
-        unread = sum(1 for d in all_docs if d.to_dict().get('read_at') is None)
+        all_notifs = db_service.query_user_docs(current_user, "notifications")
+        total = len(all_notifs)
+        unread = sum(1 for n in all_notifs if n.get('read_at') is None)
         types_count = {}
-        for d in all_docs:
-            t = d.to_dict().get('type', 'general')
+        for n in all_notifs:
+            t = n.get('type', 'general')
             types_count[t] = types_count.get(t, 0) + 1
         return {"total_notifications": total, "unread_count": unread, "notifications_by_type": types_count}
     except Exception as e:

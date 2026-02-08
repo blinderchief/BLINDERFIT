@@ -1,24 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import axios from 'axios';
-import { auth } from '@/integrations/firebase/client';
-import { storage } from '@/integrations/firebase/client';
-import { db, functions } from '@/integrations/firebase/client';
-import { httpsCallable } from "firebase/functions";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, limit, addDoc, serverTimestamp } from "firebase/firestore";
-import { v4 as uuidv4 } from 'uuid';
-import { useAuth } from "@/contexts/AuthContext"; // Using the primary AuthContext
+import { useAuth } from "@/contexts/AuthContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Menu, X, Send, Mic, MicOff, ImageIcon, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import apiService from "@/services/api";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
+  CardFooter
 } from "@/components/ui/card";
 import {
   Form,
@@ -34,18 +28,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  files?: { id: string; name: string; type: string; url?: string }[];
+}
+
+interface ChatSession {
+  id: string;
+  title: string;
+  messageCount: number;
+  lastUpdatedAt: Date;
+  isActive: boolean;
+}
+
 const FitMentor = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [sessionId, setSessionId] = useState(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [showSessionDrawer, setShowSessionDrawer] = useState(false);
-  const [userSessions, setUserSessions] = useState([]);
+  const [userSessions, setUserSessions] = useState<ChatSession[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
 
   const [activeTab, setActiveTab] = useState('chat');
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     { 
       role: 'assistant', 
       content: 'Hello! I\'m FitMentor, your AI fitness coach. How can I help you today with your fitness journey?'
@@ -59,10 +67,10 @@ const FitMentor = () => {
   const [fitnessPlan, setFitnessPlan] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef(null);
-  const documentInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
 
   const formSchema = z.object({
     age: z.string().min(1, "Age is required"),
@@ -93,49 +101,22 @@ const FitMentor = () => {
     }
   });
 
+  // Load sessions from backend API
   const loadUserSessions = async () => {
     if (!user) return;
     
     setIsLoadingSessions(true);
     
     try {
-      const sessionsQuery = query(
-        collection(db, 'chat_sessions'),
-        where('userId', '==', user.uid),
-        orderBy('lastUpdatedAt', 'desc'),
-        limit(20)
-      );
-      
-      const sessionsSnapshot = await getDocs(sessionsQuery);
-      const sessions = [];
-      
-      for (const sessionDoc of sessionsSnapshot.docs) {
-        const sessionData = sessionDoc.data();
-        
-        const firstMessageQuery = query(
-          collection(db, 'chat_sessions', sessionDoc.id, 'messages'),
-          orderBy('timestamp', 'asc'),
-          limit(1)
-        );
-        
-        const firstMessageSnapshot = await getDocs(firstMessageQuery);
-        let sessionTitle = 'New Conversation';
-        
-        if (!firstMessageSnapshot.empty) {
-          const firstMessage = firstMessageSnapshot.docs[0].data();
-          sessionTitle = firstMessage.content.substring(0, 30) + (firstMessage.content.length > 30 ? '...' : '');
-        }
-        
-        sessions.push({
-          id: sessionDoc.id,
-          title: sessionTitle,
-          messageCount: sessionData.messageCount || 0,
-          lastUpdatedAt: sessionData.lastUpdatedAt?.toDate() || new Date(),
-          isActive: sessionDoc.id === sessionId
-        });
-      }
-      
-      setUserSessions(sessions);
+      const sessions: any = await apiService.getChatHistory(20);
+      const sessionList = (sessions?.sessions || []).map((s: any) => ({
+        id: s.id,
+        title: s.title || 'New Conversation',
+        messageCount: s.message_count || 0,
+        lastUpdatedAt: new Date(s.last_updated_at || Date.now()),
+        isActive: s.id === sessionId
+      }));
+      setUserSessions(sessionList);
     } catch (error) {
       console.error("Error loading user sessions:", error);
     } finally {
@@ -149,7 +130,8 @@ const FitMentor = () => {
     }
   }, [showSessionDrawer, user]);
 
-  const switchSession = async (newSessionId) => {
+  // Switch to a different chat session
+  const switchSession = async (newSessionId: string) => {
     if (newSessionId === sessionId) return;
     
     setIsLoadingHistory(true);
@@ -158,15 +140,17 @@ const FitMentor = () => {
       setSessionId(newSessionId);
       localStorage.setItem('fitmentor_session_id', newSessionId);
       
-      const messagesQuery = query(
-        collection(db, 'chat_sessions', newSessionId, 'messages'),
-        orderBy('timestamp', 'asc')
-      );
+      const sessionData: any = await apiService.get(`/ai/session/${newSessionId}`);
+      const loadedMessages = (sessionData?.messages || []).map((m: any) => ({
+        role: m.role,
+        content: m.content,
+        files: m.files
+      }));
       
-      const messagesSnapshot = await getDocs(messagesQuery);
-      const loadedMessages = messagesSnapshot.docs.map(doc => doc.data());
-      
-      setMessages(loadedMessages);
+      setMessages(loadedMessages.length > 0 ? loadedMessages : [{ 
+        role: 'assistant', 
+        content: 'Hello! I\'m FitMentor, your AI fitness coach. How can I help you today?'
+      }]);
       
       setShowSessionDrawer(false);
     } catch (error) {
@@ -176,29 +160,22 @@ const FitMentor = () => {
     }
   };
 
+  // Start a new chat session
   const startNewSession = async () => {
     try {
-      const newSessionRef = doc(collection(db, 'chat_sessions'));
-      const newSessionId = newSessionRef.id;
-      
-      await setDoc(newSessionRef, {
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        lastUpdatedAt: serverTimestamp(),
-        messageCount: 0
-      });
-      
-      setSessionId(newSessionId);
-      localStorage.setItem('fitmentor_session_id', newSessionId);
-      
-      setMessages([]);
-      
+      setSessionId(null);
+      localStorage.removeItem('fitmentor_session_id');
+      setMessages([{
+        role: 'assistant',
+        content: 'Hello! I\'m FitMentor, your AI fitness coach. How can I help you today with your fitness journey?'
+      }]);
       setShowSessionDrawer(false);
     } catch (error) {
       console.error("Error creating new chat session:", error);
     }
   };
 
+  // Load chat history on mount
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!user) {
@@ -212,97 +189,35 @@ const FitMentor = () => {
         const storedSessionId = localStorage.getItem('fitmentor_session_id');
         
         if (storedSessionId) {
-          const sessionDoc = await getDoc(doc(db, 'chat_sessions', storedSessionId));
+          const sessionData: any = await apiService.get(`/ai/session/${storedSessionId}`);
           
-          if (sessionDoc.exists() && sessionDoc.data().userId === user.uid) {
+          if (sessionData?.messages?.length > 0) {
             setSessionId(storedSessionId);
-            
-            const messagesQuery = query(
-              collection(db, 'chat_sessions', storedSessionId, 'messages'),
-              orderBy('timestamp', 'asc')
-            );
-            
-            const messagesSnapshot = await getDocs(messagesQuery);
-            const loadedMessages = messagesSnapshot.docs.map(doc => doc.data());
-            
-            if (loadedMessages.length > 0) {
-              setMessages(loadedMessages);
-            }
-          } else {
-            await createNewSession();
+            const loadedMessages = sessionData.messages.map((m: any) => ({
+              role: m.role,
+              content: m.content,
+              files: m.files
+            }));
+            setMessages(loadedMessages);
           }
-        } else {
-          await createNewSession();
         }
       } catch (error) {
         console.error("Error loading chat history:", error);
-        await createNewSession();
       } finally {
         setIsLoadingHistory(false);
-      }
-    };
-    
-    const createNewSession = async () => {
-      try {
-        const newSessionRef = doc(collection(db, 'chat_sessions'));
-        const newSessionId = newSessionRef.id;
-        
-        await setDoc(newSessionRef, {
-          userId: user.uid,
-          createdAt: serverTimestamp(),
-          lastUpdatedAt: serverTimestamp(),
-          messageCount: 0
-        });
-        
-        setSessionId(newSessionId);
-        localStorage.setItem('fitmentor_session_id', newSessionId);
-        
-        setMessages([]);
-      } catch (error) {
-        console.error("Error creating new chat session:", error);
       }
     };
     
     loadChatHistory();
   }, [user]);
 
-  const saveMessageToFirestore = async (message, isUserMessage = false) => {
-    if (!user || !sessionId) return;
-    
-    try {
-      const messageRef = doc(collection(db, 'chat_sessions', sessionId, 'messages'));
-      
-      await setDoc(messageRef, {
-        ...message,
-        id: messageRef.id,
-        timestamp: serverTimestamp()
-      });
-      
-      await setDoc(doc(db, 'chat_sessions', sessionId), {
-        lastUpdatedAt: serverTimestamp(),
-        messageCount: messages.length + 1
-      }, { merge: true });
-      
-      if (isUserMessage) {
-        await addDoc(collection(db, 'user_queries'), {
-          userId: user.uid,
-          sessionId: sessionId,
-          query: message.content,
-          files: message.files || [],
-          timestamp: serverTimestamp()
-        });
-      }
-    } catch (error) {
-      console.error("Error saving message to Firestore:", error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  // Send message to AI backend
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!input.trim() && uploadedFiles.length === 0) return;
     
-    const userMessage = { 
+    const userMessage: ChatMessage = { 
       role: 'user', 
       content: input,
       files: uploadedFiles.length > 0 ? [...uploadedFiles] : undefined
@@ -310,18 +225,14 @@ const FitMentor = () => {
     
     setMessages(prev => [...prev, userMessage]);
     
-    await saveMessageToFirestore(userMessage, true);
-    
     const questionText = input;
     setInput('');
     setIsLoading(true);
     
     try {
-      const user = auth.currentUser;
       if (!user) {
-        const errorMessage = { role: 'assistant', content: 'Please log in to use the AI coach.' };
+        const errorMessage: ChatMessage = { role: 'assistant', content: 'Please log in to use the AI coach.' };
         setMessages(prev => [...prev, errorMessage]);
-        await saveMessageToFirestore(errorMessage);
         setIsLoading(false);
         return;
       }
@@ -331,137 +242,50 @@ const FitMentor = () => {
         content: msg.content
       }));
       
-      // First try a simple test call to verify connection
-      try {
-        const helloWorld = httpsCallable(functions, 'helloWorld');
-        const result = await helloWorld({});
-        console.log("Connection test successful:", result);
-      } catch (testError) {
-        console.error("Connection test failed:", testError);
-        // Don't throw, try the main call anyway
+      // Call backend AI endpoint
+      const response: any = await apiService.sendMessage(questionText, {
+        chat_history: recentMessages,
+        session_id: sessionId,
+        files: uploadedFiles.length > 0 ? uploadedFiles.map(f => f.name) : undefined,
+        source: 'fitmentor_page'
+      });
+      
+      const formattedResponse = response?.response || response?.message || response?.data?.response || 
+        "I'm sorry, I couldn't generate a proper response. Please try asking again.";
+      
+      // Update session ID if a new one was created
+      if (response?.session_id && !sessionId) {
+        setSessionId(response.session_id);
+        localStorage.setItem('fitmentor_session_id', response.session_id);
       }
       
-      // Use Firebase callable functions
-      const askAI = httpsCallable(functions, 'askAI');
-      
-      let payload = { 
-        question: questionText + "\n\nContext: " + recentMessages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join("\n")
-      };
-      
-      if (uploadedFiles.length > 0) {
-        payload.question += "\n\nThe user has uploaded these files: " + 
-          uploadedFiles.map(file => file.name).join(", ");
-      }
-      
-      console.log("Sending request to AI:", payload);
-      const response = await askAI(payload);
-      
-      console.log("Raw response from AI:", response);
-      
-      // Access callable function result via response.data
-      const answer = response.data;
-      console.log("Parsed answer:", answer);
-      
-      let formattedResponse = '';
-      
-      if (answer && typeof answer === 'object') {
-        // Handle common response formats
-        if (answer.text) {
-          formattedResponse += answer.text;
-        } else if (answer.mainAnswer) {
-          formattedResponse += answer.mainAnswer;
-        } else if (answer.answer) {
-          formattedResponse += answer.answer;
-        } else if (Object.keys(answer).length > 0) {
-          // Extract any key that might contain text
-          for (const key in answer) {
-            if (typeof answer[key] === 'string' && answer[key].length > 10) {
-              formattedResponse += answer[key] + '\n\n';
-            }
-          }
-        }
-      } else if (typeof answer === 'string') {
-        formattedResponse = answer;
-      } else {
-        // Handle unexpected response format
-        try {
-          const stringified = JSON.stringify(answer, null, 2);
-          console.log("Stringified unexpected response:", stringified);
-          formattedResponse = "I've processed your question but received an unexpected response format. Please try again with a different question.";
-        } catch (err) {
-          console.error("Failed to stringify response:", err);
-          formattedResponse = "I've processed your question but couldn't parse the response. Please try again or contact support.";
-        }
-      }
-      
-      const assistantMessage = { 
+      const assistantMessage: ChatMessage = { 
         role: 'assistant', 
-        content: formattedResponse.trim() || "I'm sorry, I couldn't generate a proper response. Please try asking again."
+        content: formattedResponse.trim()
       };
       
       setMessages(prev => [...prev, assistantMessage]);
-      
-      await saveMessageToFirestore(assistantMessage);
-      
       setUploadedFiles([]);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error getting AI response:", error);
-      
-      // Enhanced error reporting for better troubleshooting
-      let errorDetails = "";
-      let errorCode = "";
-      
-      if (error.code) {
-        errorCode = error.code;
-        errorDetails += `\nError code: ${error.code}`;
-      }
-      if (error.message) {
-        errorDetails += `\nError message: ${error.message}`;
-      }
-      if (error.details) {
-        errorDetails += `\nError details: ${JSON.stringify(error.details)}`;
-      }
-      if (error.stack) {
-        errorDetails += `\nStack trace: ${error.stack}`;
-      }
-      
-      console.log("Detailed error info:", errorDetails);
       
       let userFacingErrorMessage = "I'm sorry, I encountered an error while processing your question. Please try again later.";
       
-      // If we're in development, add more details
-      if (process.env.NODE_ENV === 'development') {
-        userFacingErrorMessage += `\n\nTechnical details: ${errorCode || 'unknown error'}`;
-      }
-      
-      // For specific error codes, provide more helpful messages
-      if (errorCode === 'functions/internal') {
-        userFacingErrorMessage = "I'm sorry, there's a temporary issue with the AI service. Our team has been notified and is working on a fix.";
-      } else if (errorCode === 'functions/unavailable') {
-        userFacingErrorMessage = "The AI service is currently unavailable. Please try again in a few minutes.";
-      } else if (errorCode === 'functions/unauthenticated' || errorCode === 'functions/permission-denied') {
+      if (error?.response?.status === 401) {
         userFacingErrorMessage = "You need to be logged in to use this feature. Please log in and try again.";
-      } else if (errorCode === 'functions/invalid-argument') {
-        userFacingErrorMessage = "There was an issue with your request. Please try asking a simpler question.";
+      } else if (error?.response?.status === 429) {
+        userFacingErrorMessage = "You're sending messages too quickly. Please wait a moment and try again.";
+      } else if (error?.code === 'ERR_NETWORK') {
+        userFacingErrorMessage = "I'm having trouble connecting to the AI server. Please make sure the backend is running.";
       }
       
-      const errorMessage = { 
+      const errorMsg: ChatMessage = { 
         role: 'assistant', 
         content: userFacingErrorMessage
       };
       
-      setMessages(prev => [...prev, errorMessage]);
-      await saveMessageToFirestore(errorMessage);
-      
-      // Try to call a simpler function to determine if it's a specific issue with the AI function
-      try {
-        const helloWorld = httpsCallable(functions, 'helloWorld');
-        const pingResult = await helloWorld({});
-        console.log("Hello world succeeded after AI failure:", pingResult);
-      } catch (pingError) {
-        console.error("Hello world also failed, likely a connection issue:", pingError);
-      }
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
@@ -482,7 +306,6 @@ const FitMentor = () => {
 
   const stopRecording = () => {
     console.log('Stopping voice recording...');
-    
     setTimeout(() => {
       const possibleInputs = [
         "How many days per week should I work out?",
@@ -494,7 +317,7 @@ const FitMentor = () => {
   };
 
   const handleNext = async () => {
-    const fields = [];
+    const fields: string[] = [];
     
     switch (currentStep) {
       case 1:
@@ -511,7 +334,7 @@ const FitMentor = () => {
         break;
     }
     
-    const result = await form.trigger(fields);
+    const result = await form.trigger(fields as any);
     
     if (result && currentStep < 4) {
       setCurrentStep(prev => prev + 1);
@@ -530,10 +353,9 @@ const FitMentor = () => {
     }
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
-      const user = auth.currentUser;
       if (!user) {
         toast({
           variant: 'destructive',
@@ -544,15 +366,14 @@ const FitMentor = () => {
         return;
       }
       
-      // Use Firebase callable function instead of direct HTTP request
-      const generatePersonalizedPlan = httpsCallable(functions, 'askAI');
-      const result = await generatePersonalizedPlan({
-        question: "Generate a 7-day fitness and nutrition plan based on this profile: " + JSON.stringify(data)
-      });
+      // Use backend API to generate plan
+      const response: any = await apiService.sendMessage(
+        "Generate a 7-day fitness and nutrition plan based on this profile: " + JSON.stringify(data),
+        { source: 'fitmentor_assessment' }
+      );
       
-      // Access the result from the callable function
-      const planData = result.data;
-      setFitnessPlan(planData.plan || 'No plan generated.');
+      const planText = response?.response || response?.message || 'No plan generated.';
+      setFitnessPlan(planText);
       setHasSubmitted(true);
       
       toast({
@@ -571,7 +392,8 @@ const FitMentor = () => {
     }
   };
 
-  const handleImageUpload = async (e) => {
+  // File uploads now use backend upload endpoint
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
@@ -588,18 +410,11 @@ const FitMentor = () => {
           continue;
         }
         
-        const fileId = uuidv4();
-        const fileRef = ref(storage, `user-uploads/${auth.currentUser.uid}/images/${fileId}-${file.name}`);
-        
-        await uploadBytes(fileRef, file);
-        
-        const downloadURL = await getDownloadURL(fileRef);
-        
+        // For now, store file info locally — actual upload happens via backend API
         newFiles.push({
-          id: fileId,
+          id: crypto.randomUUID(),
           name: file.name,
           type: 'image',
-          url: downloadURL,
           size: file.size,
           uploadedAt: new Date().toISOString()
         });
@@ -611,13 +426,13 @@ const FitMentor = () => {
         fileInputRef.current.value = "";
       }
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error handling image:", error);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleDocumentUpload = async (e) => {
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
@@ -635,18 +450,10 @@ const FitMentor = () => {
           continue;
         }
         
-        const fileId = uuidv4();
-        const fileRef = ref(storage, `user-uploads/${auth.currentUser.uid}/documents/${fileId}-${file.name}`);
-        
-        await uploadBytes(fileRef, file);
-        
-        const downloadURL = await getDownloadURL(fileRef);
-        
         newFiles.push({
-          id: fileId,
+          id: crypto.randomUUID(),
           name: file.name,
           type: 'document',
-          url: downloadURL,
           size: file.size,
           uploadedAt: new Date().toISOString()
         });
@@ -658,13 +465,13 @@ const FitMentor = () => {
         documentInputRef.current.value = "";
       }
     } catch (error) {
-      console.error("Error uploading document:", error);
+      console.error("Error handling document:", error);
     } finally {
       setIsUploading(false);
     }
   };
 
-  const removeFile = (fileId) => {
+  const removeFile = (fileId: string) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
@@ -681,12 +488,7 @@ const FitMentor = () => {
                   <FormItem>
                     <FormLabel className="text-sm font-medium">Age <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        placeholder="Enter your age" 
-                        className="w-full"
-                      />
+                      <Input type="number" {...field} placeholder="Enter your age" className="w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -699,10 +501,7 @@ const FitMentor = () => {
                   <FormItem>
                     <FormLabel className="text-sm font-medium">Gender <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <select 
-                        {...field}
-                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                      >
+                      <select {...field} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
                         <option value="">Select gender</option>
                         <option value="male">Male</option>
                         <option value="female">Female</option>
@@ -723,12 +522,7 @@ const FitMentor = () => {
                   <FormItem>
                     <FormLabel className="text-sm font-medium">Weight (kg) <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        placeholder="Enter your weight in kg" 
-                        className="w-full"
-                      />
+                      <Input type="number" {...field} placeholder="Enter your weight in kg" className="w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -741,12 +535,7 @@ const FitMentor = () => {
                   <FormItem>
                     <FormLabel className="text-sm font-medium">Height (cm) <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field} 
-                        placeholder="Enter your height in cm" 
-                        className="w-full"
-                      />
+                      <Input type="number" {...field} placeholder="Enter your height in cm" className="w-full" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -765,10 +554,7 @@ const FitMentor = () => {
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Activity Level <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <select 
-                      {...field}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    >
+                    <select {...field} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
                       <option value="">Select activity level</option>
                       <option value="sedentary">Sedentary (little to no exercise)</option>
                       <option value="light">Light (1-3 days/week)</option>
@@ -788,11 +574,7 @@ const FitMentor = () => {
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Fitness Goals <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="Describe your fitness goals (e.g., weight loss, muscle gain, improved endurance)"
-                      className="min-h-[100px]"
-                    />
+                    <Textarea {...field} placeholder="Describe your fitness goals (e.g., weight loss, muscle gain, improved endurance)" className="min-h-[100px]" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -810,11 +592,7 @@ const FitMentor = () => {
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Medical Conditions</FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="List any medical conditions or injuries we should be aware of"
-                      className="min-h-[100px]"
-                    />
+                    <Textarea {...field} placeholder="List any medical conditions or injuries we should be aware of" className="min-h-[100px]" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -827,11 +605,7 @@ const FitMentor = () => {
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Dietary Preferences <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="Any dietary preferences or restrictions (vegetarian, vegan, allergies, etc.)"
-                      className="min-h-[100px]"
-                    />
+                    <Textarea {...field} placeholder="Any dietary preferences or restrictions (vegetarian, vegan, allergies, etc.)" className="min-h-[100px]" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -849,12 +623,7 @@ const FitMentor = () => {
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Sleep Hours (average per night) <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      {...field} 
-                      placeholder="Average hours of sleep per night" 
-                      className="w-full"
-                    />
+                    <Input type="number" {...field} placeholder="Average hours of sleep per night" className="w-full" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -867,10 +636,7 @@ const FitMentor = () => {
                 <FormItem>
                   <FormLabel className="text-sm font-medium">Stress Level <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
-                    <select 
-                      {...field}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                    >
+                    <select {...field} className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm">
                       <option value="">Select stress level</option>
                       <option value="low">Low (rarely stressed)</option>
                       <option value="moderate">Moderate (occasionally stressed)</option>
@@ -894,10 +660,6 @@ const FitMentor = () => {
     }
   };
 
-  useEffect(() => {
-    return () => {};
-  }, []);
-
   return (
     <div className="min-h-[calc(100vh-96px)] bg-black">
       <div className="gofit-container py-12">
@@ -916,6 +678,7 @@ const FitMentor = () => {
           
           <TabsContent value="chat" className="m-0">
             <div className="flex h-full">
+              {/* Session drawer */}
               <div 
                 className={`fixed inset-y-0 left-0 z-40 w-64 bg-black/90 border-r border-white/10 transform ${
                   showSessionDrawer ? 'translate-x-0' : '-translate-x-full'
@@ -996,9 +759,7 @@ const FitMentor = () => {
                         {messages.map((message, index) => (
                           <div
                             key={index}
-                            className={`flex ${
-                              message.role === "assistant" ? "justify-start" : "justify-end"
-                            } mb-4`}
+                            className={`flex ${message.role === "assistant" ? "justify-start" : "justify-end"} mb-4`}
                           >
                             <div
                               className={`max-w-[80%] rounded-lg p-4 ${
@@ -1007,23 +768,16 @@ const FitMentor = () => {
                                   : "bg-gold/10 text-white"
                               }`}
                             >
-                              <div className="whitespace-pre-line">
-                                {message.content}
-                              </div>
+                              <div className="whitespace-pre-line">{message.content}</div>
                               
                               {message.files && message.files.length > 0 && (
                                 <div className="mt-3 pt-3 border-t border-white/10">
-                                  <div className="text-xs text-gray-400 mb-2">
-                                    Uploaded files:
-                                  </div>
+                                  <div className="text-xs text-gray-400 mb-2">Uploaded files:</div>
                                   <div className="flex flex-wrap gap-2">
                                     {message.files.map(file => (
-                                      <a
+                                      <span
                                         key={file.id}
-                                        href={file.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center bg-black/30 rounded px-2 py-1 text-xs hover:bg-black/50 transition-colors"
+                                        className="flex items-center bg-black/30 rounded px-2 py-1 text-xs"
                                       >
                                         {file.type === 'image' ? (
                                           <ImageIcon size={12} className="mr-1 text-gold" />
@@ -1031,7 +785,7 @@ const FitMentor = () => {
                                           <FileText size={12} className="mr-1 text-gold" />
                                         )}
                                         <span className="truncate max-w-[100px]">{file.name}</span>
-                                      </a>
+                                      </span>
                                     ))}
                                   </div>
                                 </div>
@@ -1095,10 +849,7 @@ const FitMentor = () => {
                             />
                           </div>
 
-                          <button 
-                            type="submit" 
-                            className="p-2.5 bg-gold text-black rounded-full"
-                          >
+                          <button type="submit" className="p-2.5 bg-gold text-black rounded-full">
                             <Send size={20} />
                           </button>
                         </form>
@@ -1133,9 +884,7 @@ const FitMentor = () => {
                             <div
                               key={step}
                               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                                step <= currentStep
-                                  ? 'bg-gold text-black'
-                                  : 'bg-gray-700 text-gray-300'
+                                step <= currentStep ? 'bg-gold text-black' : 'bg-gray-700 text-gray-300'
                               }`}
                             >
                               {step}
@@ -1143,10 +892,7 @@ const FitMentor = () => {
                           ))}
                         </div>
                         <div className="absolute top-4 left-0 right-0 h-[2px] bg-gray-700 -z-10">
-                          <div
-                            className="h-full bg-gold transition-all duration-300"
-                            style={{ width: `${(currentStep - 1) * 33.33}%` }}
-                          ></div>
+                          <div className="h-full bg-gold transition-all duration-300" style={{ width: `${(currentStep - 1) * 33.33}%` }}></div>
                         </div>
                       </div>
                     </div>
@@ -1157,28 +903,13 @@ const FitMentor = () => {
 
                         <div className="flex justify-between mt-8">
                           {currentStep > 1 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handlePrev}
-                            >
-                              Previous
-                            </Button>
+                            <Button type="button" variant="outline" onClick={handlePrev}>Previous</Button>
                           )}
                           <div className="ml-auto">
                             {currentStep < 4 ? (
-                              <Button
-                                type="button"
-                                onClick={handleNext}
-                              >
-                                Next
-                              </Button>
+                              <Button type="button" onClick={handleNext}>Next</Button>
                             ) : (
-                              <Button
-                                type="submit"
-                                disabled={isLoading}
-                                className="bg-gold hover:bg-gold/90 text-black"
-                              >
+                              <Button type="submit" disabled={isLoading} className="bg-gold hover:bg-gold/90 text-black">
                                 {isLoading ? (
                                   <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1213,21 +944,13 @@ const FitMentor = () => {
                         <ScrollArea className="h-[600px] rounded-md border p-4">
                           <div className="prose prose-invert max-w-none">
                             {fitnessPlan.split('\n').map((line, i) => {
-                              if (line.startsWith('# ')) {
-                                return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{line.replace('# ', '')}</h1>
-                              } else if (line.startsWith('## ')) {
-                                return <h2 key={i} className="text-xl font-semibold mt-5 mb-3">{line.replace('## ', '')}</h2>
-                              } else if (line.startsWith('### ')) {
-                                return <h3 key={i} className="text-lg font-medium mt-4 mb-2">{line.replace('### ', '')}</h3>
-                              } else if (line.startsWith('- ')) {
-                                return <li key={i} className="ml-4 mb-1">{line.replace('- ', '')}</li>
-                              } else if (line.startsWith('*')) {
-                                return <p key={i} className="italic text-gray-400 my-2">{line.replace('*', '')}</p>
-                              } else if (line.trim() === '') {
-                                return <br key={i} />
-                              } else {
-                                return <p key={i} className="my-2">{line}</p>
-                              }
+                              if (line.startsWith('# ')) return <h1 key={i} className="text-2xl font-bold mt-6 mb-4">{line.replace('# ', '')}</h1>;
+                              if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-semibold mt-5 mb-3">{line.replace('## ', '')}</h2>;
+                              if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-medium mt-4 mb-2">{line.replace('### ', '')}</h3>;
+                              if (line.startsWith('- ')) return <li key={i} className="ml-4 mb-1">{line.replace('- ', '')}</li>;
+                              if (line.startsWith('*')) return <p key={i} className="italic text-gray-400 my-2">{line.replace('*', '')}</p>;
+                              if (line.trim() === '') return <br key={i} />;
+                              return <p key={i} className="my-2">{line}</p>;
                             })}
                           </div>
                         </ScrollArea>
@@ -1250,21 +973,14 @@ const FitMentor = () => {
                             </Button>
                           </div>
                           <p className="text-sm text-muted-foreground mt-8">
-                            Remember, this plan is designed specifically for you based on the information you provided. For best results, follow it consistently for the full 7 days.
+                            Remember, this plan is designed specifically for you based on the information you provided.
                           </p>
                         </div>
                       </TabsContent>
                     </Tabs>
                   </CardContent>
                   <CardFooter className="flex justify-between">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setHasSubmitted(false);
-                        setCurrentStep(1);
-                        form.reset();
-                      }}
-                    >
+                    <Button variant="outline" onClick={() => { setHasSubmitted(false); setCurrentStep(1); form.reset(); }}>
                       Start Over
                     </Button>
                     <Button className="bg-gold hover:bg-gold/90 text-black">Schedule Consultation</Button>
@@ -1279,7 +995,7 @@ const FitMentor = () => {
   );
 };
 
-const formatDate = (date) => {
+const formatDate = (date: Date) => {
   if (!date) return '';
   
   const now = new Date();
@@ -1297,15 +1013,3 @@ const formatDate = (date) => {
 };
 
 export default FitMentor;
-
-
-
-
-
-
-
-
-
-
-
-

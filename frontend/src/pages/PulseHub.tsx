@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealthData } from '@/contexts/HealthDataContext';
-import { db } from '@/integrations/firebase/client';
-import { doc, onSnapshot } from 'firebase/firestore';
+import apiService from '@/services/api';
 import {
   Dumbbell, Brain, Activity, Flame, Heart, Trophy, Target,
   CalendarDays, TrendingUp, Users, BookOpen, ChevronRight,
@@ -47,7 +46,7 @@ const DEFAULT_STATS: DashStats = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Chart data (placeholder – swap with real Firestore data)           */
+/*  Chart data (placeholder – swap with real API data)                 */
 /* ------------------------------------------------------------------ */
 
 const weekActivity = [
@@ -199,38 +198,35 @@ const PulseHub = () => {
     return () => clearTimeout(t);
   }, []);
 
-  /* ---- Firestore real-time sync ---- */
+  /* ---- Backend API data fetch ---- */
   useEffect(() => {
     if (!user) { setLoading(false); return; }
 
-    const ref = doc(db, 'users', user.uid);
-    const timeout = setTimeout(() => setLoading(false), 8000);
-
-    const unsub = onSnapshot(
-      ref,
-      (snap) => {
-        clearTimeout(timeout);
-        if (snap.exists()) {
-          const d = snap.data();
+    const fetchStats = async () => {
+      try {
+        const data: any = await apiService.getDashboardData();
+        if (data) {
           setStats({
-            workoutsCompleted: d.workoutsCompleted ?? d.stats?.workoutCompleted ?? 0,
-            streak: d.streak ?? d.stats?.daysStreak ?? 0,
-            caloriesBurned: d.caloriesBurned ?? 0,
-            activeMinutes: d.activeMinutes ?? 0,
-            hydration: d.hydration ?? 0,
-            sleepHours: d.sleepHours ?? 0,
-            sleepQuality: d.sleepQuality ?? 0,
-            heartRate: d.heartRate ?? d.stats?.heartRate?.current ?? 0,
-            points: d.points ?? d.stats?.totalPoints ?? 0,
-            weeklyGoal: d.weeklyGoal ?? { current: 0, target: 5 },
+            workoutsCompleted: data.workoutsCompleted ?? 0,
+            streak: data.streak ?? 0,
+            caloriesBurned: data.caloriesBurned ?? 0,
+            activeMinutes: data.activeMinutes ?? 0,
+            hydration: data.hydration ?? 0,
+            sleepHours: data.sleepHours ?? 0,
+            sleepQuality: data.sleepQuality ?? 0,
+            heartRate: data.heartRate ?? 0,
+            points: data.points ?? 0,
+            weeklyGoal: data.weeklyGoal ?? { current: 0, target: 5 },
           });
         }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
         setLoading(false);
-      },
-      () => { clearTimeout(timeout); setLoading(false); }
-    );
+      }
+    };
 
-    return () => { clearTimeout(timeout); unsub(); };
+    fetchStats();
   }, [user]);
 
   /* ---- Loading / no-auth states ---- */
@@ -542,14 +538,3 @@ const PulseHub = () => {
 };
 
 export default PulseHub;
-
-
-
-
-
-
-
-
-
-
-

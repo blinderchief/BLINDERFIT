@@ -1,33 +1,25 @@
-import { functions } from '@/integrations/firebase/client';
-import { httpsCallable } from "firebase/functions";
-
 /**
- * Test function to verify Firebase Cloud Function connectivity
+ * Test utilities for API connectivity
  * Can be called from the browser console to debug
  */
-export const testFunctionCall = async () => {
+import apiService from '@/services/api';
+
+export const testAPICall = async () => {
   try {
-    console.log("Testing Firebase function connectivity...");
-    const testPing = httpsCallable(functions, 'testPing');
-    const result = await testPing();
-    console.log("Function call successful!", result);
+    console.log("Testing API connectivity...");
+    const result = await apiService.get('/health');
+    console.log("API call successful!", result);
     return result;
   } catch (error) {
-    console.error("Error calling Firebase function:", error);
+    console.error("Error calling API:", error);
     throw error;
   }
 };
 
-/**
- * Test the AI specifically with a simple question
- */
 export const testAICall = async () => {
   try {
     console.log("Testing AI function connectivity...");
-    const testAI = httpsCallable(functions, 'testAIResponse');
-    const result = await testAI({ 
-      question: "What's a simple exercise for beginners?" 
-    });
+    const result = await apiService.sendMessage("What's a simple exercise for beginners?");
     console.log("AI function call successful!", result);
     return result;
   } catch (error) {
@@ -39,7 +31,7 @@ export const testAICall = async () => {
 // Make these functions available on window for browser console testing
 if (typeof window !== 'undefined') {
   // @ts-ignore
-  window.testFunctionCall = testFunctionCall;
+  window.testAPICall = testAPICall;
   // @ts-ignore
   window.testAICall = testAICall;
 }

@@ -1,367 +1,232 @@
-# Blinderfit Production Deployment Guide
+# BlinderFit Deployment Guide
 
-## Overview
-This guide provides step-by-step instructions for deploying Blinderfit to production using Firebase and Docker.
+Complete step-by-step guide for deploying BlinderFit to production using **Clerk** (auth), **Neon** (database), **Railway** (backend), and **Vercel** (frontend).
+
+---
 
 ## Prerequisites
-- Firebase CLI installed (`npm install -g firebase-tools`)
-- Docker and Docker Compose installed
-- Google Cloud Platform project
-- Domain name (optional but recommended)
 
-## 1. Firebase Setup
+- GitHub account with the BlinderFit repo pushed
+- [Clerk](https://clerk.com) account (free tier)
+- [Neon](https://neon.tech) account (free tier)
+- [Railway](https://railway.app) account (Hobby plan or higher)
+- [Vercel](https://vercel.com) account (free tier)
+- [Google AI Studio](https://aistudio.google.com) API key
 
-### 1.1 Create Firebase Project
-```bash
-# Login to Firebase
-firebase login
+---
 
-# Create new project
-firebase projects:create blinderfit-prod
+## 1. Clerk Authentication Setup
 
-# Select the project
-firebase use blinderfit-prod
+1. Go to [clerk.com](https://clerk.com) and create a new application
+2. Name it **BlinderFit** and enable **Email** sign-in
+3. From the Clerk Dashboard → **API Keys**, copy:
+   - **Publishable key** (`pk_live_...` or `pk_test_...`)
+   - **Secret key** (`sk_live_...` or `sk_test_...`)
+4. Under **Domains** → add your production frontend URL (e.g., `https://blinderfit.vercel.app`)
+5. Under **JWT Templates** (optional) — the default session token works out of the box
+
+### Clerk Keys Needed
+
+| Key | Where Used |
+|-----|-----------|
+| `pk_live_...` (Publishable) | Frontend `VITE_CLERK_PUBLISHABLE_KEY` |
+| `sk_live_...` (Secret) | Backend `CLERK_SECRET_KEY` |
+
+---
+
+## 2. Neon PostgreSQL Database
+
+1. Go to [neon.tech](https://neon.tech) and create a new project
+2. Name it **blinderfit** and select a region close to your Railway backend
+3. Copy the **connection string** from the dashboard:
+   ```
+   postgresql://user:password@ep-xxxxx.us-east-2.aws.neon.tech/blinderfit?sslmode=require
+   ```
+4. The database tables are created automatically on first backend startup (SQLAlchemy `create_all`)
+
+### Neon Connection String
+
+| Variable | Value |
+|----------|-------|
+| `DATABASE_URL` | `postgresql://user:pass@host.neon.tech/blinderfit?sslmode=require` |
+
+---
+
+## 3. Google Gemini AI Key
+
+1. Go to [aistudio.google.com](https://aistudio.google.com)
+2. Click **Get API Key** → **Create API key**
+3. Copy the API key
+
+| Variable | Value |
+|----------|-------|
+| `GOOGLE_AI_API_KEY` | `AIza...` |
+
+---
+
+## 4. Backend Deployment (Railway)
+
+### 4.1 Create Railway Service
+
+1. Go to [railway.app](https://railway.app) and create a new project
+2. Click **New Service** → **GitHub Repo** → select your BlinderFit repo
+3. Set the **Root Directory** to `backend`
+4. Railway will auto-detect the Dockerfile
+
+### 4.2 Set Environment Variables
+
+In Railway's service settings → **Variables**, add:
+
 ```
-
-### 1.2 Enable Required Services
-1. Go to [Firebase Console](https://console.firebase.google.com)
-2. Enable Authentication
-3. Enable Firestore Database
-4. Enable Storage (for file uploads)
-5. Enable Hosting
-6. Enable Cloud Functions (if needed)
-
-### 1.3 Configure Authentication
-1. Go to Authentication > Sign-in method
-2. Enable Email/Password and Google providers
-3. Configure authorized domains (add your production domain)
-
-### 1.4 Firestore Security Rules
-The Firestore rules are already configured in `firestore.rules`. Deploy them:
-```bash
-firebase deploy --only firestore:rules
-```
-
-### 1.5 Firestore Indexes
-Deploy the indexes:
-```bash
-firebase deploy --only firestore:indexes
-```
-
-## 2. Environment Variables Setup
-
-### 2.1 Backend Environment Variables
-Create a `.env` file in the backend directory:
-
-```env
-# Environment
+DATABASE_URL=postgresql://user:pass@host.neon.tech/blinderfit?sslmode=require
+CLERK_SECRET_KEY=sk_live_your_clerk_secret_key
+GOOGLE_AI_API_KEY=AIza_your_gemini_api_key
 ENVIRONMENT=production
-
-# Server
-HOST=0.0.0.0
 PORT=8000
-
-# CORS
-ALLOWED_ORIGINS=https://blinderfit.blinder.live,https://blinderfit-prod.web.app,https://blinderfit-prod.firebaseapp.com
-
-# Firebase
-FIREBASE_PROJECT_ID=blinderfit-prod
-FIREBASE_PRIVATE_KEY_ID=your-private-key-id
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour-private-key\n-----END PRIVATE KEY-----\n"
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@blinderfit-prod.iam.gserviceaccount.com
-FIREBASE_CLIENT_ID=your-client-id
-FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
-FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
-FIREBASE_AUTH_PROVIDER_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
-FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-xxxxx%40blinderfit-prod.iam.gserviceaccount.com
-
-# Google AI (Gemini)
-GOOGLE_AI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-1.5-pro
-
-# JWT
-JWT_SECRET_KEY=your-super-secret-jwt-key
-JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# Rate Limiting
-RATE_LIMIT_REQUESTS=100
-RATE_LIMIT_WINDOW=60
-
-# Logging
-LOG_LEVEL=INFO
+ALLOWED_ORIGINS=["https://blinderfit.vercel.app","https://your-custom-domain.com"]
 ```
 
-### 2.2 Frontend Environment Variables
-Create a `.env` file in the frontend directory:
+### 4.3 Deploy
 
-```env
-VITE_API_BASE_URL=https://api.blinderfit.blinder.live
-VITE_APP_NAME=Blinderfit
-VITE_APP_VERSION=1.0.0
-VITE_FIREBASE_API_KEY=your-firebase-api-key
-VITE_FIREBASE_AUTH_DOMAIN=blinderfit-prod.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=blinderfit-prod
-VITE_FIREBASE_STORAGE_BUCKET=blinderfit-prod.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
-VITE_FIREBASE_APP_ID=your-app-id
+Railway will automatically build and deploy from the Dockerfile. After deployment:
+
+1. Copy the generated public URL (e.g., `https://blinderfit-backend-production.up.railway.app`)
+2. Test the health endpoint:
+   ```bash
+   curl https://blinderfit-backend-production.up.railway.app/health
+   # Should return: {"status":"healthy","version":"1.0.0"}
+   ```
+3. Test the API docs: `https://your-backend-url.up.railway.app/docs`
+
+### 4.4 Custom Domain (Optional)
+
+1. In Railway → Service → **Settings** → **Networking**
+2. Add your custom domain (e.g., `api.blinderfit.com`)
+3. Add the CNAME record to your DNS
+
+---
+
+## 5. Frontend Deployment (Vercel)
+
+### 5.1 Connect to Vercel
+
+1. Go to [vercel.com](https://vercel.com) and click **Add New Project**
+2. Import your GitHub repo
+3. Set the **Root Directory** to `frontend`
+4. Vercel auto-detects the Vite framework
+
+### 5.2 Set Environment Variables
+
+In Vercel project settings → **Environment Variables**, add:
+
+```
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_your_clerk_publishable_key
+VITE_API_BASE_URL=https://blinderfit-backend-production.up.railway.app
 ```
 
-## 3. Docker Deployment
+### 5.3 Deploy
 
-### 3.1 Build and Deploy with Docker Compose
-```bash
-# Navigate to project root
-cd /path/to/blinderfit
+Click **Deploy**. Vercel will build and publish the frontend.
 
-# Build and start services
-docker-compose -f docker-compose.prod.yml up -d --build
+### 5.4 Custom Domain (Optional)
 
-# Check service status
-docker-compose -f docker-compose.prod.yml ps
-
-# View logs
-docker-compose -f docker-compose.prod.yml logs -f
-```
-
-### 3.2 Environment Variables for Docker
-Create a `.env.prod` file for production:
-
-```env
-# Firebase
-FIREBASE_PROJECT_ID=blinderfit-prod
-FIREBASE_PRIVATE_KEY_ID=your-private-key-id
-FIREBASE_PRIVATE_KEY=your-private-key
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@blinderfit-prod.iam.gserviceaccount.com
-FIREBASE_CLIENT_ID=your-client-id
-FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
-FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
-FIREBASE_AUTH_PROVIDER_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
-FIREBASE_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-xxxxx%40blinderfit-prod.iam.gserviceaccount.com
-
-# API Keys
-GEMINI_API_KEY=your-gemini-api-key
-JWT_SECRET_KEY=your-jwt-secret
-
-# URLs
-ALLOWED_ORIGINS=https://blinderfit.blinder.live
-VITE_API_BASE_URL=https://api.blinderfit.blinder.live
-```
-
-Run with environment file:
-```bash
-docker-compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
-```
-
-## 4. Firebase Hosting Setup
-
-### 4.1 Build Frontend
-```bash
-cd frontend
-npm install
-npm run build
-cd ..
-```
-
-### 4.2 Deploy to Firebase Hosting
-```bash
-firebase deploy --only hosting
-```
-
-### 4.3 Configure Hosting
-Update `firebase.json` if needed:
-
-```json
-{
-  "hosting": {
-    "public": "frontend/dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ],
-    "headers": [
-      {
-        "source": "**/*.js",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "max-age=31536000"
-          }
-        ]
-      },
-      {
-        "source": "**/*.css",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "max-age=31536000"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-## 5. Domain Configuration
-
-### 5.1 Custom Domain Setup
-1. Go to Firebase Console > Hosting
-2. Add your custom domain
+1. In Vercel → Project → **Settings** → **Domains**
+2. Add your custom domain (e.g., `blinderfit.com`)
 3. Update DNS records as instructed
-4. Wait for SSL certificate provisioning
 
-### 5.2 API Domain
-For the backend API, you can:
-- Use Firebase Cloud Functions
-- Deploy to Google Cloud Run
-- Use a VPS with Nginx reverse proxy
+---
 
-## 6. SSL and Security
+## 6. Post-Deployment Checklist
 
-### 6.1 SSL Certificate
-Firebase Hosting provides automatic SSL certificates. For custom domains:
-- SSL is automatically provisioned by Firebase
-- Renewals are handled automatically
-
-### 6.2 Security Headers
-Security headers are configured in the backend middleware and nginx configuration.
-
-## 7. Monitoring and Logging
-
-### 7.1 Firebase Monitoring
-- Use Firebase Crashlytics for error monitoring
-- Firebase Performance Monitoring for app performance
-- Firebase Analytics for user behavior
-
-### 7.2 Backend Monitoring
+### Verify Backend
 ```bash
-# Check backend health
-curl https://api.blinderfit.blinder.live/health
+# Health check
+curl https://your-backend-url/health
 
-# View logs
-docker-compose -f docker-compose.prod.yml logs backend
+# API docs
+open https://your-backend-url/docs
 ```
 
-## 8. Backup and Recovery
+### Verify Frontend
+1. Open the Vercel URL in a browser
+2. Check that the Clerk sign-in/sign-up modal works
+3. Register a test user
+4. Verify the user appears in Clerk Dashboard → **Users**
 
-### 8.1 Firestore Backup
+### Verify Database
+1. Open Neon Dashboard → **Tables**
+2. After first user registration, verify `users` table has a row
+
+### Update CORS
+Make sure `ALLOWED_ORIGINS` on Railway includes your Vercel domain:
+```
+ALLOWED_ORIGINS=["https://blinderfit.vercel.app"]
+```
+
+### Update Clerk Domains
+In Clerk Dashboard → **Domains**, ensure your Vercel URL is listed as an allowed origin.
+
+---
+
+## 7. Environment Variables Summary
+
+### Backend (Railway)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | **Yes** | Neon PostgreSQL connection string |
+| `CLERK_SECRET_KEY` | **Yes** | Clerk secret key |
+| `GOOGLE_AI_API_KEY` | **Yes** | Google Gemini API key |
+| `PORT` | No | Default: `8000` (Railway sets this) |
+| `ENVIRONMENT` | No | `production` |
+| `ALLOWED_ORIGINS` | No | JSON array of CORS origins |
+| `SERPAPI_KEY` | No | SerpAPI key for web search |
+| `GOOGLE_CLIENT_ID` | No | Google OAuth (wearables) |
+| `GOOGLE_CLIENT_SECRET` | No | Google OAuth (wearables) |
+
+### Frontend (Vercel)
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_CLERK_PUBLISHABLE_KEY` | **Yes** | Clerk publishable key |
+| `VITE_API_BASE_URL` | **Yes** | Backend API URL |
+
+---
+
+## 8. Monitoring & Troubleshooting
+
+### Health Check
 ```bash
-# Export data
-gcloud firestore export gs://blinderfit-backup --project=blinderfit-prod
-
-# Import data
-gcloud firestore import gs://blinderfit-backup --project=blinderfit-prod
+curl -f https://your-backend-url/health
 ```
 
-### 8.2 Database Backup Strategy
-- Daily automated backups
-- Point-in-time recovery available
-- Test restoration procedures regularly
+### Railway Logs
+Railway Dashboard → Service → **Logs** tab
 
-## 9. Scaling
+### Common Issues
 
-### 9.1 Horizontal Scaling
-```yaml
-# Update docker-compose.prod.yml
-services:
-  backend:
-    deploy:
-      replicas: 3
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-```
+| Problem | Solution |
+|---------|----------|
+| CORS errors | Check `ALLOWED_ORIGINS` on Railway includes your frontend URL |
+| 401 Unauthorized | Verify `CLERK_SECRET_KEY` is correct and matches your Clerk app |
+| Database connection failed | Check `DATABASE_URL` format with `?sslmode=require` |
+| Gemini API errors | Verify `GOOGLE_AI_API_KEY` is valid and has quota |
+| Frontend shows blank page | Check browser console for errors; verify `VITE_CLERK_PUBLISHABLE_KEY` |
 
-### 9.2 Load Balancing
-- Use Firebase Hosting for frontend load balancing
-- Consider Google Cloud Load Balancer for backend
-- Implement Redis clustering for session storage
+### API Documentation
+- **Swagger UI**: `https://your-backend-url/docs`
+- **ReDoc**: `https://your-backend-url/redoc`
 
-## 10. Troubleshooting
+---
 
-### 10.1 Common Issues
+## 9. Updating
 
-**Backend not starting:**
-```bash
-# Check logs
-docker-compose -f docker-compose.prod.yml logs backend
+### Deploy Backend Changes
+Push to the `main` branch — Railway auto-deploys from GitHub.
 
-# Check environment variables
-docker-compose -f docker-compose.prod.yml exec backend env
-```
+### Deploy Frontend Changes
+Push to the `main` branch — Vercel auto-deploys from GitHub.
 
-**Firebase authentication issues:**
-- Verify API keys in environment variables
-- Check Firebase Console configuration
-- Ensure authorized domains are configured
-
-**CORS errors:**
-- Verify ALLOWED_ORIGINS in backend environment
-- Check nginx configuration for API proxy
-
-### 10.2 Health Checks
-```bash
-# Backend health
-curl -f https://api.blinderfit.blinder.live/health
-
-# Frontend health
-curl -f https://blinderfit.blinder.live
-```
-
-## 11. Maintenance
-
-### 11.1 Regular Updates
-```bash
-# Update dependencies
-cd backend && pip install -U -r requirements.txt
-cd ../frontend && npm update
-
-# Rebuild and deploy
-docker-compose -f docker-compose.prod.yml up -d --build
-firebase deploy
-```
-
-### 11.2 Monitoring Alerts
-- Set up alerts for high error rates
-- Monitor API response times
-- Track user engagement metrics
-
-## 12. Cost Optimization
-
-### 12.1 Firebase Costs
-- Monitor usage in Firebase Console
-- Set up budgets and alerts
-- Optimize Firestore queries
-
-### 12.2 API Costs
-- Monitor Gemini API usage
-- Implement caching strategies
-- Use appropriate model sizes
-
-## Support
-For issues or questions:
-- Check the logs: `docker-compose logs`
-- Review Firebase Console for errors
-- Contact the development team
-
-## Checklist
-- [ ] Firebase project created and configured
-- [ ] Environment variables set up
-- [ ] Docker containers built and running
-- [ ] Frontend deployed to Firebase Hosting
-- [ ] Custom domain configured (optional)
-- [ ] SSL certificates provisioned
-- [ ] Health checks passing
-- [ ] Monitoring and logging configured
-- [ ] Backup strategy implemented
-- [ ] Security headers verified</content>
+### Database Migrations
+Tables are auto-created via SQLAlchemy `Base.metadata.create_all()` on backend startup. For schema changes, update the models in `app/core/database.py` and redeploy.</content>
 <parameter name="filePath">c:\Users\SUYASH KUMAR SINGH\OneDrive\Desktop\Blinderfit_\DEPLOYMENT_GUIDE.md

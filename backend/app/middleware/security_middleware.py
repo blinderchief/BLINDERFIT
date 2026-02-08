@@ -34,7 +34,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "font-src 'self' https://fonts.gstatic.com; "
             "img-src 'self' data: https: blob:; "
-            "connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://generativelanguage.googleapis.com; "
+            "connect-src 'self' https://generativelanguage.googleapis.com https://api.clerk.com https://*.clerk.accounts.dev; "
             "frame-ancestors 'none';"
         )
         response.headers["Content-Security-Policy"] = csp

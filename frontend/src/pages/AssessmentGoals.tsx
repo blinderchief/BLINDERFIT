@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/integrations/firebase/client';
-import { doc, getDoc } from 'firebase/firestore';
+import apiService from '@/services/api';
 import { 
   Target, CheckCircle, Clock, ArrowRight, 
   Calendar, Award, TrendingUp, AlertCircle 
@@ -13,8 +12,8 @@ import { Link } from 'react-router-dom';
 const AssessmentGoals = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [goals, setGoals] = useState([]);
-  const [assessmentDate, setAssessmentDate] = useState(null);
+  const [goals, setGoals] = useState<any[]>([]);
+  const [assessmentDate, setAssessmentDate] = useState<Date | null>(null);
 
   useEffect(() => {
     const fetchGoals = async () => {
@@ -22,14 +21,9 @@ const AssessmentGoals = () => {
       
       try {
         setLoading(true);
-        const userDocRef = doc(db, 'users', user.uid);
-        const docSnap = await getDoc(userDocRef);
-        
-        if (docSnap.exists()) {
-          const userData = docSnap.data();
-          setGoals(userData.assessmentGoals || []);
-          setAssessmentDate(userData.lastAssessmentDate?.toDate() || new Date());
-        }
+        const data: any = await apiService.getOnboardingStatus();
+        setGoals(data?.assessmentGoals || []);
+        setAssessmentDate(data?.lastAssessmentDate ? new Date(data.lastAssessmentDate) : new Date());
       } catch (error) {
         console.error("Error fetching assessment goals:", error);
       } finally {
@@ -93,7 +87,7 @@ const AssessmentGoals = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {goals.map((goal, index) => (
+          {goals.map((goal: any, index: number) => (
             <Card key={index} className="bg-black border-white/10 hover:border-gold/30 transition-all">
               <CardHeader className="pb-2">
                 <CardTitle className="text-xl font-light flex items-center">

@@ -9,7 +9,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
-from app.core.database import init_firebase
+from app.core.database import init_database
 from app.middleware import (
     SecurityHeadersMiddleware,
     RequestLoggingMiddleware,
@@ -40,8 +40,8 @@ async def lifespan(app: FastAPI):
     """Application lifespan context manager"""
     # Startup
     logger.info("Starting Blinderfit Backend...")
-    await init_firebase()
-    logger.info("Firebase initialized successfully")
+    await init_database()
+    logger.info("PostgreSQL database initialized successfully")
 
     # Start rate limiting cleanup task
     await rate_limit_middleware.start_cleanup_task()

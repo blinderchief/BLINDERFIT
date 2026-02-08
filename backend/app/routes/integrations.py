@@ -8,14 +8,14 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 import json
 
-from app.core.database import get_firestore_client
+from app.core.database import db_service
 from app.routes.auth import get_current_user
 
 router = APIRouter(tags=["integrations"])
 
 
 def _get_svc():
-    """Lazy import integrations service to avoid module-level Firebase init"""
+    """Lazy import integrations service"""
     from app.services.integrations_service import integrations_service
     return integrations_service
 
@@ -92,6 +92,8 @@ async def sync_wearable_data(request: WearableSyncRequest, current_user: str = D
         if not data:
             raise HTTPException(status_code=500, detail="Failed to sync wearable data")
         return data
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -133,31 +135,19 @@ async def get_research_papers(request: ResearchRequest, current_user: str = Depe
 
 
 @router.get("/wearable-history")
-async def get_wearable_history(
-    provider: Optional[str] = Query(None), limit: int = Query(10, ge=1, le=100),
-    current_user: str = Depends(get_current_user)
-):
+async def get_wearable_history(provider: Optional[str] = Query(None), limit: int = Query(10, ge=1, le=100), current_user: str = Depends(get_current_user)):
     try:
         svc = _get_svc()
-        return await svc.get_integration_history(
-            user_id=current_user,
-            integration_type=f"wearable_{provider}" if provider else None,
-            limit=limit
-        )
+        return await svc.get_integration_history(user_id=current_user, integration_type=f"wearable_{provider}" if provider else None, limit=limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/integration-history")
-async def get_integration_history(
-    integration_type: Optional[str] = Query(None), limit: int = Query(10, ge=1, le=100),
-    current_user: str = Depends(get_current_user)
-):
+async def get_integration_history(integration_type: Optional[str] = Query(None), limit: int = Query(10, ge=1, le=100), current_user: str = Depends(get_current_user)):
     try:
         svc = _get_svc()
-        return await svc.get_integration_history(
-            user_id=current_user, integration_type=integration_type, limit=limit
-        )
+        return await svc.get_integration_history(user_id=current_user, integration_type=integration_type, limit=limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -165,10 +155,7 @@ async def get_integration_history(
 @router.post("/meal-suggestions")
 async def get_meal_suggestions(preferences: Dict[str, Any], current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        user_doc = db.collection('users').document(current_user).get()
-        user_data = user_doc.to_dict() if user_doc.exists else {}
-
+        user_data = db_service.get_user(current_user) or {}
         dietary_restrictions = user_data.get('dietary_restrictions', [])
         allergies = user_data.get('allergies', [])
         cuisine_preferences = user_data.get('cuisine_preferences', [])
@@ -190,9 +177,7 @@ async def get_meal_suggestions(preferences: Dict[str, Any], current_user: str = 
 @router.post("/workout-plan")
 async def generate_workout_plan(goals: Dict[str, Any], current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        user_doc = db.collection('users').document(current_user).get()
-        user_data = user_doc.to_dict() if user_doc.exists else {}
+        user_data = db_service.get_user(current_user) or {}
 
         from app.services.gemini_service import gemini_service
         prompt = f"""Create a personalized workout plan:
@@ -211,13 +196,8 @@ async def generate_workout_plan(goals: Dict[str, Any], current_user: str = Depen
 @router.post("/health-assessment")
 async def comprehensive_health_assessment(current_user: str = Depends(get_current_user)):
     try:
-        db = get_firestore_client()
-        user_doc = db.collection('users').document(current_user).get()
-        user_data = user_doc.to_dict() if user_doc.exists else {}
-
-        tracking_ref = db.collection('users').document(current_user).collection('tracking')
-        recent_tracking = tracking_ref.order_by('date', direction='DESCENDING').limit(7).get()
-        tracking_data = [doc.to_dict() for doc in recent_tracking]
+        user_data = db_service.get_user(current_user) or {}
+        tracking_data = db_service.query_user_docs(current_user, "tracking", order_by="date", order_dir="DESC", limit_count=7)
 
         from app.services.gemini_service import gemini_service
         prompt = f"""Comprehensive health assessment:

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { updateUserProfile, uploadUserFile } from '../integrations/firebase/db';
+import apiService from '@/services/api';
 import { toast } from 'sonner';
 
 const ProfileForm = () => {
@@ -21,19 +21,24 @@ const ProfileForm = () => {
     setIsSubmitting(true);
     
     try {
-      // Upload profile image if selected
-      let imageData = null;
-      if (profileImage) {
-        imageData = await uploadUserFile(user.uid, profileImage, 'profile');
-      }
-      
-      // Update user profile
-      await updateUserProfile(user.uid, {
-        name,
+      // Update user profile via backend API
+      await apiService.put('/auth/profile', {
+        display_name: name,
         bio,
-        profileImage: imageData ? imageData.url : null,
         profileComplete: true
       });
+      
+      // If profile image selected, upload via backend API
+      if (profileImage) {
+        const formData = new FormData();
+        formData.append('file', profileImage);
+        formData.append('type', 'profile');
+        try {
+          await apiService.post('/auth/upload-avatar', formData);
+        } catch (uploadError) {
+          console.warn('Avatar upload not available yet:', uploadError);
+        }
+      }
       
       toast.success('Profile updated successfully');
     } catch (error) {

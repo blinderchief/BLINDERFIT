@@ -1,94 +1,104 @@
 # BlinderFit
 
-BlinderFit is a comprehensive fitness application built with React, Vite, and Firebase, providing personalized fitness coaching, health tracking, and community features.
+AI-powered personalized fitness coach with health tracking, meal logging, exercise planning, and real-time insights — powered by Google Gemini.
 
-## Getting Started
+## Architecture
 
-### Prerequisites
-- Node.js 18+ (recommended)
-- Firebase CLI (`npm install -g firebase-tools`)
-- Firebase project with Authentication, Firestore, Storage, and Functions enabled
-
-### Installation
-1. Clone the repository
-2. Install dependencies
-   ```bash
-   npm install
-   ```
-3. Create `.env` files based on `.env.example`
-4. Run the development server
-   ```bash
-   npm run dev
-   ```
-
-## Build and Deployment
-
-### Building for Production
-```bash
-npm run build
-```
-
-### Deploying to Firebase
-```bash
-npm run deploy
-```
+| Layer | Technology | Hosting |
+|-------|-----------|---------|
+| **Frontend** | React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui | Vercel |
+| **Backend** | Python 3.11 + FastAPI + SQLAlchemy | Railway (Docker) |
+| **Database** | PostgreSQL (Neon serverless) | Neon |
+| **Auth** | Clerk (JWT) | Clerk |
+| **AI** | Google Gemini | Google AI |
 
 ## Project Structure
 
 ```
 BlinderFit/
-├── frontend/           # React frontend application
-│   ├── src/           # Application source code
-│   │   ├── components/# Reusable UI components
-│   │   ├── contexts/  # React context providers
-│   │   ├── pages/     # Application pages/routes
-│   │   ├── integrations/# External service integrations
-│   │   └── services/  # Business logic and data services
-│   ├── public/        # Static assets
-│   ├── index.html     # Main HTML file
-│   ├── vite.config.ts # Vite configuration
-│   └── package.json   # Frontend dependencies
-├── functions/         # Firebase cloud functions
-│   ├── src/          # Function source code
-│   │   └── ai/       # AI services and personalization
-│   └── package.json  # Backend dependencies
-├── firebase.json      # Firebase configuration
-├── firestore.rules    # Database security rules
-├── storage.rules      # Storage security rules
-└── .env              # Environment variables
+├── frontend/          # React + TypeScript + Vite app
+│   ├── src/
+│   │   ├── components/  # UI components + shadcn/ui
+│   │   ├── contexts/    # Auth + HealthData contexts
+│   │   ├── pages/       # Route pages
+│   │   ├── hooks/       # Custom React hooks
+│   │   ├── services/    # API client (Axios)
+│   │   └── App.tsx      # Root with ClerkProvider
+│   ├── vercel.json      # Vercel deployment config
+│   └── package.json
+├── backend/           # Python FastAPI API server
+│   ├── app/
+│   │   ├── core/        # Config + database (SQLAlchemy/Neon)
+│   │   ├── middleware/   # Auth, rate limiting, security
+│   │   ├── routes/       # API route handlers
+│   │   └── services/     # Gemini AI, integrations
+│   ├── tests/           # Pytest test suite
+│   ├── Dockerfile       # Production container
+│   ├── railway.toml     # Railway deployment config
+│   └── requirements.txt
+└── DEPLOYMENT_GUIDE.md  # Step-by-step deployment instructions
+```
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+ 
+- Python 3.11+
+- A [Clerk](https://clerk.com) account (free tier works)
+- A [Neon](https://neon.tech) PostgreSQL database (free tier works)
+- A [Google AI Studio](https://aistudio.google.com) API key
+
+### Frontend Setup
+
+```bash
+cd frontend
+cp .env.example .env
+# Edit .env with your Clerk publishable key and backend URL
+npm install
+npm run dev
+```
+
+### Backend Setup
+
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # macOS/Linux
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your DATABASE_URL, CLERK_SECRET_KEY, GOOGLE_AI_API_KEY
+uvicorn main:app --reload --port 8000
 ```
 
 ## Features
 
-- **FitMentor**: AI-powered fitness coach
-- **PulseHub**: Health and activity tracking dashboard
-- **FitLearn**: Educational content on fitness and nutrition
-- **MindShift**: Mental wellness resources
-- **TribeVibe**: Social community features
-- **MyZone**: Personal space for tracking progress
+- **FitMentor** — AI health Q&A powered by Gemini
+- **PulseHub** — Real-time health dashboard with charts
+- **Assessment** — Personalized onboarding questionnaire
+- **Tracking** — Meal, exercise, and weight logging
+- **Plans** — AI-generated personalized fitness plans
+- **FitLearn** — Health & nutrition educational content
+- **MindShift** — Mental wellness resources
+- **TribeVibe** — Community features
+- **MyZone** — Personal profile and progress
 
-## Firebase Configuration
+## Deployment
 
-The application uses Firebase for:
-- Authentication
-- Firestore Database
-- Cloud Storage
-- Cloud Functions
-- Hosting
+See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for complete deployment instructions covering:
 
-## Development
+1. **Clerk** — Authentication setup
+2. **Neon** — PostgreSQL database provisioning
+3. **Railway** — Backend deployment (Docker)
+4. **Vercel** — Frontend deployment
 
-### Frontend Development
-```bash
-npm run dev:frontend
-```
+## API Documentation
 
-### Backend Development
-```bash
-npm run dev:backend
-```
+When the backend is running, visit:
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
 
-### Full Stack Development
-```bash
-npm run serve  # Starts Firebase emulators
-```
+## License
+
+Private

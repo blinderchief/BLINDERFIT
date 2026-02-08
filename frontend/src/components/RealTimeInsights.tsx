@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import apiService from '@/services/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
@@ -23,14 +23,16 @@ export default function RealTimeInsights({
     setError(null);
     
     try {
-      const functions = getFunctions();
-      const getInsights = httpsCallable(functions, 'getRealTimeFitnessInsightsModern');
+      const result: any = await apiService.sendMessage(
+        `Provide real-time fitness insights about: ${topic}. Format the response with mainAnswer, additionalInfo, and personalizedTips fields.`
+      );
       
-      const result = await getInsights({ topic });
-      const data = result.data as any;
-      
-      setInsights(data.insights);
-      setLastUpdated(new Date(data.timestamp));
+      setInsights({
+        mainAnswer: result?.response || result?.message || 'No insights available',
+        additionalInfo: result?.additionalInfo || null,
+        personalizedTips: result?.personalizedTips || null,
+      });
+      setLastUpdated(new Date());
     } catch (err: any) {
       console.error('Error fetching insights:', err);
       setError(err.message || 'Failed to fetch insights');

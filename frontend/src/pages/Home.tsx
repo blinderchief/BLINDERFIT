@@ -8,8 +8,7 @@ import {
   CarouselItem
 } from "@/components/ui/carousel";
 import { toast } from '@/hooks/use-toast';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../integrations/firebase/client';
+import apiService from '@/services/api';
 
 const Home = () => {
   const { user } = useAuth();
@@ -117,40 +116,20 @@ const Home = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email) {
-      toast({
-        title: "Error",
-        description: "Please enter your email address",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Please enter your email address", variant: "destructive" });
       return;
     }
-    
     setIsSubmitting(true);
-    
     try {
-      // Add email to Firebase Firestore
-      await addDoc(collection(db, 'earlyAdopters'), {
-        email,
-        createdAt: serverTimestamp()
-      });
-      
+      await apiService.submitEarlyAdopter(email);
       setEmail('');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 5000);
-      
-      toast({
-        title: "Success!",
-        description: "You've been added to our early adopter list.",
-      });
+      toast({ title: "Success!", description: "You've been added to our early adopter list." });
     } catch (error: any) {
       console.error("Error submitting email:", error);
-      toast({
-        title: "Error",
-        description: "There was a problem submitting your email. Please try again.",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "There was a problem submitting your email. Please try again.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -454,41 +433,3 @@ const Home = () => {
 };
 
 export default Home;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

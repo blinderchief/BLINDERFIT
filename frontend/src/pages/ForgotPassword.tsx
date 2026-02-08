@@ -2,40 +2,31 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from "sonner";
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../integrations/firebase/client';
+import { useClerk } from '@clerk/clerk-react';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const clerk = useClerk();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email) {
       toast.error("Please enter your email address");
       return;
     }
-    
     setIsSubmitting(true);
-    
     try {
-      // Send password reset email using Firebase
-      await sendPasswordResetEmail(auth, email);
-      
+      await clerk.client?.signIn.create({
+        strategy: 'reset_password_email_code',
+        identifier: email,
+      });
       setIsSubmitted(true);
       toast.success("Password reset instructions sent to your email");
     } catch (error: any) {
       console.error("Error:", error);
-      let errorMessage = "Failed to send reset instructions. Please try again.";
-      
-      if (error.code === 'auth/user-not-found') {
-        errorMessage = "No account found with this email address";
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "Invalid email address";
-      }
-      
+      const errorMessage = error?.errors?.[0]?.message || "Failed to send reset instructions. Please try again.";
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -122,10 +113,3 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
-
-
-
-
-
-
-

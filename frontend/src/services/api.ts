@@ -1,5 +1,11 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { auth } from '@/integrations/firebase/client';
+
+// Token getter function - will be set by the AuthProvider
+let _getToken: (() => Promise<string | null>) | null = null;
+
+export const setTokenGetter = (getter: () => Promise<string | null>) => {
+  _getToken = getter;
+};
 
 class ApiService {
   private api: AxiosInstance;
@@ -20,10 +26,11 @@ class ApiService {
     this.api.interceptors.request.use(
       async (config) => {
         try {
-          const user = auth.currentUser;
-          if (user) {
-            const token = await user.getIdToken();
-            config.headers.Authorization = `Bearer ${token}`;
+          if (_getToken) {
+            const token = await _getToken();
+            if (token) {
+              config.headers.Authorization = `Bearer ${token}`;
+            }
           }
         } catch (error) {
           console.error('Error getting auth token:', error);
@@ -40,14 +47,10 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Token expired or invalid
           console.error('Authentication error:', error.response.data);
-          // You might want to redirect to login or refresh token here
         } else if (error.response?.status === 429) {
-          // Rate limited
           console.error('Rate limited:', error.response.data);
         } else if (error.response?.status >= 500) {
-          // Server error
           console.error('Server error:', error.response.data);
         }
         return Promise.reject(error);
@@ -86,15 +89,14 @@ class ApiService {
     return this.get('/health');
   }
 
-  // Auth methods - handled by Firebase Auth directly
-  // These are no-ops since authentication is managed by Firebase
+  // Auth methods - handled by Clerk directly
   async login(_email: string, _password: string) {
-    console.warn('Use Firebase Auth (AuthContext) for login instead of api.login()');
+    console.warn('Use Clerk Auth (AuthContext) for login instead of api.login()');
     return { success: true };
   }
 
   async register(_userData: Record<string, unknown>) {
-    console.warn('Use Firebase Auth (AuthContext) for registration instead of api.register()');
+    console.warn('Use Clerk Auth (AuthContext) for registration instead of api.register()');
     return { success: true };
   }
 
@@ -205,10 +207,6 @@ class ApiService {
     return this.put('/notifications/preferences', preferences);
   }
 
-  async updateFCMToken(fcmToken: string) {
-    return this.put('/notifications/fcm-token', { fcm_token: fcmToken });
-  }
-
   // Integrations methods
   async searchWeb(query: string, numResults?: number) {
     return this.post('/integrations/web-search', { query, num_results: numResults });
@@ -248,6 +246,11 @@ class ApiService {
 
   async getHealthAssessment() {
     return this.post('/integrations/health-assessment');
+  }
+
+  // Early adopter signup
+  async submitEarlyAdopter(email: string) {
+    return this.post('/onboarding/early-adopter', { email });
   }
 }
 

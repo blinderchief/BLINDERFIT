@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/integrations/firebase/client';
+import apiService from '@/services/api';
 
 interface UseAIOptions {
   onError?: (error: Error) => void;
@@ -16,19 +15,16 @@ export const useAI = (options: UseAIOptions = {}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const askAI = async (question: string, chatHistory: any[] = []) => {
+  const askAI = async (question: string | any) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const answerHealthQuestion = httpsCallable(functions, 'answerHealthQuestion');
-      const result = await answerHealthQuestion({ 
-        question, 
-        chatHistory 
-      });
+      const msg = typeof question === 'string' ? question : JSON.stringify(question);
+      const result = await apiService.sendMessage(msg);
       
       setIsLoading(false);
-      return result.data;
+      return result;
     } catch (err: any) {
       setIsLoading(false);
       setError(err);
@@ -41,19 +37,16 @@ export const useAI = (options: UseAIOptions = {}) => {
     }
   };
 
-  const generatePlan = async (preferences: PlanPreferences, userData: any = {}) => {
+  const generatePlan = async (preferences: PlanPreferences | any, userData: any = {}) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const generateFitnessPlan = httpsCallable(functions, 'generateFitnessPlan');
-      const result = await generateFitnessPlan({ 
-        preferences,
-        userData 
-      });
+      const message = `Generate a personalized fitness plan with these preferences: ${JSON.stringify(preferences)}. User data: ${JSON.stringify(userData)}`;
+      const result = await apiService.sendMessage(message);
       
       setIsLoading(false);
-      return result.data;
+      return result;
     } catch (err: any) {
       setIsLoading(false);
       setError(err);

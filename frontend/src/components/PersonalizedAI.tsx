@@ -26,7 +26,7 @@ export const PersonalizedAI = () => {
   });
 
   // Use our new AI hook
-  const { askAI, generatePlan, isLoading, error } = useAI({
+  const { askAI, generatePlan, isLoading, error: _error } = useAI({
     onError: (err) => {
       toast({
         title: "Error",
@@ -47,9 +47,9 @@ export const PersonalizedAI = () => {
     }
 
     try {
-      const result = await askAI(question);
+      const result = await askAI(question) as any;
       if (result) {
-        setAIResponse(result.answer);
+        setAIResponse(result.answer ?? result);
       }
     } catch (error) {
       console.error("Error asking question:", error);
@@ -431,7 +431,7 @@ export const PersonalizedAI = () => {
                 <label className="text-sm font-medium">Days per Week</label>
                 <Select 
                   value={planPreferences.daysPerWeek.toString()} 
-                  onValueChange={val => setPlanPreferences({...planPreferences, daysPerWeek: val})}
+                  onValueChange={val => setPlanPreferences({...planPreferences, daysPerWeek: parseInt(val)})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select days per week" />
@@ -476,7 +476,7 @@ export const PersonalizedAI = () => {
       </CardContent>
 
       <CardFooter className="flex justify-between text-xs text-muted-foreground">
-        <span>Powered by Gemini + Firebase</span>
+        <span>Powered by Gemini AI</span>
         <span>All responses are personalized to your data</span>
       </CardFooter>
     </Card>

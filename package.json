@@ -4,25 +4,17 @@
   "scripts": {
     "dev": "npm run dev:frontend",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd functions && npm run serve",
     "build": "npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd functions && npm run build",
-    "deploy": "npm run deploy:frontend && npm run deploy:backend",
     "deploy:frontend": "cd frontend && npm run deploy",
-    "deploy:backend": "cd functions && npm run deploy",
-    "serve": "firebase emulators:start",
     "lint": "cd frontend && npm run lint",
     "preview": "cd frontend && npm run preview"
   },
   "engines": {
-    "node": "18"
+    "node": ">=20.x"
   },
   "private": true,
   "workspaces": [
-    "frontend",
-    "functions"
+    "frontend"
   ]
 }
-
-

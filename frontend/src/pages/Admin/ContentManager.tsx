@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPageContent, savePageContent } from '@/integrations/firebase/db';
+import apiService from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { PageContent, HeroImage, VisionFeature } from '@/lib/content';
+import { HeroImage, VisionFeature } from '@/lib/content';
 
 // Define type for page content 
 interface ContentState {
@@ -39,7 +39,7 @@ const ContentManager = () => {
     }    
     const loadContent = async () => {
       try {
-        const data = await getPageContent('home');
+        const data: any = await apiService.get('/admin/content/home');
           
         if (data) {
           setPageContent(data as unknown as ContentState);
@@ -75,14 +75,12 @@ const ContentManager = () => {
     
     setIsSaving(true);
     try {
-      // Firebase will handle both creation and updates
       const updatedContent = {
         ...pageContent,
-        // Firebase will handle timestamp server-side
       };
       
-      // Save the content (Firebase will merge if exists or create if not)
-      await savePageContent('home', updatedContent);
+      // Save the content via backend API
+      await apiService.put('/admin/content/home', updatedContent);
       
       // Add created_at if this might be a new document
       if (!pageContent.created_at) {
