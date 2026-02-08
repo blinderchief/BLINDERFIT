@@ -29,22 +29,34 @@ npm run build
 ```
 
 ### Deploying to Firebase
-Use one of the following deployment scripts:
-- `improved-deploy.bat` - Recommended deployment script
-- `deploy-fixed-version.bat` - Alternative deployment script with detailed steps
-
-Alternatively, follow the manual deployment steps in `MANUAL-DEPLOYMENT-GUIDE.md`.
+```bash
+npm run deploy
+```
 
 ## Project Structure
 
-- `src/` - Application source code
-  - `components/` - Reusable UI components
-  - `contexts/` - React context providers
-  - `pages/` - Application pages/routes
-  - `integrations/` - External service integrations
-  - `services/` - Business logic and data services
-- `functions/` - Firebase cloud functions
-- `public/` - Static assets
+```
+BlinderFit/
+├── frontend/           # React frontend application
+│   ├── src/           # Application source code
+│   │   ├── components/# Reusable UI components
+│   │   ├── contexts/  # React context providers
+│   │   ├── pages/     # Application pages/routes
+│   │   ├── integrations/# External service integrations
+│   │   └── services/  # Business logic and data services
+│   ├── public/        # Static assets
+│   ├── index.html     # Main HTML file
+│   ├── vite.config.ts # Vite configuration
+│   └── package.json   # Frontend dependencies
+├── functions/         # Firebase cloud functions
+│   ├── src/          # Function source code
+│   │   └── ai/       # AI services and personalization
+│   └── package.json  # Backend dependencies
+├── firebase.json      # Firebase configuration
+├── firestore.rules    # Database security rules
+├── storage.rules      # Storage security rules
+└── .env              # Environment variables
+```
 
 ## Features
 
@@ -64,10 +76,19 @@ The application uses Firebase for:
 - Cloud Functions
 - Hosting
 
-## Troubleshooting
+## Development
 
-See `DEPLOYMENT-TROUBLESHOOTING.md` for common deployment issues and solutions.
+### Frontend Development
+```bash
+npm run dev:frontend
+```
 
-## Recent Fixes
+### Backend Development
+```bash
+npm run dev:backend
+```
 
-Refer to `FIXES-SUMMARY.md` for a list of recent fixes and improvements.
+### Full Stack Development
+```bash
+npm run serve  # Starts Firebase emulators
+```

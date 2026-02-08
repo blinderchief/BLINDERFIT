@@ -1,11 +1,21 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // User profile files - only the owner can read/write
+    match /users/{userId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Public assets (images, videos) - anyone can read
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Deny everything else by default
     match /{allPaths=**} {
-      // Allow read/write access to all users under any conditions
-      // Warning: Your security rules are not secure. Anyone can read and write to your storage
-      // This is only for testing and should not be used in production
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

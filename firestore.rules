@@ -5,88 +5,88 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
     }
-    
-    // Users collection - AI-enhanced structure
+
+    // Users collection - main user data
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
-      
-      // Sub-collections
+
+      // Onboarding sub-collection
+      match /onboarding/{document} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId);
+      }
+
+      // Chat history sub-collection
+      match /chats/{chatId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // Tracking data sub-collection
+      match /tracking/{trackingId} {
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId);
+      }
+
+      // Plans sub-collection
       match /plans/{planId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId);
         allow delete: if isOwner(userId);
       }
-      
-      match /progress/{progressId} {
+
+      // ML Insights sub-collection
+      match /ml_insights/{insightId} {
         allow read: if isOwner(userId);
         allow create, update: if isOwner(userId);
       }
-      
-      match /mood_logs/{logId} {
+
+      // Notifications sub-collection
+      match /notifications/{notificationId} {
         allow read: if isOwner(userId);
-        allow create: if isOwner(userId);
+        allow create, update: if isOwner(userId);
       }
     }
-    
-    // AI Personalization data - system generated, user readable
-    match /ai_personalization/{userId} {
-      allow read: if isOwner(userId);
-      // Only cloud functions can write personalization data
+
+    // Public health data (read-only for all authenticated users)
+    match /health_data/{document} {
+      allow read: if isSignedIn();
       allow write: if false;
     }
-    
-    // User interactions - tracked for personalization
-    match /interactions/{interactionId} {
-      allow read: if request.auth != null && 
-                   resource.data.userId == request.auth.uid;
-      
-      // Users can create their own interaction records
-      allow create: if request.auth != null && 
-                      request.resource.data.userId == request.auth.uid;
-      
-      // But can't modify them after creation (for data integrity)
-      allow update, delete: if false;
-    }
-    
-    // AI queries - user questions and AI responses
-    match /ai_queries/{queryId} {
-      allow read: if request.auth != null && 
-                   resource.data.userId == request.auth.uid;
-      
-      // Users can create queries (typically through cloud functions)
-      allow create: if request.auth != null &&
-                      request.resource.data.userId == request.auth.uid;
-      
-      // Historical record, no updates
-      allow update, delete: if false;
-    }
-    
-    // AI response cache - shared across users, read-only
+
+    // AI cache (read-only for all authenticated users)
     match /ai_cache/{cacheId} {
-      // All users can read the cache
       allow read: if isSignedIn();
-      
-      // Only cloud functions can write to cache
       allow write: if false;
     }
-    
-    // Community features with AI enhancements
-    match /community/{postId} {
-      allow read: if isSignedIn();
-      
-      // Any signed-in user can create posts
-      allow create: if isSignedIn() &&
-                     request.resource.data.userId == request.auth.uid;
-      
-      // Only post creator can update/delete
-      allow update, delete: if isSignedIn() &&
-                             resource.data.userId == request.auth.uid;
+
+    // Early adopter signups
+    match /earlyAdopters/{docId} {
+      allow read: if false;
+      allow create: if true;  // Anyone can sign up
+    }
+
+    // Public CMS content (hero images, vision text, features)
+    match /heroImages/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /visionText/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /visionFeatures/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

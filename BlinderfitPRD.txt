@@ -1,0 +1,164 @@
+# Product Requirements Document (PRD) for Blinderfit: AI-Powered Personalized Health Coach
+
+## 1. Executive Summary
+
+### 1.1 Product Overview
+Blinderfit is a comprehensive, user-centric mobile/web application designed to transform users' health journeys through hyper-personalized AI coaching. At its core is FitMentor, an intelligent AI nutritionist and fitness advisor powered by Google Gemini, which leverages extensive user data to deliver adaptive nutrition plans, exercise routines, and motivational insights. The app targets individuals outside the healthy BMI range (18-25), such as those who are obese (>25 BMI) or underweight (<18 BMI), by providing end-to-end support—from onboarding assessments to daily tracking and long-term progress monitoring.
+
+Building on the existing frontend (accessible at https://blinderfit.blinder.live/, including /fitmentor for AI chats and /pulsehub for dashboards), this PRD outlines enhancements for a full-stack product. It incorporates advanced ML capabilities via Gemini (e.g., predictive modeling for health trajectories) to maximize user data utilization, ensuring plans evolve with real-time inputs like daily forms, attachments, and voice interactions. The focus is on complete user empowerment: using 100% of collected data (health profiles, routines, progress logs) to foster sustainable habits, deliver "shocking" reality checks, and predict outcomes, ultimately guiding users to optimal health.
+
+As a startup product (launched in 2025), Blinderfit prioritizes scalability, privacy, and engagement to achieve viral growth. It integrates ethical web search for evidence-based recommendations and Gemini's multimodal capabilities for handling voice, images, and PDFs.
+
+### 1.2 Business Objectives
+- **User Impact**: Help 80% of users achieve BMI goals within 6 months by leveraging data-driven personalization.
+- **Growth**: Acquire 10K users in Year 1 via freemium model (basic free, premium for advanced ML insights).
+- **Monetization**: Subscriptions ($4.99/month) for premium features like predictive analytics and wearable sync.
+- **Innovation**: Rely on Gemini for "advanced ML training" where needed (e.g., fine-tuned prompts for personalization models), avoiding custom training to reduce costs.
+
+### 1.3 Key Metrics for Success
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| User Engagement | 75% daily active users | App analytics (Firebase) |
+| Health Outcomes | 70% BMI improvement | Pre/post assessments |
+| Retention | 60% at 30 days | Cohort analysis |
+| AI Accuracy | 90% satisfaction (NPS >8) | In-app feedback |
+| Data Utilization | 95% of inputs influence plans | Backend logs |
+| Cost Efficiency | <$0.30/user/month | API + cloud usage |
+
+### 1.4 Assumptions and Dependencies
+- Frontend ready; backend built per prior PRD (FastAPI, Firebase/Firestore, Gemini integration).
+- Gemini API access (Pro/Med-Gemini for health-specific multimodal tasks).
+- User consent for data usage; compliance with HIPAA/GDPR equivalents.
+- No initial custom ML training; use Gemini's built-in capabilities (e.g., self-supervised learning for predictions).
+
+## 2. Market and User Research Insights
+Based on 2025 trends in AI health apps:
+- **Personalization is Key**: 85% of users drop off non-personalized apps; AI-driven adaptations (e.g., real-time nutrition tweaks) boost retention by 40% (source: Orangesoft AI in Fitness 2025).
+- **Data-Driven ML**: Techniques like collaborative filtering and hybrid models (e.g., for calorie/exercise personalization) enable precise recommendations using user history (source: Nature Scientific Reports, 2024).
+- **Gemini Integration**: Multimodal models like Med-Gemini excel in health apps for analyzing images (e.g., meal photos) and predicting outcomes (source: Google Research, 2024).
+- **Challenges**: Privacy concerns (mitigate with on-device processing via Gemini Nano); over-reliance on data (balance with motivational gamification).
+
+### 2.1 User Personas
+| Persona | Description | Goals | Pain Points |
+|---------|-------------|-------|-------------|
+| **Raj (Overweight Professional)** | 32M, BMI 28, desk job, Indian urbanite. | Sustainable weight loss without gym. | Info overload; motivation dips. |
+| **Priya (Underweight Student)** | 22F, BMI 17, irregular meals. | Balanced nutrition for energy. | Forgets tracking; cultural food prefs. |
+| **Amit (Chronic Condition User)** | 45M, BMI 26, diabetic. | Safe, doctor-aligned plans. | Fear of inaccurate advice. |
+
+### 2.2 User Journey Map
+1. **Discovery/Onboarding**: OAuth sign-up → Health quiz (height, weight, age, diseases, routines, preferences) → Initial BMI assessment.
+2. **Personalization Kickoff**: Chat with FitMentor → AI generates 1-month plan using user data + web-sourced expert advice.
+3. **Daily Loop**: Morning notifications → Follow plan (diet/exercise) → Evening form submission → AI adjusts tomorrow's plan.
+4. **Deep Engagement**: Voice chats, photo uploads (e.g., meal scans) → ML insights (e.g., "Your carb intake predicts +1kg gain; swap rice for quinoa").
+5. **Progress & Motivation**: PulseHub dashboard with visualizations, "reality shocks" (e.g., junk food impact graphs), gamified streaks.
+6. **Long-Term**: Quarterly reviews; predictive ML for goal timelines.
+
+## 3. Product Scope
+
+### 3.1 In Scope
+- **Core Features**: Onboarding, AI chats (text/voice), plan generation/adjustment, daily tracking, notifications, dashboard.
+- **Personalization Enhancements**: Use 100% user data (e.g., routines, compliance logs) for adaptive plans; integrate attachments (PDFs for reports, screenshots for meals).
+- **Advanced ML (Gemini-Reliant)**: Predictive modeling (e.g., BMI trajectory forecasting), collaborative filtering for nutrition recs, real-time feedback (e.g., exercise form via image analysis).
+- **User-Centric Additions**: Gamification (badges for streaks), community forums, motivational "nudges" based on data patterns.
+- **Integrations**: Wearables (Google Fit/Apple Health), India-specific e-commerce APIs for products.
+
+### 3.2 Out of Scope
+- Custom ML model training (rely on Gemini's pre-trained capabilities).
+- B2B features (e.g., corporate wellness).
+- AR/VR workouts.
+
+### 3.3 Risks and Mitigations
+| Risk | Likelihood | Mitigation |
+|------|------------|------------|
+| Data Privacy Breach | Medium | Firebase encryption; anonymized ML inputs. |
+| Inaccurate Predictions | High | Gemini safety filters; disclaimers ("Not medical advice"). |
+| High API Costs | Medium | Caching; Gemini Nano for on-device tasks. |
+| User Burnout | High | A/B test motivational features. |
+
+## 4. Functional Requirements
+
+### 4.1 Onboarding and Data Collection
+- Dynamic form: Collects height/weight (auto-BMI calc), age, diseases, daily routines, dietary prefs, goals.
+- Consent flow: Explicit opt-in for data usage in ML personalization.
+- Storage: Firestore schema (enhanced from prior PRD) with sub-collections for longitudinal data.
+
+### 4.2 FitMentor AI Core
+- **Chat Interface**: Multimodal (text, voice via Google Speech-to-Text, images/PDFs via Gemini Vision).
+- **Prompt Engineering**: Every query includes full user context (profile + summarized history + daily logs). E.g., "Based on Raj's diabetes and 70% carb compliance last week, suggest low-GI meal alternatives. Predict 7-day BMI shift."
+- **Plan Generation**: 1-month adaptive plan (daily meals: food/calories/proteins; exercise/yoga routines). Uses web search (via Gemini tools) for expert-backed recs (e.g., "Renowned Indian dietitians on quinoa for weight loss").
+- **Product Recs**: AI scans e-commerce (Amazon/Flipkart APIs) for cheapest natural options; fallbacks to home recipes.
+
+### 4.3 Advanced ML Personalization (Gemini-Reliant)
+- **If Required**: Activated for premium users; no custom training—leverage Gemini's multimodal/self-supervised learning.
+- **Techniques Incorporated**:
+  - **Predictive Analytics**: Use Gemini to model user data (e.g., time-series forecasting of BMI/weight via historical logs). Prompt: "Analyze [user_weight_history] with ML regression; forecast BMI at 30 days if compliance improves 20%."
+  - **Collaborative Filtering**: For nutrition/exercise recs—Gemini simulates by comparing anonymized user patterns (e.g., "Similar users with BMI 28 and desk jobs succeeded with HIIT; adapt for Raj").
+  - **Dynamic Goal Setting**: ML updates targets (e.g., step goals) based on retrospective data, per Sage Journals (2024) approach.
+  - **Real-Time Feedback**: Image analysis (e.g., upload workout photo → "Form correction: Straighten back") using Med-Gemini.
+- **Data Maximization**: All inputs (forms, chats, attachments) feed into context; summarize sessions exceeding 128K tokens via Gemini.
+
+### 4.4 Tracking and Adjustment
+- Daily Form: Compliance checklist (meals/exercise/nutrients); auto-adjusts next plan (e.g., +200 cal if deficit).
+- End-to-End Monitoring: Aggregate data for insights (e.g., Pandas in backend for "Junk food correlation: 30% delay in goals").
+
+### 4.5 PulseHub Dashboard
+- Visuals: Charts (BMI trends, nutrient heatmaps), ML insights (e.g., "Shock: 15% hidden calories from snacks—projected +3kg by month-end").
+- Gamification: Streaks, badges; personalized tips from data patterns.
+
+### 4.6 Notifications and Engagement
+- Timed pushes (FCM): Meal reminders, motivational quotes tied to data (e.g., "Great job on proteins—keep it up to hit goal 2 weeks early!").
+- Voice Mode: Alexa-like interactions for hands-free logging.
+
+## 5. Non-Functional Requirements
+
+### 5.1 Performance and Scalability
+- Response Time: <1s for chats; handle 5K DAU.
+- Tech Stack: FastAPI backend; React Native frontend enhancements; Gemini Pro for ML.
+
+### 5.2 Security and Privacy
+- Data Usage: Federated learning simulation via Gemini (process on-device where possible).
+- Compliance: Audit trails; delete-on-request.
+
+### 5.3 Accessibility
+- WCAG 2.1; voice for low-literacy users.
+
+## 6. Technical Architecture
+
+### 6.1 Key Components
+- **Backend**: FastAPI APIs (enhanced with ML endpoints, e.g., POST /ml/predict).
+- **AI/ML Layer**: Gemini SDK for all intelligence; integrate Med-Gemini for health-specific tasks.
+- **Data Layer**: Firestore (schema: Add ml_predictions sub-collection: {date, bmi_forecast, confidence}).
+- **Integrations**: Google Fit for wearables; SerpAPI for web search.
+
+### 6.2 Data Flow for Personalization
+1. User input → Store in Firestore.
+2. Query trigger → Fetch context → Gemini prompt with ML technique (e.g., "Apply collaborative filtering to [data]").
+3. Output → Adjust plan → Update dashboard.
+
+## 7. Data Schema Enhancements (Firestore)
+- **users/{user_id}/ml_insights** (sub-collection): {technique: string, input_data: dict, output: dict, timestamp: timestamp}.
+- Ensure 100% data linkage (e.g., routines link to predictions).
+
+## 8. API Enhancements
+- POST /ml/personalize: {data_slice: dict} → {recommendations: dict, prediction: dict}.
+- All prior endpoints + auth.
+
+## 9. Go-to-Market and Launch
+- **MVP Rollout**: Q4 2025; beta with 500 users.
+- **Marketing**: App Store optimization; influencer partnerships for India.
+- **Feedback Loop**: In-app surveys to refine ML prompts.
+
+## 10. Timeline and Resources
+| Phase | Duration | Key Deliverables |
+|-------|----------|------------------|
+| Design/Research | 2 weeks | Wireframes, ML prototypes. |
+| Development | 8 weeks | Backend ML integration, frontend tweaks. |
+| Testing/Launch | 4 weeks | Beta testing, deployment. |
+- Team: 2 devs, 1 designer, 1 PM; budget $50K (Gemini credits included).
+
+## 11. Appendices
+- **Disclaimers**: All AI outputs include "Consult a doctor" notes.
+- **Future Roadmap**: Custom fine-tuning if Gemini allows; social features.
+- **References**: Incorporated from 2025 sources (e.g., AI Fitness Trends, Med-Gemini docs).
+
+This PRD ensures Blinderfit is a true health companion, harnessing user data via Gemini-powered ML for profound, life-changing personalization.
