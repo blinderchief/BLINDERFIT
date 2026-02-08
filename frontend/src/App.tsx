@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ClerkProvider } from '@clerk/clerk-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HealthDataProvider } from './contexts/HealthDataContext';
 import { setTokenGetter } from './services/api';
@@ -24,20 +23,18 @@ import FitnessPlan from './pages/FitnessPlan';
 import Tracking from './pages/Tracking';
 import Profile from './pages/Profile';
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
-
 // Bridge component to connect Clerk auth token to API service
 const TokenBridge = ({ children }: { children: React.ReactNode }) => {
   const { getToken } = useAuth();
-  
+
   useEffect(() => {
     setTokenGetter(getToken);
   }, [getToken]);
-  
+
   return <>{children}</>;
 };
 
-function AppRoutes() {
+function App() {
   return (
     <AuthProvider>
       <TokenBridge>
@@ -67,18 +64,6 @@ function AppRoutes() {
         </HealthDataProvider>
       </TokenBridge>
     </AuthProvider>
-  );
-}
-
-function App() {
-  if (!CLERK_PUBLISHABLE_KEY) {
-    console.warn('Missing VITE_CLERK_PUBLISHABLE_KEY — auth will not work');
-  }
-
-  return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <AppRoutes />
-    </ClerkProvider>
   );
 }
 
