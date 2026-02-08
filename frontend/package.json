@@ -11,7 +11,7 @@
     "deploy": "vercel --prod"
   },
   "engines": {
-    "node": ">=20.x"
+    "node": "20.x"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

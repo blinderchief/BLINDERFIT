@@ -114,15 +114,15 @@ async def root():
     }
 
 # Include routers
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(onboarding.router, prefix="/onboarding", tags=["Onboarding"])
-app.include_router(ai_chat.router, prefix="/ai", tags=["AI Chat"])
-app.include_router(plans.router, prefix="/plans", tags=["Plans"])
-app.include_router(tracking.router, prefix="/tracking", tags=["Tracking"])
-app.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
-app.include_router(ml_predictions.router, prefix="/ml", tags=["ML Predictions"])
-app.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
-app.include_router(integrations.router, prefix="/integrations", tags=["Integrations"])
+app.include_router(auth, prefix="/auth", tags=["Authentication"])
+app.include_router(onboarding, prefix="/onboarding", tags=["Onboarding"])
+app.include_router(ai_chat, prefix="/ai", tags=["AI Chat"])
+app.include_router(plans, prefix="/plans", tags=["Plans"])
+app.include_router(tracking, prefix="/tracking", tags=["Tracking"])
+app.include_router(dashboard, prefix="/dashboard", tags=["Dashboard"])
+app.include_router(ml_predictions, prefix="/ml", tags=["ML Predictions"])
+app.include_router(notifications, prefix="/notifications", tags=["Notifications"])
+app.include_router(integrations, prefix="/integrations", tags=["Integrations"])
 
 if __name__ == "__main__":
     import uvicorn

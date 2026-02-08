@@ -43,7 +43,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         # Remove server header for security
-        response.headers.pop("server", None)
+        if "server" in response.headers:
+            del response.headers["server"]
 
         # Add custom headers
         response.headers["X-API-Version"] = "1.0.0"
