@@ -2,19 +2,13 @@
   "name": "blinderfit",
   "description": "AI-powered fitness platform with personalized training and wellness",
   "scripts": {
-    "dev": "npm run dev:frontend",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build": "npm run build:frontend",
-    "build:frontend": "cd frontend && npm run build",
-    "deploy:frontend": "cd frontend && npm run deploy",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
     "lint": "cd frontend && npm run lint",
     "preview": "cd frontend && npm run preview"
   },
   "engines": {
     "node": "20.x"
   },
-  "private": true,
-  "workspaces": [
-    "frontend"
-  ]
+  "private": true
 }
