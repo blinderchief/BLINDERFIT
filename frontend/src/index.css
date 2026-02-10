@@ -43,21 +43,29 @@
     @apply border-border;
   }
 
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-black text-white;
     font-family: 'Montserrat', sans-serif;
     font-weight: 300;
+    overflow-x: hidden;
+    width: 100%;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply tracking-widest uppercase;
     font-family: 'Montserrat', sans-serif;
     font-weight: 400;
-    letter-spacing: 0.5em;
   }
 
-  /* Fix for input text visibility in login/signup forms */
-  input, textarea, select {
+  /* Input styling — scoped to avoid breaking Clerk components */
+  .gofit-container input,
+  .gofit-container textarea,
+  .gofit-container select,
+  form:not(.cl-formFieldRow) input,
+  form:not(.cl-formFieldRow) textarea {
     @apply text-white bg-[#222] border-gray-600;
     color: white !important;
     font-family: 'Montserrat', sans-serif;

@@ -1,433 +1,475 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf, Dumbbell, CircuitBoard, ChevronRight, ArrowRight, Mail, MessageCircle } from 'lucide-react';
+import {
+  Brain,
+  BarChart3,
+  Dumbbell,
+  Activity,
+  BookOpen,
+  Sparkles,
+  Users,
+  UserCircle,
+  ArrowRight,
+  ChevronRight,
+  ChevronDown,
+  MessageSquare,
+  Target,
+  TrendingUp,
+  Shield,
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Carousel,
-  CarouselContent,
-  CarouselItem
-} from "@/components/ui/carousel";
-import { toast } from '@/hooks/use-toast';
-import apiService from '@/services/api';
 
-const Home = () => {
-  const { user } = useAuth();
-  const [isVisible, setIsVisible] = useState({
-    hero: false,
-    features: false,
-    vision: false,
-    about: false,
-    earlyAdopter: false,
-    cta: false
-  });
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [showCookieBanner, setShowCookieBanner] = useState(false);
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+/* ────────────────────────────────────────────────────── */
+/*  Feature data                                         */
+/* ────────────────────────────────────────────────────── */
+const features = [
+  {
+    icon: Brain,
+    title: 'FitMentor AI',
+    desc: 'Your personal AI nutritionist & fitness advisor powered by Google Gemini. Get hyper-personalized diet plans, exercise routines, and real-time coaching through text and voice.',
+    link: '/fitmentor',
+    color: 'from-amber-500/20 to-yellow-600/10',
+  },
+  {
+    icon: BarChart3,
+    title: 'PulseHub Dashboard',
+    desc: 'A command center for your health journey. Visualize BMI trends, calorie intake, workout streaks, and AI-generated insights — all in one beautiful dashboard.',
+    link: '/pulsehub',
+    color: 'from-blue-500/20 to-cyan-600/10',
+  },
+  {
+    icon: Dumbbell,
+    title: 'Fitness Plans',
+    desc: 'Adaptive 30-day workout & nutrition programs built around your goals, body type, and daily schedule. Plans evolve as you progress.',
+    link: '/fitness-plan',
+    color: 'from-rose-500/20 to-pink-600/10',
+  },
+  {
+    icon: Activity,
+    title: 'Health Tracking',
+    desc: 'Log meals, workouts, water intake, sleep, and vitals daily. Your data feeds the AI so every recommendation gets smarter over time.',
+    link: '/tracking',
+    color: 'from-green-500/20 to-emerald-600/10',
+  },
+  {
+    icon: BookOpen,
+    title: 'FitLearn',
+    desc: 'Evidence-based articles, video guides, and micro-courses on nutrition science, injury prevention, and holistic wellness.',
+    link: '/fitlearn',
+    color: 'from-violet-500/20 to-purple-600/10',
+  },
+  {
+    icon: Sparkles,
+    title: 'MindShift',
+    desc: 'Mental wellness tools — guided meditation, breathing exercises, motivational nudges, and perception training to keep you focused.',
+    link: '/mindshift',
+    color: 'from-teal-500/20 to-cyan-600/10',
+  },
+  {
+    icon: Users,
+    title: 'TribeVibe',
+    desc: 'Join community challenges, share progress, find accountability partners, and draw inspiration from others on the same journey.',
+    link: '/tribevibe',
+    color: 'from-orange-500/20 to-amber-600/10',
+  },
+  {
+    icon: UserCircle,
+    title: 'MyZone',
+    desc: 'Your personal space — profile, health history, achievements, and preferences all in one place. Full control over your data.',
+    link: '/myzone',
+    color: 'from-indigo-500/20 to-blue-600/10',
+  },
+];
 
-  const heroImages = [
-    {
-      url: "https://images.unsplash.com/photo-1549476464-37392f717541?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80",
-      message: "TRANSFORM YOUR PERCEPTION",
-      description: "Unleash your potential with personalized fitness that adapts to your unique vision."
-    },
-    {
-      url: "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80",
-      message: "SEE BEYOND LIMITS",
-      description: "Our revolutionary approach redefines fitness through the power of visualization."
-    },
-    {
-      url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80",
-      message: "CLARITY THROUGH MOTION",
-      description: "Founded by fitness enthusiasts, our platform empowers you to bring clarity and purpose to fitness journeys."
-    }
-  ];
+const steps = [
+  {
+    num: '01',
+    title: 'Complete Health Assessment',
+    desc: 'Sign up and answer a quick health quiz — BMI, daily routines, dietary preferences, fitness goals, and medical history.',
+    icon: Target,
+  },
+  {
+    num: '02',
+    title: 'Get Your AI Plan',
+    desc: 'FitMentor AI analyzes your data and builds a personalized 30-day nutrition & workout plan backed by expert research.',
+    icon: MessageSquare,
+  },
+  {
+    num: '03',
+    title: 'Track, Adapt & Transform',
+    desc: 'Log daily progress, receive real-time adjustments, and watch your dashboard light up with results. The AI learns and evolves with you.',
+    icon: TrendingUp,
+  },
+];
 
-  useEffect(() => {
-    // Set initial visibility for hero section
-    setTimeout(() => {
-      setIsVisible(prev => ({ ...prev, hero: true }));
-    }, 100);
-    
-    // Set visibility for earlyAdopter section after a delay
-    setTimeout(() => {
-      setIsVisible(prev => ({ ...prev, earlyAdopter: true }));
-    }, 1500);
-    
-    const hasCookieConsent = localStorage.getItem('cookieConsent');
-    if (!hasCookieConsent) {
-      setShowCookieBanner(true);
-    }
-
-    const observerOptions = {
-      threshold: 0.2,
-      rootMargin: '0px 0px -100px 0px'
-    };
-
-    // Make sure to include all sections we want to observe
-    const sectionsToObserve = [
-      { id: 'features', ref: document.getElementById('features') },
-      { id: 'earlyAdopter', ref: document.getElementById('earlyAdopter') },
-      { id: 'vision', ref: document.getElementById('vision') },
-      { id: 'cta', ref: document.getElementById('cta') }
-    ];
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const sectionId = entry.target.id;
-          setIsVisible(prev => ({ ...prev, [sectionId]: true }));
-        }
-      });
-    }, observerOptions);
-
-    // Delay the observer setup to ensure DOM elements are ready
-    setTimeout(() => {
-      sectionsToObserve.forEach(section => {
-        const element = section.ref || document.getElementById(section.id);
-        if (element) {
-          observer.observe(element);
-        } else {
-          console.warn(`Element with id ${section.id} not found`);
-        }
-      });
-    }, 500);
-
-    const carouselInterval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-    }, 5000);
-
-    return () => {
-      sectionsToObserve.forEach(section => {
-        const element = section.ref || document.getElementById(section.id);
-        if (element) {
-          observer.unobserve(element);
-        }
-      });
-      clearInterval(carouselInterval);
-    };
-  }, [heroImages.length]);
-
-  const acceptCookies = () => {
-    localStorage.setItem('cookieConsent', 'true');
-    setShowCookieBanner(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast({ title: "Error", description: "Please enter your email address", variant: "destructive" });
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await apiService.submitEarlyAdopter(email);
-      setEmail('');
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 5000);
-      toast({ title: "Success!", description: "You've been added to our early adopter list." });
-    } catch (error: any) {
-      console.error("Error submitting email:", error);
-      toast({ title: "Error", description: "There was a problem submitting your email. Please try again.", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="overflow-hidden">
-      {/* Main Hero Section */}
-      <section className="relative h-screen flex items-start pt-32">
-        <div className="absolute inset-0 bg-black/60 z-10"></div>
-        
-        <Carousel 
-          className="absolute inset-0 w-full h-full" 
-          opts={{ loop: true }}
-          setApi={carousel => {
-            if (carousel) {
-              carousel.scrollTo(currentSlide);
-            }
-          }}
-        >
-          <CarouselContent className="h-full">
-            {heroImages.map((image, index) => (
-              <CarouselItem key={index} className="h-full">
-                <div 
-                  className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000"
-                  style={{
-                    backgroundImage: `url("${image.url}")`,
-                    opacity: index === currentSlide ? 1 : 0
-                  }}
-                ></div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-        
-        <div className="gofit-container relative z-10">
-          <div 
-            className={`max-w-2xl mx-auto sm:ml-8 transition-all duration-1000 ease-out ${
-              isVisible.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-            }`}
-          >
-            <div className="flex flex-col items-center sm:items-start">
-              <div className="flex items-center justify-center mb-6 p-4 sm:p-6 rounded-full bg-black/50 border border-gold/30">
-                <img 
-                  src="/images/blinderfit-logo.png" 
-                  alt="BlinderFit Logo" 
-                  className="h-12 sm:h-16 w-auto"
-                />
-              </div>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-[0.3em] sm:tracking-[0.5em] text-white mb-4 sm:mb-6 text-center sm:text-left">
-                BLINDERFIT
-              </h1>
-              <p className="text-xl sm:text-2xl md:text-3xl text-gold font-light mb-4 tracking-[0.2em] sm:tracking-[0.3em] text-center sm:text-left">
-                CLARITY THROUGH MOTION
-              </p>
-              <p className="text-gray-300 text-base sm:text-lg mb-6 sm:mb-8 font-light text-center sm:text-left">
-              Founded by fitness enthusiasts, BlinderFit is a platform to bring clarity and purpose to fitness journeys.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                {user ? (
-                  <Link to="/pulsehub" className="gofit-button">
-                    Go to Your Dashboard
-                  </Link>
-                ) : (
-                  <Link to="/login" className="gofit-button">
-                    Begin Your Journey
-                  </Link>
-                )}
-              </div>
-            </div>
+/* ────────────────────────────────────────────────────── */
+/*  Mock App Preview Screens                             */
+/* ────────────────────────────────────────────────────── */
+const DashboardPreview = () => (
+  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl">
+    <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#161616] border-b border-gray-800">
+      <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+      <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+      <span className="ml-3 text-[10px] text-gray-500 tracking-wider">PULSEHUB DASHBOARD</span>
+    </div>
+    <div className="p-4 space-y-3">
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { label: 'BMI', val: '23.4', delta: '-1.2' },
+          { label: 'Streak', val: '14d', delta: '+3' },
+          { label: 'Calories', val: '1,840', delta: '-160' },
+        ].map((s) => (
+          <div key={s.label} className="bg-[#1a1a1a] rounded p-2.5 text-center">
+            <p className="text-[9px] text-gray-500 uppercase tracking-widest">{s.label}</p>
+            <p className="text-lg font-semibold text-white mt-0.5" style={{ letterSpacing: '0.05em' }}>{s.val}</p>
+            <p className="text-[9px] text-green-400">{s.delta}</p>
           </div>
-        </div>
-        
-        <div className="absolute bottom-16 left-0 right-0 z-20 flex justify-center gap-2">
-          {heroImages.map((_, index) => (
-            <button
-              key={index}
-              className={`h-2 rounded-full transition-all ${
-                index === currentSlide ? 'w-8 bg-gold' : 'w-2 bg-white/50'
-              }`}
-              onClick={() => setCurrentSlide(index)}
-              aria-label={`Go to slide ${index + 1}`}
-            />
+        ))}
+      </div>
+      <div className="bg-[#1a1a1a] rounded p-3">
+        <p className="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Weekly Progress</p>
+        <div className="flex items-end gap-1 h-16">
+          {[40, 55, 45, 70, 60, 80, 65].map((h, i) => (
+            <div key={i} className="flex-1 rounded-sm bg-gradient-to-t from-gold/60 to-gold/20" style={{ height: `${h}%` }} />
           ))}
         </div>
-        
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center">
-          <a 
-            href="#vision" 
-            className="animate-bounce text-gold"
-            aria-label="Scroll to vision"
-          >
-            <ChevronRight className="rotate-90 h-8 w-8" />
-          </a>
+        <div className="flex justify-between mt-1">
+          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+            <span key={i} className="text-[8px] text-gray-600 flex-1 text-center">{d}</span>
+          ))}
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+);
 
-      {/* Vision Section */}
-      <section id="vision" className="py-20 bg-black border-t border-gold/10">
-        <div className="gofit-container">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-light tracking-wider text-white mb-6">OUR VISION</h2>
-            <p className="text-xl text-gold font-light max-w-3xl mx-auto mb-4 tracking-wide">
-              "To transform how we perceive fitness — not just as physical activity, but as a journey of clarity and purpose."
-            </p>
-            <p className="text-gray-300 max-w-2xl mx-auto">
-              Founded by fitness enthusiasts, BlinderFit redefines fitness by focusing on the mind-body connection. 
-              We believe true transformation begins with clear vision and purpose.
-            </p>
+const ChatPreview = () => (
+  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl">
+    <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#161616] border-b border-gray-800">
+      <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+      <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+      <span className="ml-3 text-[10px] text-gray-500 tracking-wider">FITMENTOR AI CHAT</span>
+    </div>
+    <div className="p-4 space-y-3 min-h-[180px]">
+      <div className="flex justify-end">
+        <div className="bg-gold/20 border border-gold/30 rounded-lg px-3 py-2 max-w-[75%]">
+          <p className="text-xs text-gray-200">I want to lose 5 kg in 2 months. What should I eat today?</p>
+        </div>
+      </div>
+      <div className="flex justify-start">
+        <div className="bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2 max-w-[80%]">
+          <p className="text-xs text-gray-300">Based on your profile (BMI 26.1, desk job, vegetarian), here's your plan for today:</p>
+          <ul className="text-xs text-gray-400 mt-1.5 space-y-0.5 list-disc ml-3">
+            <li>Breakfast: Oats with almonds — 320 cal</li>
+            <li>Lunch: Quinoa salad with paneer — 450 cal</li>
+            <li>Snack: Green smoothie — 180 cal</li>
+            <li>Dinner: Dal + 1 roti + salad — 400 cal</li>
+          </ul>
+          <p className="text-[10px] text-gold mt-2">✨ Predicted outcome: −0.6 kg this week</p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const TrackingPreview = () => (
+  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl">
+    <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#161616] border-b border-gray-800">
+      <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
+      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
+      <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+      <span className="ml-3 text-[10px] text-gray-500 tracking-wider">DAILY TRACKING</span>
+    </div>
+    <div className="p-4 space-y-2.5">
+      {[
+        { label: 'Meals Logged', val: '3 / 4', pct: 75, clr: 'bg-gold' },
+        { label: 'Water Intake', val: '2.1L / 3L', pct: 70, clr: 'bg-blue-400' },
+        { label: 'Workout', val: '32 min / 45 min', pct: 71, clr: 'bg-green-400' },
+        { label: 'Sleep', val: '7.2h / 8h', pct: 90, clr: 'bg-violet-400' },
+      ].map((t) => (
+        <div key={t.label} className="bg-[#1a1a1a] rounded p-2.5">
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-[10px] text-gray-400 tracking-wider uppercase">{t.label}</span>
+            <span className="text-[10px] text-gray-300">{t.val}</span>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-black/60 backdrop-blur-sm p-8 border border-gold/20 transform transition-all duration-300 hover:translate-y-[-10px] hover:border-gold/40">
-              <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mb-6">
-                <Leaf className="h-8 w-8 text-gold" />
-              </div>
-              <h3 className="text-xl font-light text-white mb-4">Perception Training</h3>
-              <p className="text-gray-300">
-                Our unique approach retrains how you perceive fitness challenges, turning obstacles into stepping stones.
-              </p>
-            </div>
-            
-            <div className="bg-black/60 backdrop-blur-sm p-8 border border-gold/20 transform transition-all duration-300 hover:translate-y-[-10px] hover:border-gold/40">
-              <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mb-6">
-                <Dumbbell className="h-8 w-8 text-gold" />
-              </div>
-              <h3 className="text-xl font-light text-white mb-4">Clarity Through Motion</h3>
-              <p className="text-gray-300">
-                Movement isn't just physical—it's mental. We guide you to find clarity in every rep, every stride.
-              </p>
-            </div>
-            
-            <div className="bg-black/60 backdrop-blur-sm p-8 border border-gold/20 transform transition-all duration-300 hover:translate-y-[-10px] hover:border-gold/40">
-              <div className="w-16 h-16 rounded-full bg-gold/10 flex items-center justify-center mb-6">
-                <CircuitBoard className="h-8 w-8 text-gold" />
-              </div>
-              <h3 className="text-xl font-light text-white mb-4">AI-Enhanced Vision</h3>
-              <p className="text-gray-300">
-                Our technology analyzes your unique patterns to create personalized training that evolves with you.
-              </p>
-            </div>
+          <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full ${t.clr}`} style={{ width: `${t.pct}%` }} />
           </div>
         </div>
-      </section>
+      ))}
+    </div>
+  </div>
+);
 
-      {/* Early Adopter Section */}
-      <section id="earlyAdopter" className="py-16 bg-black border-t border-b border-gold/20">
-        <div className="gofit-container">
-          <div 
-            className={`max-w-xl mx-auto text-center transition-all duration-1000 ease-out ${
-              isVisible.earlyAdopter ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+/* ────────────────────────────────────────────────────── */
+/*  Home Component                                       */
+/* ────────────────────────────────────────────────────── */
+const Home = () => {
+  const { user } = useAuth();
+  const [visible, setVisible] = useState<Record<string, boolean>>({ hero: false });
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible((p) => ({ ...p, hero: true })), 100);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) setVisible((p) => ({ ...p, [e.target.id]: true }));
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
+    );
+
+    const ids = ['features', 'previews', 'howItWorks', 'cta'];
+    const timeout = setTimeout(() => {
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          sectionRefs.current[id] = el;
+          observer.observe(el);
+        }
+      });
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timeout);
+      Object.values(sectionRefs.current).forEach((el) => el && observer.unobserve(el));
+    };
+  }, []);
+
+  const reveal = (id: string) =>
+    visible[id] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8';
+
+  return (
+    <div className="overflow-hidden -mt-24">
+      {/* ═══════════════════════ HERO ═══════════════════════ */}
+      <section className="relative min-h-screen flex items-center justify-center bg-black overflow-hidden">
+        {/* Subtle gradient background */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-blue-900/5" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[150px]" />
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center pt-32 pb-20">
+          <div
+            className={`transition-all duration-1000 ease-out ${
+              visible.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
             }`}
           >
-            <div className="border border-gold/30 rounded-full px-8 py-3 inline-block mb-8">
-              <p className="text-gold text-sm sm:text-base">Be Our First 1,000!</p>
+            {/* Beta badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold/30 bg-gold/5 mb-8">
+              <span className="inline-block w-2 h-2 rounded-full bg-gold animate-pulse" />
+              <span className="text-gold text-xs tracking-[0.2em] uppercase font-medium">
+                Beta — Early Access
+              </span>
             </div>
-            
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-light tracking-wider mb-6 leading-tight">
-              <span className="block sm:inline">EARLY</span>{" "}
-              <span className="block sm:inline">ADOPTER</span>{" "}
-              <span className="block sm:inline">INVITE</span>
-            </h2>
-            
-            <p className="text-gray-300 mb-8 max-w-lg mx-auto">
-              Join our exclusive community of early adopters and get access to special features.
+
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white mb-6 leading-[1.1]"
+              style={{ letterSpacing: '0.06em' }}>
+              AI-Powered Fitness,{' '}
+              <span className="text-gold">Personalized</span> for You
+            </h1>
+
+            <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-10 font-light leading-relaxed"
+              style={{ letterSpacing: '0.02em' }}>
+              BlinderFit combines Google Gemini AI with deep health data to build adaptive nutrition plans,
+              personalized workouts, and real-time coaching — so every day moves you closer to your goals.
             </p>
-            
-            <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <input 
-                  type="email" 
-                  placeholder="Your email" 
-                  className="flex-grow bg-transparent border border-white/30 px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-gold"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                <button 
-                  type="submit"
-                  className="gofit-button"
-                  disabled={isSubmitting}
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              {user ? (
+                <Link
+                  to="/pulsehub"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
                 >
-                  {isSubmitting ? 'Joining...' : 'Join Now'}
-                </button>
-              </div>
-            </form>
-            
-            {showSuccess && (
-              <div className="mt-4 p-3 bg-green-900/30 border border-green-500/30 text-green-400">
-                Thank you for joining! We'll be in touch soon.
-              </div>
-            )}
+                  Go to Dashboard <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
+                  >
+                    Get Started Free <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/fitmentor"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 border border-gray-600 text-gray-300 font-medium tracking-wider text-sm hover:border-gray-400 hover:text-white transition-all"
+                  >
+                    Try FitMentor AI <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Trust indicators */}
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-6 text-gray-500 text-xs tracking-wider">
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5" /> HIPAA-Aligned Privacy
+              </span>
+              <span className="hidden sm:inline text-gray-700">|</span>
+              <span>Powered by Google Gemini</span>
+              <span className="hidden sm:inline text-gray-700">|</span>
+              <span>100% of Your Data Drives Your Plan</span>
+            </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+            <a href="#features" className="text-gray-600 hover:text-gold transition-colors" aria-label="Scroll to features">
+              <ChevronDown className="h-6 w-6 animate-bounce" />
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Footer Section */}
-      <footer className="bg-black border-t border-gray-800 py-8">
-        <div className="gofit-container">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-6 md:mb-0">
-              <div className="flex items-center">
-                <img 
-                  src="/images/blinderfit-logo.png" 
-                  alt="BlinderFit Logo" 
-                  className="h-8 w-auto mr-3"
-                />
-                <h2 className="text-xl font-light tracking-wider text-white">BLINDERFIT</h2>
-              </div>
-              <p className="text-sm text-gray-400 mt-2 max-w-xs">
-                Redefining fitness through the power of perception and clarity
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-6">
-              <div>
-                <h3 className="text-white font-light text-sm tracking-wider mb-3">CONTACT US</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <a href="mailto:info@blinderfit.com" className="flex items-center text-gray-400 hover:text-gold transition-colors text-sm">
-                      <Mail className="h-4 w-4 mr-2" />
-                      info@blinderfit.com
-                    </a>
-                  </li>
-                  <li>
-                    <button className="flex items-center text-gray-400 hover:text-gold transition-colors text-sm">
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Live Chat
-                    </button>
-                  </li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-white font-light text-sm tracking-wider mb-3">EXPLORE</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link to="/fitlearn" className="text-gray-400 hover:text-gold transition-colors text-sm">
-                      FitLearn
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/mindshift" className="text-gray-400 hover:text-gold transition-colors text-sm">
-                      MindShift
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/fitmentor" className="text-gray-400 hover:text-gold transition-colors text-sm">
-                      FitMentor
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-8 pt-6 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-gray-500 text-xs mb-4 sm:mb-0">
-              © {new Date().getFullYear()} BlinderFit. All rights reserved.
+      {/* ═══════════════════ FEATURES ═══════════════════ */}
+      <section id="features" className="py-24 bg-black border-t border-gray-900">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className={`text-center mb-16 transition-all duration-700 ${reveal('features')}`}>
+            <p className="text-gold text-xs tracking-[0.3em] uppercase mb-3">Everything You Need</p>
+            <h2 className="text-3xl sm:text-4xl font-light text-white mb-4" style={{ letterSpacing: '0.08em' }}>
+              ONE PLATFORM, TOTAL TRANSFORMATION
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">
+              From AI-powered coaching to community challenges — BlinderFit covers every dimension of your health journey.
             </p>
-            <div className="flex space-x-4">
-              <Link to="/privacy" className="text-gray-500 hover:text-gray-400 text-xs">
-                Privacy Policy
-              </Link>
-              <Link to="/terms" className="text-gray-500 hover:text-gray-400 text-xs">
-                Terms of Service
-              </Link>
-            </div>
           </div>
-        </div>
-      </footer>
 
-      {/* Cookie Consent Banner */}
-      {showCookieBanner && (
-        <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm border-t border-gray-800 py-4 px-6 z-50">
-          <div className="gofit-container">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-sm text-gray-300 text-center sm:text-left">
-                This website uses cookies to ensure you get the best experience on our website.
-              </p>
-              <div className="flex gap-3">
-                <button 
-                  onClick={acceptCookies}
-                  className="px-4 py-2 bg-gold text-black text-xs tracking-wider hover:bg-gold/90 transition-colors"
-                >
-                  Accept
-                </button>
-                <Link 
-                  to="/privacy"
-                  className="px-4 py-2 border border-gray-600 text-gray-300 text-xs tracking-wider hover:bg-gray-800 transition-colors"
-                >
-                  Learn More
-                </Link>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {features.map((f, i) => (
+              <Link
+                key={f.title}
+                to={f.link}
+                className={`group relative bg-[#111] border border-gray-800 rounded-lg p-6 hover:border-gold/30 transition-all duration-500 ${reveal('features')}`}
+                style={{ transitionDelay: `${i * 80}ms` }}
+              >
+                <div className={`absolute inset-0 rounded-lg bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-100 transition-opacity`} />
+                <div className="relative z-10">
+                  <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center mb-4 group-hover:bg-gold/20 transition-colors">
+                    <f.icon className="h-5 w-5 text-gold" />
+                  </div>
+                  <h3 className="text-white text-sm font-medium tracking-wider mb-2 uppercase">{f.title}</h3>
+                  <p className="text-gray-400 text-xs leading-relaxed">{f.desc}</p>
+                  <span className="inline-flex items-center gap-1 mt-3 text-gold text-[11px] tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">
+                    Explore <ArrowRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ APP PREVIEWS ═══════════════ */}
+      <section id="previews" className="py-24 bg-[#060606] border-t border-gray-900">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className={`text-center mb-14 transition-all duration-700 ${reveal('previews')}`}>
+            <p className="text-gold text-xs tracking-[0.3em] uppercase mb-3">See It in Action</p>
+            <h2 className="text-3xl sm:text-4xl font-light text-white mb-4" style={{ letterSpacing: '0.08em' }}>
+              A GLIMPSE INSIDE BLINDERFIT
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">
+              AI-driven dashboards, conversational coaching, and daily habit tracking — all wrapped in a sleek dark interface.
+            </p>
+          </div>
+
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-700 ${reveal('previews')}`}>
+            <div style={{ transitionDelay: '100ms' }}>
+              <DashboardPreview />
+              <p className="text-center text-gray-500 text-xs mt-3 tracking-wider uppercase">PulseHub Dashboard</p>
+            </div>
+            <div style={{ transitionDelay: '200ms' }}>
+              <ChatPreview />
+              <p className="text-center text-gray-500 text-xs mt-3 tracking-wider uppercase">FitMentor AI Chat</p>
+            </div>
+            <div style={{ transitionDelay: '300ms' }}>
+              <TrackingPreview />
+              <p className="text-center text-gray-500 text-xs mt-3 tracking-wider uppercase">Daily Tracking</p>
             </div>
           </div>
         </div>
-      )}
+      </section>
+
+      {/* ═══════════════ HOW IT WORKS ═══════════════ */}
+      <section id="howItWorks" className="py-24 bg-black border-t border-gray-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className={`text-center mb-16 transition-all duration-700 ${reveal('howItWorks')}`}>
+            <p className="text-gold text-xs tracking-[0.3em] uppercase mb-3">Simple Process</p>
+            <h2 className="text-3xl sm:text-4xl font-light text-white" style={{ letterSpacing: '0.08em' }}>
+              HOW IT WORKS
+            </h2>
+          </div>
+
+          <div className="space-y-8">
+            {steps.map((s, i) => (
+              <div
+                key={s.num}
+                className={`flex items-start gap-6 transition-all duration-700 ${reveal('howItWorks')}`}
+                style={{ transitionDelay: `${i * 150}ms` }}
+              >
+                <div className="flex-shrink-0 w-14 h-14 rounded-full border border-gold/30 bg-gold/5 flex items-center justify-center">
+                  <s.icon className="h-6 w-6 text-gold" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-gold text-xs tracking-widest font-medium">{s.num}</span>
+                    <h3 className="text-white text-base tracking-wider uppercase">{s.title}</h3>
+                  </div>
+                  <p className="text-gray-400 text-sm leading-relaxed">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ CTA ═══════════════ */}
+      <section id="cta" className="py-24 bg-[#060606] border-t border-gray-900">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <div className={`transition-all duration-700 ${reveal('cta')}`}>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold/30 bg-gold/5 mb-6">
+              <span className="inline-block w-2 h-2 rounded-full bg-gold animate-pulse" />
+              <span className="text-gold text-xs tracking-[0.2em] uppercase">Now in Beta</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-light text-white mb-4" style={{ letterSpacing: '0.08em' }}>
+              START YOUR TRANSFORMATION TODAY
+            </h2>
+            <p className="text-gray-400 text-sm max-w-lg mx-auto mb-8 leading-relaxed">
+              Join BlinderFit's early access program and be among the first to experience AI-powered fitness coaching that truly adapts to you.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              {user ? (
+                <Link
+                  to="/pulsehub"
+                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
+                >
+                  Go to Dashboard <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
+                  >
+                    Create Free Account <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center gap-2 px-8 py-3.5 border border-gray-600 text-gray-300 font-medium tracking-wider text-sm hover:border-gray-400 hover:text-white transition-all"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

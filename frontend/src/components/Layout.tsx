@@ -77,17 +77,21 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
 
           {/* Center: Logo and Company Name */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center">
-            <img 
-              src="/images/blinderfit-logo.png" 
-              alt="BlinderFit Logo" 
-              className="h-8 w-auto mb-1"
-            />
-            <Link to="/" className="text-center">
-              <h1 className="text-xl md:text-2xl font-light tracking-[0.3em] text-white">
+          <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
+              <img 
+                src="/images/blinderfit-logo.svg" 
+                alt="BlinderFit" 
+                className="h-7 w-auto"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+              <span className="text-lg md:text-xl font-light tracking-[0.3em] text-white">
                 BLINDERFIT
-              </h1>
+              </span>
             </Link>
+            <span className="text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded border border-gold/40 text-gold bg-gold/5 font-medium leading-none">
+              Beta
+            </span>
           </div>
 
           {/* Right: Login/Profile - Hide on mobile, show on desktop */}
@@ -146,9 +150,10 @@ const Layout = ({ children }: LayoutProps) => {
           {/* Logo and Brand Section - Centered */}
           <div className="flex flex-col items-center mb-16">
             <img 
-              src="/images/blinderfit-logo.png" 
-              alt="BlinderFit Logo" 
+              src="/images/blinderfit-logo.svg" 
+              alt="BlinderFit" 
               className="h-16 w-auto mb-4"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
             <h2 className="text-2xl font-light tracking-[0.5em] text-white/90">
               BLINDERFIT
@@ -247,7 +252,7 @@ const Layout = ({ children }: LayoutProps) => {
                   <video 
                     className="w-full h-full object-cover"
                     controls
-                    poster="/images/blinderfit-logo.png"
+                    poster="/images/blinderfit-logo.svg"
                     preload="metadata"
                   >
                     <source src="/videos/blinderfitvideo.mp4" type="video/mp4" />
@@ -368,9 +373,10 @@ const Layout = ({ children }: LayoutProps) => {
           {/* Logo in footer */}
           <div className="flex justify-center mb-8">
             <img 
-              src="/images/blinderfit-logo.png" 
-              alt="BlinderFit Logo" 
+              src="/images/blinderfit-logo.svg" 
+              alt="BlinderFit" 
               className="h-16 w-auto"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           </div>
 
