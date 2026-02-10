@@ -140,7 +140,7 @@ const Layout = ({ children }: LayoutProps) => {
       {/* Full Screen Mobile Menu */}
       <div 
         className={`fixed inset-y-0 left-0 w-full sm:w-[400px] max-w-full bg-gradient-to-b from-black/95 via-black/90 to-black/85 backdrop-blur-2xl z-50 transform 
-          transition-transform duration-500 ease-in-out overflow-y-auto ${
+          transition-transform duration-500 ease-in-out overflow-y-auto hide-scrollbar ${
           isMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -236,64 +236,47 @@ const Layout = ({ children }: LayoutProps) => {
           {/* Full footer with categories — homepage only */}
           {isHomePage && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 pb-10">
-                {/* Column 1: TRAINING */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 pb-10">
+                {/* Column 1: PLATFORM */}
                 <div>
-                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Training</h3>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Platform</h3>
                   <ul className="space-y-3">
-                    <li><Link to="/beginner-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Beginner Plans</Link></li>
-                    <li><Link to="/advanced-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Advanced Plans</Link></li>
-                    <li><Link to="/celebrity-routines" className="text-[#999] hover:text-gold text-xs transition-colors">Celebrity Routines</Link></li>
-                    <li><Link to="/personal-trainers" className="text-[#999] hover:text-gold text-xs transition-colors">Personal Trainers</Link></li>
-                    <li><Link to="/workout-series" className="text-[#999] hover:text-gold text-xs transition-colors">Workout Series</Link></li>
+                    <li><Link to="/pulsehub" className="text-[#999] hover:text-gold text-xs transition-colors">PulseHub Dashboard</Link></li>
+                    <li><Link to="/fitmentor" className="text-[#999] hover:text-gold text-xs transition-colors">FitMentor AI Coach</Link></li>
+                    <li><Link to="/fitness-plan" className="text-[#999] hover:text-gold text-xs transition-colors">Fitness Plans</Link></li>
+                    <li><Link to="/tracking" className="text-[#999] hover:text-gold text-xs transition-colors">Health Tracking</Link></li>
                   </ul>
                 </div>
 
-                {/* Column 2: NUTRITION */}
+                {/* Column 2: LEARN & GROW */}
                 <div>
-                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Nutrition</h3>
-                  <ul className="space-y-3">
-                    <li><Link to="/meal-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Meal Plans</Link></li>
-                    <li><Link to="/recipes" className="text-[#999] hover:text-gold text-xs transition-colors">Healthy Recipes</Link></li>
-                    <li><Link to="/supplements" className="text-[#999] hover:text-gold text-xs transition-colors">Supplements</Link></li>
-                    <li><Link to="/nutrition-guides" className="text-[#999] hover:text-gold text-xs transition-colors">Nutrition Guides</Link></li>
-                    <li><Link to="/macro-calculator" className="text-[#999] hover:text-gold text-xs transition-colors">Macro Calculator</Link></li>
-                  </ul>
-                </div>
-
-                {/* Column 3: COMMUNITY */}
-                <div>
-                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Community</h3>
-                  <ul className="space-y-3">
-                    <li><Link to="/tribevibe" className="text-[#999] hover:text-gold text-xs transition-colors">TribeVibe</Link></li>
-                    <li><Link to="/men" className="text-[#999] hover:text-gold text-xs transition-colors">Men</Link></li>
-                    <li><Link to="/women" className="text-[#999] hover:text-gold text-xs transition-colors">Women</Link></li>
-                    <li><Link to="/seniors" className="text-[#999] hover:text-gold text-xs transition-colors">Seniors</Link></li>
-                    <li><Link to="/athletes" className="text-[#999] hover:text-gold text-xs transition-colors">Athletes</Link></li>
-                  </ul>
-                </div>
-
-                {/* Column 4: PROGRAMS */}
-                <div>
-                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Programs</h3>
-                  <ul className="space-y-3">
-                    <li><Link to="/group-classes" className="text-[#999] hover:text-gold text-xs transition-colors">Group Classes</Link></li>
-                    <li><Link to="/wellness-retreats" className="text-[#999] hover:text-gold text-xs transition-colors">Wellness Retreats</Link></li>
-                    <li><Link to="/fitness-challenges" className="text-[#999] hover:text-gold text-xs transition-colors">Fitness Challenges</Link></li>
-                    <li><Link to="/virtual-coaching" className="text-[#999] hover:text-gold text-xs transition-colors">Virtual Coaching</Link></li>
-                    <li><Link to="/personal-assessment" className="text-[#999] hover:text-gold text-xs transition-colors">Personal Assessment</Link></li>
-                  </ul>
-                </div>
-
-                {/* Column 5: RESOURCES */}
-                <div>
-                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Resources</h3>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Learn & Grow</h3>
                   <ul className="space-y-3">
                     <li><Link to="/fitlearn" className="text-[#999] hover:text-gold text-xs transition-colors">FitLearn</Link></li>
-                    <li><Link to="/fitmentor" className="text-[#999] hover:text-gold text-xs transition-colors">FitMentor</Link></li>
                     <li><Link to="/mindshift" className="text-[#999] hover:text-gold text-xs transition-colors">MindShift</Link></li>
+                    <li><Link to="/tribevibe" className="text-[#999] hover:text-gold text-xs transition-colors">TribeVibe Community</Link></li>
+                    <li><Link to="/myzone" className="text-[#999] hover:text-gold text-xs transition-colors">MyZone</Link></li>
+                  </ul>
+                </div>
+
+                {/* Column 3: COMPANY */}
+                <div>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Company</h3>
+                  <ul className="space-y-3">
+                    <li><Link to="/about" className="text-[#999] hover:text-gold text-xs transition-colors">About Us</Link></li>
+                    <li><Link to="/contact" className="text-[#999] hover:text-gold text-xs transition-colors">Contact</Link></li>
                     <li><Link to="/careers" className="text-[#999] hover:text-gold text-xs transition-colors">Careers</Link></li>
-                    <li><Link to="/contact" className="text-[#999] hover:text-gold text-xs transition-colors">Contact Us</Link></li>
+                  </ul>
+                </div>
+
+                {/* Column 4: LEGAL */}
+                <div>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Legal</h3>
+                  <ul className="space-y-3">
+                    <li><Link to="/privacy-policy" className="text-[#999] hover:text-gold text-xs transition-colors">Privacy Policy</Link></li>
+                    <li><Link to="/legal" className="text-[#999] hover:text-gold text-xs transition-colors">Terms of Service</Link></li>
+                    <li><Link to="/cookie-policy" className="text-[#999] hover:text-gold text-xs transition-colors">Cookie Policy</Link></li>
+                    <li><Link to="/accessibility" className="text-[#999] hover:text-gold text-xs transition-colors">Accessibility</Link></li>
                   </ul>
                 </div>
               </div>
@@ -339,11 +322,11 @@ const Layout = ({ children }: LayoutProps) => {
           {/* Legal Links — shown on all pages */}
           <div className={`${isHomePage ? 'border-t border-[#333] pt-8 mt-4' : ''}`}>
             <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mb-4">
-              <Link to="/legal" className="text-[#999] hover:text-white text-xs transition-colors">Legal</Link>
-              <Link to="/privacy-policy" className="text-[#999] hover:text-white text-xs transition-colors">Privacy Policy</Link>
-              <Link to="/cookie-policy" className="text-[#999] hover:text-white text-xs transition-colors">Cookie Policy</Link>
+              <Link to="/legal" className="text-[#999] hover:text-white text-xs transition-colors">Terms</Link>
+              <Link to="/privacy-policy" className="text-[#999] hover:text-white text-xs transition-colors">Privacy</Link>
+              <Link to="/cookie-policy" className="text-[#999] hover:text-white text-xs transition-colors">Cookies</Link>
               <Link to="/accessibility" className="text-[#999] hover:text-white text-xs transition-colors">Accessibility</Link>
-              <Link to="/contacts" className="text-[#999] hover:text-white text-xs transition-colors">Contacts</Link>
+              <Link to="/contact" className="text-[#999] hover:text-white text-xs transition-colors">Contact</Link>
             </div>
             <p className="text-center text-[#666] text-xs mt-6">
               © {new Date().getFullYear()} BLINDERFIT. All rights reserved.

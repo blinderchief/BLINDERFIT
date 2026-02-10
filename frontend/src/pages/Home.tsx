@@ -453,7 +453,7 @@ const Home = () => {
               WHY BLINDERFIT STANDS OUT
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">
-              Most fitness apps give you generic plans. BlinderFit learns who you are and evolves with you.
+              With 345M+ fitness app users globally and only 3–8% retention at 30 days, generic apps aren't working. BlinderFit is built differently.
             </p>
           </div>
 
@@ -586,18 +586,18 @@ const Home = () => {
             {/* Social proof */}
             <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-gray-500 text-xs tracking-wider">
               <div className="text-center">
-                <p className="text-2xl font-light text-white mb-0.5">8+</p>
-                <p className="uppercase">AI Features</p>
+                <p className="text-2xl font-light text-white mb-0.5">$12B+</p>
+                <p className="uppercase">Market (2025)</p>
+              </div>
+              <div className="hidden sm:block w-px h-8 bg-gray-800" />
+              <div className="text-center">
+                <p className="text-2xl font-light text-white mb-0.5">345M+</p>
+                <p className="uppercase">App Users</p>
               </div>
               <div className="hidden sm:block w-px h-8 bg-gray-800" />
               <div className="text-center">
                 <p className="text-2xl font-light text-white mb-0.5">24/7</p>
                 <p className="uppercase">AI Coaching</p>
-              </div>
-              <div className="hidden sm:block w-px h-8 bg-gray-800" />
-              <div className="text-center">
-                <p className="text-2xl font-light text-white mb-0.5">100%</p>
-                <p className="uppercase">Personalized</p>
               </div>
               <div className="hidden sm:block w-px h-8 bg-gray-800" />
               <div className="text-center">

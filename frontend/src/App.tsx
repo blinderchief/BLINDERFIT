@@ -23,6 +23,13 @@ import FitLearnContent from './pages/FitLearnContent';
 import FitnessPlan from './pages/FitnessPlan';
 import Tracking from './pages/Tracking';
 import Profile from './pages/Profile';
+import About from './pages/About';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Legal from './pages/Legal';
+import CookiePolicy from './pages/CookiePolicy';
+import Accessibility from './pages/Accessibility';
+import Contact from './pages/Contact';
+import Careers from './pages/Careers';
 
 // Bridge component to connect Clerk auth token to API service
 const TokenBridge = ({ children }: { children: React.ReactNode }) => {
@@ -48,6 +55,13 @@ function App() {
               <Route path="/register" element={<Layout><Register /></Layout>} />
               <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
               <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
+              <Route path="/about" element={<Layout><About /></Layout>} />
+              <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
+              <Route path="/legal" element={<Layout><Legal /></Layout>} />
+              <Route path="/cookie-policy" element={<Layout><CookiePolicy /></Layout>} />
+              <Route path="/accessibility" element={<Layout><Accessibility /></Layout>} />
+              <Route path="/contact" element={<Layout><Contact /></Layout>} />
+              <Route path="/careers" element={<Layout><Careers /></Layout>} />
 
               {/* Admin-only routes — only suyashsingh.raebareli@gmail.com */}
               <Route element={<AdminRoute />}>
