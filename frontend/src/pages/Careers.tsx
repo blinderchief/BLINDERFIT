@@ -33,19 +33,12 @@ const Careers = () => (
         </section>
 
         <section>
-          <h2 className="text-white text-lg font-light mb-3 tracking-wide">Open Roles</h2>
-          <p>We're always looking for talented people who are passionate about health, AI, and building great products. Current areas of interest:</p>
-          <ul className="list-disc pl-5 space-y-1.5 mt-3">
-            <li>Full-Stack Engineers (React + Python/FastAPI)</li>
-            <li>AI/ML Engineers (LLM fine-tuning, health data)</li>
-            <li>Product Designers (Health/Fitness UX)</li>
-            <li>Content Creators (Fitness & Nutrition)</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="text-white text-lg font-light mb-3 tracking-wide">Apply</h2>
-          <p>Send us your resume and a brief note about why you're excited about BlinderFit to <span className="text-gold">careers@blinderfit.com</span>. We read every application.</p>
+          <h2 className="text-white text-lg font-light mb-3 tracking-wide">Join Us</h2>
+          <p>We're an early-stage team and not hiring for specific roles right now. But if you're passionate about health, AI, and building products that genuinely help people — we'd love to hear from you.</p>
+          <p className="mt-3">
+            Reach out at <span className="text-gold">careers@blinderfit.com</span> or connect with the founder on{' '}
+            <a href="https://www.linkedin.com/in/suyash-kumar-singh/" target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">LinkedIn</a>.
+          </p>
         </section>
       </div>
 

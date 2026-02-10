@@ -2,64 +2,64 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Users, ChevronRight } from 'lucide-react';
 
-const Awareness = () => {
+const MindShift = () => {
   const [upcomingEvents, setUpcomingEvents] = useState([
     {
       id: 1,
-      title: "Virtual Fitness Awareness Workshop",
-      date: "2024-06-15",
-      time: "10:00 AM - 12:00 PM",
-      location: "Online Zoom Session",
-      image: "https://images.unsplash.com/photo-1507398941214-572c25f4b1dc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
-      participants: 42,
-      description: "Join us for an interactive workshop on health and fitness awareness. Learn about sustainable fitness practices and maintaining long-term health."
+      title: "Morning Clarity: Guided Meditation",
+      date: "2026-02-20",
+      time: "7:00 AM - 7:30 AM",
+      location: "In-App Guided Session",
+      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+      participants: 184,
+      description: "Start your day with a guided body-scan meditation and focused breathing. Research shows 40% reduction in exercise anxiety with regular mindfulness practice."
     },
     {
       id: 2,
-      title: "Mental Health and Fitness",
-      date: "2024-06-22",
-      time: "2:00 PM - 4:00 PM",
-      location: "Community Center, New York",
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      participants: 28,
-      description: "Explore the connection between mental well-being and physical fitness in this enlightening seminar led by experts in both fields."
+      title: "Stress-Recovery Workshop: Breathwork for Athletes",
+      date: "2026-02-25",
+      time: "6:00 PM - 7:00 PM",
+      location: "Live Virtual Session",
+      image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80",
+      participants: 96,
+      description: "Learn breathwork techniques (box breathing, 4-7-8 method) that activate your parasympathetic nervous system and reduce cortisol levels by up to 18%."
     },
     {
       id: 3,
-      title: "Nutrition Awareness Campaign",
-      date: "2024-07-05",
-      time: "9:00 AM - 3:00 PM",
-      location: "Central Park, New York",
-      image: "https://images.unsplash.com/photo-1505576633757-0ac1084af824?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80",
-      participants: 120,
-      description: "Join us for a day of nutrition education, healthy food demonstrations, and expert talks on maintaining a balanced diet for optimal health."
+      title: "Sleep Optimization Masterclass",
+      date: "2026-03-05",
+      time: "9:00 PM - 9:45 PM",
+      location: "In-App Guided Session",
+      image: "https://images.unsplash.com/photo-1507398941214-572c25f4b1dc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80",
+      participants: 238,
+      description: "Progressive muscle relaxation and wind-down protocols that adapt based on your training load. Heavier training days trigger deeper recovery sessions."
     }
   ]);
   
   const [campaigns, setCampaigns] = useState([
     {
       id: 1,
-      title: "30-Day Fitness Challenge",
-      image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      description: "Join our community-wide fitness challenge to establish daily exercise habits.",
-      participants: 2584,
+      title: "21-Day Stress Reset Challenge",
+      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+      description: "Daily breathwork and meditation sessions designed to lower cortisol, improve HRV, and build lasting stress management habits.",
+      participants: 1847,
       progress: 68
     },
     {
       id: 2,
-      title: "Hydration Awareness",
-      image: "https://images.unsplash.com/photo-1564419320461-6870880221ad?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      description: "Promoting proper hydration habits for better health and fitness performance.",
-      participants: 1842,
-      progress: 45
+      title: "Sleep Quality Optimization",
+      image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
+      description: "Progressive wind-down protocols that adapt to your training load. Track sleep stages and see recovery score improvements.",
+      participants: 2156,
+      progress: 52
     },
     {
       id: 3,
-      title: "Mental Health & Fitness",
+      title: "Mindful Movement: Yoga & Breathwork",
       image: "https://images.unsplash.com/photo-1598386651573-9232cc0c2d6c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80",
-      description: "Raising awareness about the connection between mental wellbeing and physical health.",
-      participants: 3105,
-      progress: 75
+      description: "Gentle yoga flows combined with breathwork for body-mind connection. Uses motivational coaching instead of shame-inducing streak tracking.",
+      participants: 3210,
+      progress: 78
     }
   ]);
   
@@ -96,13 +96,14 @@ const Awareness = () => {
               isVisible.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
-            <h1 className="section-heading mb-6">Fitness Awareness</h1>
+            <h1 className="section-heading mb-6">MindShift</h1>
             <p className="text-xl text-silver font-light mb-8">
-              Join our mission to promote fitness awareness and education to communities worldwide. 
-              Together we can create a healthier, more active world.
+              Your mind and body are one system. Research shows users who integrate mental wellness 
+              with fitness see 3× better adherence. MindShift connects stress management, sleep 
+              optimization, and mindfulness directly to your training.
             </p>
             <button className="gofit-button">
-              Join Our Movement
+              Start Your Practice
             </button>
           </div>
         </div>
@@ -116,10 +117,10 @@ const Awareness = () => {
               isVisible.events ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
-            <h2 className="section-heading">Upcoming Events</h2>
+            <h2 className="section-heading">Guided Sessions</h2>
             <p className="section-subheading max-w-3xl mx-auto">
-              Participate in our awareness events to learn, connect, and grow with like-minded individuals 
-              who share your passion for fitness and wellbeing.
+              Science-backed meditation, breathwork, and relaxation sessions designed specifically 
+              for people who train. Each session adapts based on your stress and recovery data.
             </p>
           </div>
           
@@ -166,7 +167,7 @@ const Awareness = () => {
                     </div>
                   </div>
                   <button className="w-full py-3 border border-gold text-gold hover:bg-gold hover:text-black transition-colors group-hover:bg-gold group-hover:text-black">
-                    Register Now
+                    Start Session
                   </button>
                 </div>
               </div>
@@ -175,7 +176,7 @@ const Awareness = () => {
           
           <div className="text-center mt-12">
             <button className="gofit-button-outline">
-              View All Events <ChevronRight className="ml-2 inline-block" size={18} />
+              View All Sessions <ChevronRight className="ml-2 inline-block" size={18} />
             </button>
           </div>
         </div>
@@ -189,9 +190,10 @@ const Awareness = () => {
               isVisible.campaigns ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
             }`}
           >
-            <h2 className="section-heading">Ongoing Campaigns</h2>
+            <h2 className="section-heading">Wellness Programs</h2>
             <p className="section-subheading max-w-3xl mx-auto">
-              Our awareness campaigns are designed to educate and inspire communities to embrace healthier lifestyles.
+              Multi-week programs that integrate mental wellness with your fitness routine. 
+              Uses empathetic coaching — not shame-inducing streak trackers.
             </p>
           </div>
           
@@ -245,4 +247,4 @@ const Awareness = () => {
   );
 };
 
-export default Awareness;
+export default MindShift;

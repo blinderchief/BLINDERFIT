@@ -15,12 +15,12 @@ const TribeVibe = () => {
         
         <div className="mb-10 max-w-3xl mx-auto p-8 border border-gold/20 bg-black/80 backdrop-blur-sm text-center">
           <Award className="h-16 w-16 text-gold mx-auto mb-4" />
-          <h2 className="text-2xl font-light text-white mb-4">As a First 1,000 member, enjoy exclusive recipes</h2>
+          <h2 className="text-2xl font-light text-white mb-4">As a First 1,000 member, enjoy exclusive content</h2>
           <p className="text-gray-300 mb-6">
-            Thank you for being one of our early adopters. Access exclusive content like Suyash's Masala Smoothie recipe and connect with other fitness enthusiasts.
+            Thank you for being one of our early adopters. Access exclusive recipes and connect with other fitness enthusiasts.
           </p>
           <div className="bg-emerald-900/20 p-4 border-l-2 border-emerald-500 text-left mb-6">
-            <h3 className="text-white font-medium text-lg mb-2">Suyash's Masala Smoothie</h3>
+            <h3 className="text-white font-medium text-lg mb-2">BlinderFit Masala Smoothie</h3>
             <ul className="list-disc pl-5 text-gray-300 space-y-1">
               <li>1 banana</li>
               <li>1 cup spinach</li>
@@ -65,11 +65,11 @@ const TribeVibe = () => {
                   <div className="border border-white/10 p-4 rounded-sm">
                     <div className="flex items-start gap-3 mb-3">
                       <div className="h-10 w-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
-                        S
+                        B
                       </div>
                       <div>
-                        <h3 className="text-white font-medium">Suyash Kumar Singh</h3>
-                        <p className="text-gray-400 text-sm">Founder, BlinderFit • 2 hours ago</p>
+                        <h3 className="text-white font-medium">BlinderFit Team</h3>
+                        <p className="text-gray-400 text-sm">Founder • 2 hours ago</p>
                       </div>
                     </div>
                     <p className="text-gray-300 mb-4">
@@ -105,7 +105,7 @@ const TribeVibe = () => {
                       </div>
                     </div>
                     <p className="text-gray-300 mb-4">
-                      Just tried Suyash's Masala Smoothie recipe - game changer! The cardamom and turmeric make it unique, and I definitely felt more alert during my morning workout. Highly recommend to anyone looking for something different.
+                      Just tried the BlinderFit Masala Smoothie recipe - game changer! The cardamom and turmeric make it unique, and I definitely felt more alert during my morning workout. Highly recommend to anyone looking for something different.
                     </p>
                     <div className="flex justify-between text-gray-400 border-t border-white/10 pt-3">
                       <button className="flex items-center gap-1 hover:text-gold">
@@ -153,7 +153,7 @@ const TribeVibe = () => {
                       Our upcoming challenge focuses on daily meditation and journaling combined with strategic physical training.
                     </p>
                     <div className="flex justify-between mb-2">
-                      <span className="text-gray-400 text-sm">Launch: Apr 25, 2025</span>
+                      <span className="text-gray-400 text-sm">Launch: Mar 1, 2026</span>
                       <span className="text-gold text-sm">45 pre-registered</span>
                     </div>
                     <button className="py-2 px-4 border border-gold text-gold hover:bg-gold/10 rounded-sm transition-colors">
@@ -198,10 +198,10 @@ const TribeVibe = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
-                    S
+                    B
                   </div>
                   <div>
-                    <h4 className="text-white">Suyash Kumar Singh</h4>
+                    <h4 className="text-white">BlinderFit Team</h4>
                     <p className="text-xs text-gray-400">Founder</p>
                   </div>
                 </div>

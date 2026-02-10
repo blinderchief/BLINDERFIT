@@ -21,6 +21,7 @@ import {
   Zap,
   Lock,
   Mail,
+  Linkedin,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -33,56 +34,56 @@ const features = [
   {
     icon: Brain,
     title: 'FitMentor AI',
-    desc: 'Your personal AI nutritionist & fitness advisor powered by Google Gemini. Get hyper-personalized diet plans, exercise routines, and real-time coaching through text and voice.',
+    desc: 'Powered by Google Gemini with a 2M-token context window — your AI coach remembers your full health history, analyzes multimodal inputs, and delivers truly personalized coaching.',
     link: '/fitmentor',
     color: 'from-amber-500/20 to-yellow-600/10',
   },
   {
     icon: BarChart3,
     title: 'PulseHub Dashboard',
-    desc: 'A command center for your health journey. Visualize BMI trends, calorie intake, workout streaks, and AI-generated insights — all in one beautiful dashboard.',
+    desc: 'A unified command center for every health metric — BMI, recovery score, sleep stages, stress levels, nutrition, and wearable data — all visualized in one place.',
     link: '/pulsehub',
     color: 'from-blue-500/20 to-cyan-600/10',
   },
   {
     icon: Dumbbell,
     title: 'Fitness Plans',
-    desc: 'Adaptive 30-day workout & nutrition programs built around your goals, body type, and daily schedule. Plans evolve as you progress.',
+    desc: 'Adaptive 4-week workout & nutrition programs that evolve daily based on your sleep quality, stress levels, recovery score, and real-time progress.',
     link: '/fitness-plan',
     color: 'from-rose-500/20 to-pink-600/10',
   },
   {
     icon: Activity,
     title: 'Health Tracking',
-    desc: 'Log meals, workouts, water intake, sleep, and vitals daily. Your data feeds the AI so every recommendation gets smarter over time.',
+    desc: 'Log meals, workouts, water, sleep, and vitals. Multimodal AI turns photos into macro breakdowns and wearable syncs into actionable insights — zero friction.',
     link: '/tracking',
     color: 'from-green-500/20 to-emerald-600/10',
   },
   {
     icon: BookOpen,
     title: 'FitLearn',
-    desc: 'Evidence-based articles, video guides, and micro-courses on nutrition science, injury prevention, and holistic wellness.',
+    desc: 'Evidence-based articles and micro-courses on nutrition science, injury prevention, active aging, hormonal health, and holistic wellness.',
     link: '/fitlearn',
     color: 'from-violet-500/20 to-purple-600/10',
   },
   {
     icon: Sparkles,
     title: 'MindShift',
-    desc: 'Mental wellness tools — guided meditation, breathing exercises, motivational nudges, and perception training to keep you focused.',
+    desc: 'Mental wellness integrated with fitness — guided meditation, breathing exercises, stress-recovery correlation, and motivational coaching to keep you consistent.',
     link: '/mindshift',
     color: 'from-teal-500/20 to-cyan-600/10',
   },
   {
     icon: Users,
     title: 'TribeVibe',
-    desc: 'Join community challenges, share progress, find accountability partners, and draw inspiration from others on the same journey.',
+    desc: 'Community challenges, accountability partners, and shared progress — because people who train together retain 5× better than solo users.',
     link: '/tribevibe',
     color: 'from-orange-500/20 to-amber-600/10',
   },
   {
     icon: UserCircle,
     title: 'MyZone',
-    desc: 'Your personal space — profile, health history, achievements, and preferences all in one place. Full control over your data.',
+    desc: 'Your private health space — profile, clinical history, achievements, and privacy controls. HIPAA-aligned encryption, your data is never sold.',
     link: '/myzone',
     color: 'from-indigo-500/20 to-blue-600/10',
   },
@@ -92,19 +93,19 @@ const steps = [
   {
     num: '01',
     title: 'Complete Health Assessment',
-    desc: 'Sign up and answer a quick health quiz — BMI, daily routines, dietary preferences, fitness goals, and medical history.',
+    desc: 'Sign up and share your health profile — BMI, sleep patterns, stress levels, dietary preferences, fitness goals, medical history, and wearable data.',
     icon: Target,
   },
   {
     num: '02',
     title: 'Get Your AI Plan',
-    desc: 'FitMentor AI analyzes your data and builds a personalized 30-day nutrition & workout plan backed by expert research.',
+    desc: 'Gemini analyzes your full context (2M-token window) and builds a 4-week nutrition & workout plan that adapts daily to your sleep, stress, and recovery.',
     icon: MessageSquare,
   },
   {
     num: '03',
     title: 'Track, Adapt & Transform',
-    desc: 'Log daily progress, receive real-time adjustments, and watch your dashboard light up with results. The AI learns and evolves with you.',
+    desc: 'Log progress with photos, wearable syncs, and voice. The AI learns in real-time — your plan yesterday isn\'t your plan today because you\'re not the same person today.',
     icon: TrendingUp,
   },
 ];
@@ -286,8 +287,7 @@ const Home = () => {
 
             <p className="text-gray-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-10 font-light leading-relaxed"
               style={{ letterSpacing: '0.02em' }}>
-              BlinderFit combines Google Gemini AI with deep health data to build adaptive nutrition plans,
-              personalized workouts, and real-time coaching — so every day moves you closer to your goals.
+              BlinderFit uses Google Gemini's 2M-token context and native multimodality to build a health engine that remembers your full history, adapts daily to sleep, stress and recovery, and serves demographics that generic apps ignore.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -322,7 +322,7 @@ const Home = () => {
                 <Shield className="h-3.5 w-3.5" /> HIPAA-Aligned Privacy
               </span>
               <span className="hidden sm:inline text-gray-700">|</span>
-              <span>Powered by Google Gemini</span>
+              <span>Powered by Google Gemini (2M-token context)</span>
               <span className="hidden sm:inline text-gray-700">|</span>
               <span>100% of Your Data Drives Your Plan</span>
             </div>
@@ -346,7 +346,7 @@ const Home = () => {
               ONE PLATFORM, TOTAL TRANSFORMATION
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">
-              From AI-powered coaching to community challenges — BlinderFit covers every dimension of your health journey.
+              From AI-powered coaching to mental wellness integration — BlinderFit covers every dimension including nutrition, stress, sleep, recovery, and community.
             </p>
           </div>
 
@@ -453,7 +453,7 @@ const Home = () => {
               WHY BLINDERFIT STANDS OUT
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">
-              With 345M+ fitness app users globally and only 3–8% retention at 30 days, generic apps aren't working. BlinderFit is built differently.
+              With 345M+ fitness app users and only 3–8% retention at 30 days, the "generalist AI coach" is dead. BlinderFit solves what incumbents can't.
             </p>
           </div>
 
@@ -470,14 +470,14 @@ const Home = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-800/50">
                   {[
-                    ['AI-personalized meal plans', false, true],
-                    ['Adapts in real-time to your progress', false, true],
-                    ['Voice & text AI coaching', false, true],
-                    ['Mental wellness integration', false, true],
-                    ['Community challenges & accountability', false, true],
-                    ['Single dashboard for all health data', false, true],
-                    ['Cookie-cutter workout templates', true, false],
-                    ['Data locked in silos', true, false],
+                    ['Gemini AI meal & workout plans', false, true],
+                    ['Adapts daily to sleep, stress & progress', false, true],
+                    ['Multimodal AI coaching (text, photo, voice)', false, true],
+                    ['Mental wellness & stress-recovery integration', false, true],
+                    ['Unified health dashboard + wearable sync', false, true],
+                    ['Inclusive design (seniors, cycle-aware, all levels)', false, true],
+                    ['HIPAA-aligned privacy by design', false, true],
+                    ['Cookie-cutter templates & data silos', true, false],
                   ].map(([feature, generic, bf], i) => (
                     <tr key={i} className="bg-[#0a0a0a] hover:bg-[#111] transition-colors">
                       <td className="px-5 py-3.5 text-gray-300 text-xs">{feature as string}</td>
@@ -504,9 +504,9 @@ const Home = () => {
             {/* Key differentiators */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
               {[
-                { icon: Zap, title: 'Real-Time AI', desc: 'Plans adjust daily based on your tracked data' },
-                { icon: Shield, title: 'Privacy First', desc: 'Your health data is encrypted and never sold' },
-                { icon: Lock, title: 'Science-Backed', desc: 'Every recommendation grounded in research' },
+                { icon: Zap, title: 'Long-Context AI', desc: 'Gemini ingests your full health history for clinical-grade personalization' },
+                { icon: Shield, title: 'Privacy First', desc: 'HIPAA-aligned encryption — your data is never sold or shared' },
+                { icon: Lock, title: 'Science-Backed', desc: 'Built on exercise science, nutrition research & behavioral psychology' },
               ].map((d) => (
                 <div key={d.title} className="bg-[#111] border border-gray-800 rounded-lg p-5 text-center">
                   <d.icon className="h-6 w-6 text-gold mx-auto mb-3" />
@@ -611,14 +611,15 @@ const Home = () => {
               <p className="text-gray-400 text-xs leading-relaxed italic">
                 "I built BlinderFit because I was tired of fitness apps that treat everyone the same. Your body is unique — your plan should be too. We're combining the latest in AI with real health science to create something that actually works for <span className="text-white">you</span>."
               </p>
-              <div className="mt-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center">
-                  <span className="text-gold text-xs font-medium">SS</span>
-                </div>
-                <div>
-                  <p className="text-white text-xs font-medium">Suyash Singh</p>
-                  <p className="text-gray-500 text-[10px] tracking-wider uppercase">Founder, BlinderFit</p>
-                </div>
+              <div className="mt-3">
+                <a
+                  href="https://www.linkedin.com/in/suyash-kumar-singh/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-gold text-xs tracking-wider hover:underline transition-colors"
+                >
+                  <Linkedin className="h-3.5 w-3.5" /> Founder, BlinderFit
+                </a>
               </div>
             </div>
           </div>
