@@ -16,8 +16,15 @@ import {
   Target,
   TrendingUp,
   Shield,
+  Check,
+  X,
+  Zap,
+  Lock,
+  Mail,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+
+const ADMIN_EMAIL = 'suyashsingh.raebareli@gmail.com';
 
 /* ────────────────────────────────────────────────────── */
 /*  Feature data                                         */
@@ -106,14 +113,14 @@ const steps = [
 /*  Mock App Preview Screens                             */
 /* ────────────────────────────────────────────────────── */
 const DashboardPreview = () => (
-  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl">
+  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl h-full flex flex-col">
     <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#161616] border-b border-gray-800">
       <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
       <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
       <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
       <span className="ml-3 text-[10px] text-gray-500 tracking-wider">PULSEHUB DASHBOARD</span>
     </div>
-    <div className="p-4 space-y-3">
+    <div className="p-4 space-y-3 flex-1">
       <div className="grid grid-cols-3 gap-2">
         {[
           { label: 'BMI', val: '23.4', delta: '-1.2' },
@@ -145,14 +152,14 @@ const DashboardPreview = () => (
 );
 
 const ChatPreview = () => (
-  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl">
+  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl h-full flex flex-col">
     <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#161616] border-b border-gray-800">
       <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
       <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
       <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
       <span className="ml-3 text-[10px] text-gray-500 tracking-wider">FITMENTOR AI CHAT</span>
     </div>
-    <div className="p-4 space-y-3 min-h-[180px]">
+    <div className="p-4 space-y-3 flex-1">
       <div className="flex justify-end">
         <div className="bg-gold/20 border border-gold/30 rounded-lg px-3 py-2 max-w-[75%]">
           <p className="text-xs text-gray-200">I want to lose 5 kg in 2 months. What should I eat today?</p>
@@ -175,14 +182,14 @@ const ChatPreview = () => (
 );
 
 const TrackingPreview = () => (
-  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl">
+  <div className="bg-[#0d0d0d] rounded-lg border border-gray-800 overflow-hidden shadow-2xl h-full flex flex-col">
     <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#161616] border-b border-gray-800">
       <div className="w-2.5 h-2.5 rounded-full bg-red-500/70" />
       <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
       <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
       <span className="ml-3 text-[10px] text-gray-500 tracking-wider">DAILY TRACKING</span>
     </div>
-    <div className="p-4 space-y-2.5">
+    <div className="p-4 space-y-2.5 flex-1">
       {[
         { label: 'Meals Logged', val: '3 / 4', pct: 75, clr: 'bg-gold' },
         { label: 'Water Intake', val: '2.1L / 3L', pct: 70, clr: 'bg-blue-400' },
@@ -208,7 +215,10 @@ const TrackingPreview = () => (
 /* ────────────────────────────────────────────────────── */
 const Home = () => {
   const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
   const [visible, setVisible] = useState<Record<string, boolean>>({ hero: false });
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistStatus, setWaitlistStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -223,7 +233,7 @@ const Home = () => {
       { threshold: 0.15, rootMargin: '0px 0px -60px 0px' }
     );
 
-    const ids = ['features', 'previews', 'howItWorks', 'cta'];
+    const ids = ['features', 'previews', 'howItWorks', 'comparison', 'waitlist'];
     const timeout = setTimeout(() => {
       ids.forEach((id) => {
         const el = document.getElementById(id);
@@ -281,7 +291,7 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              {user ? (
+              {isAdmin ? (
                 <Link
                   to="/pulsehub"
                   className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
@@ -290,18 +300,18 @@ const Home = () => {
                 </Link>
               ) : (
                 <>
-                  <Link
-                    to="/register"
+                  <a
+                    href="#waitlist"
                     className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
                   >
-                    Get Started Free <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    to="/fitmentor"
+                    Join the Waitlist <ArrowRight className="h-4 w-4" />
+                  </a>
+                  <a
+                    href="#features"
                     className="inline-flex items-center gap-2 px-8 py-3.5 border border-gray-600 text-gray-300 font-medium tracking-wider text-sm hover:border-gray-400 hover:text-white transition-all"
                   >
-                    Try FitMentor AI <ChevronRight className="h-4 w-4" />
-                  </Link>
+                    See What's Inside <ChevronRight className="h-4 w-4" />
+                  </a>
                 </>
               )}
             </div>
@@ -379,16 +389,22 @@ const Home = () => {
           </div>
 
           <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all duration-700 ${reveal('previews')}`}>
-            <div style={{ transitionDelay: '100ms' }}>
-              <DashboardPreview />
+            <div className="flex flex-col" style={{ transitionDelay: '100ms' }}>
+              <div className="flex-1">
+                <DashboardPreview />
+              </div>
               <p className="text-center text-gray-500 text-xs mt-3 tracking-wider uppercase">PulseHub Dashboard</p>
             </div>
-            <div style={{ transitionDelay: '200ms' }}>
-              <ChatPreview />
+            <div className="flex flex-col" style={{ transitionDelay: '200ms' }}>
+              <div className="flex-1">
+                <ChatPreview />
+              </div>
               <p className="text-center text-gray-500 text-xs mt-3 tracking-wider uppercase">FitMentor AI Chat</p>
             </div>
-            <div style={{ transitionDelay: '300ms' }}>
-              <TrackingPreview />
+            <div className="flex flex-col" style={{ transitionDelay: '300ms' }}>
+              <div className="flex-1">
+                <TrackingPreview />
+              </div>
               <p className="text-center text-gray-500 text-xs mt-3 tracking-wider uppercase">Daily Tracking</p>
             </div>
           </div>
@@ -428,44 +444,182 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ═══════════════ CTA ═══════════════ */}
-      <section id="cta" className="py-24 bg-[#060606] border-t border-gray-900">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <div className={`transition-all duration-700 ${reveal('cta')}`}>
+      {/* ═══════════════ WHY BLINDERFIT ═══════════════ */}
+      <section id="comparison" className="py-24 bg-[#060606] border-t border-gray-900">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className={`text-center mb-14 transition-all duration-700 ${reveal('comparison')}`}>
+            <p className="text-gold text-xs tracking-[0.3em] uppercase mb-3">The Difference</p>
+            <h2 className="text-3xl sm:text-4xl font-light text-white mb-4" style={{ letterSpacing: '0.08em' }}>
+              WHY BLINDERFIT STANDS OUT
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto text-sm leading-relaxed">
+              Most fitness apps give you generic plans. BlinderFit learns who you are and evolves with you.
+            </p>
+          </div>
+
+          <div className={`transition-all duration-700 ${reveal('comparison')}`}>
+            {/* Comparison Table */}
+            <div className="overflow-hidden rounded-lg border border-gray-800">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-[#111]">
+                    <th className="text-left px-5 py-4 text-gray-400 font-normal tracking-wider text-xs uppercase">Feature</th>
+                    <th className="px-5 py-4 text-gray-400 font-normal tracking-wider text-xs uppercase text-center">Generic Apps</th>
+                    <th className="px-5 py-4 text-gold font-medium tracking-wider text-xs uppercase text-center">BlinderFit</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/50">
+                  {[
+                    ['AI-personalized meal plans', false, true],
+                    ['Adapts in real-time to your progress', false, true],
+                    ['Voice & text AI coaching', false, true],
+                    ['Mental wellness integration', false, true],
+                    ['Community challenges & accountability', false, true],
+                    ['Single dashboard for all health data', false, true],
+                    ['Cookie-cutter workout templates', true, false],
+                    ['Data locked in silos', true, false],
+                  ].map(([feature, generic, bf], i) => (
+                    <tr key={i} className="bg-[#0a0a0a] hover:bg-[#111] transition-colors">
+                      <td className="px-5 py-3.5 text-gray-300 text-xs">{feature as string}</td>
+                      <td className="px-5 py-3.5 text-center">
+                        {generic ? (
+                          <Check className="h-4 w-4 text-gray-500 mx-auto" />
+                        ) : (
+                          <X className="h-4 w-4 text-gray-700 mx-auto" />
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        {bf ? (
+                          <Check className="h-4 w-4 text-gold mx-auto" />
+                        ) : (
+                          <X className="h-4 w-4 text-gray-700 mx-auto" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Key differentiators */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+              {[
+                { icon: Zap, title: 'Real-Time AI', desc: 'Plans adjust daily based on your tracked data' },
+                { icon: Shield, title: 'Privacy First', desc: 'Your health data is encrypted and never sold' },
+                { icon: Lock, title: 'Science-Backed', desc: 'Every recommendation grounded in research' },
+              ].map((d) => (
+                <div key={d.title} className="bg-[#111] border border-gray-800 rounded-lg p-5 text-center">
+                  <d.icon className="h-6 w-6 text-gold mx-auto mb-3" />
+                  <h4 className="text-white text-xs tracking-wider uppercase mb-1">{d.title}</h4>
+                  <p className="text-gray-500 text-xs">{d.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ JOIN WAITLIST ═══════════════ */}
+      <section id="waitlist" className="py-24 bg-black border-t border-gray-900 relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gold/5 rounded-full blur-[120px]" />
+
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center relative z-10">
+          <div className={`transition-all duration-700 ${reveal('waitlist')}`}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold/30 bg-gold/5 mb-6">
               <span className="inline-block w-2 h-2 rounded-full bg-gold animate-pulse" />
-              <span className="text-gold text-xs tracking-[0.2em] uppercase">Now in Beta</span>
+              <span className="text-gold text-xs tracking-[0.2em] uppercase">Launching Soon</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-light text-white mb-4" style={{ letterSpacing: '0.08em' }}>
-              START YOUR TRANSFORMATION TODAY
+              BE THE FIRST TO EXPERIENCE IT
             </h2>
             <p className="text-gray-400 text-sm max-w-lg mx-auto mb-8 leading-relaxed">
-              Join BlinderFit's early access program and be among the first to experience AI-powered fitness coaching that truly adapts to you.
+              We're opening access to a limited group of early users. Join the waitlist to get priority access, exclusive beta features, and a founding member badge.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              {user ? (
-                <Link
-                  to="/pulsehub"
-                  className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
-                >
-                  Go to Dashboard <ArrowRight className="h-4 w-4" />
-                </Link>
+
+            {/* Waitlist form */}
+            <div className="max-w-md mx-auto">
+              {waitlistStatus === 'success' ? (
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg px-6 py-4">
+                  <Check className="h-6 w-6 text-green-400 mx-auto mb-2" />
+                  <p className="text-green-400 text-sm font-medium">You're on the list!</p>
+                  <p className="text-green-400/70 text-xs mt-1">We'll notify you when early access opens.</p>
+                </div>
               ) : (
-                <>
-                  <Link
-                    to="/register"
-                    className="inline-flex items-center gap-2 px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all"
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (waitlistEmail.trim()) {
+                      // Store in localStorage for now (can integrate backend later)
+                      const existing = JSON.parse(localStorage.getItem('blinderfit_waitlist') || '[]');
+                      if (!existing.includes(waitlistEmail.trim().toLowerCase())) {
+                        existing.push(waitlistEmail.trim().toLowerCase());
+                        localStorage.setItem('blinderfit_waitlist', JSON.stringify(existing));
+                      }
+                      setWaitlistStatus('success');
+                      setWaitlistEmail('');
+                    }
+                  }}
+                  className="flex flex-col sm:flex-row gap-3"
+                >
+                  <div className="flex-1 relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <input
+                      type="email"
+                      value={waitlistEmail}
+                      onChange={(e) => setWaitlistEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      required
+                      className="w-full pl-10 pr-4 py-3.5 bg-[#111] border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/20 transition-all"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-8 py-3.5 bg-gold text-black font-medium tracking-wider text-sm hover:bg-gold/90 transition-all rounded-lg whitespace-nowrap"
                   >
-                    Create Free Account <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    to="/login"
-                    className="inline-flex items-center gap-2 px-8 py-3.5 border border-gray-600 text-gray-300 font-medium tracking-wider text-sm hover:border-gray-400 hover:text-white transition-all"
-                  >
-                    Sign In
-                  </Link>
-                </>
+                    Join Waitlist
+                  </button>
+                </form>
               )}
+            </div>
+
+            {/* Social proof */}
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-8 text-gray-500 text-xs tracking-wider">
+              <div className="text-center">
+                <p className="text-2xl font-light text-white mb-0.5">8+</p>
+                <p className="uppercase">AI Features</p>
+              </div>
+              <div className="hidden sm:block w-px h-8 bg-gray-800" />
+              <div className="text-center">
+                <p className="text-2xl font-light text-white mb-0.5">24/7</p>
+                <p className="uppercase">AI Coaching</p>
+              </div>
+              <div className="hidden sm:block w-px h-8 bg-gray-800" />
+              <div className="text-center">
+                <p className="text-2xl font-light text-white mb-0.5">100%</p>
+                <p className="uppercase">Personalized</p>
+              </div>
+              <div className="hidden sm:block w-px h-8 bg-gray-800" />
+              <div className="text-center">
+                <p className="text-2xl font-light text-white mb-0.5">Free</p>
+                <p className="uppercase">Beta Access</p>
+              </div>
+            </div>
+
+            {/* Founder note */}
+            <div className="mt-12 bg-[#0d0d0d] border border-gray-800 rounded-lg p-6 text-left max-w-lg mx-auto">
+              <p className="text-gray-400 text-xs leading-relaxed italic">
+                "I built BlinderFit because I was tired of fitness apps that treat everyone the same. Your body is unique — your plan should be too. We're combining the latest in AI with real health science to create something that actually works for <span className="text-white">you</span>."
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center">
+                  <span className="text-gold text-xs font-medium">SS</span>
+                </div>
+                <div>
+                  <p className="text-white text-xs font-medium">Suyash Singh</p>
+                  <p className="text-gray-500 text-[10px] tracking-wider uppercase">Founder, BlinderFit</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { HealthDataProvider } from './contexts/HealthDataContext';
 import { setTokenGetter } from './services/api';
+import { AdminRoute } from './components/ProtectedRoute';
 import FitMentor from './pages/FitMentor';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -41,23 +42,29 @@ function App() {
         <HealthDataProvider>
           <Router>
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<Layout><Home /></Layout>} />
-              <Route path="/fitmentor" element={<Layout><FitMentor /></Layout>} />
               <Route path="/login" element={<Layout><Login /></Layout>} />
               <Route path="/register" element={<Layout><Register /></Layout>} />
               <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
               <Route path="/reset-password" element={<Layout><ResetPassword /></Layout>} />
-              <Route path="/pulsehub" element={<Layout><PulseHub /></Layout>} />
-              <Route path="/health-form" element={<Layout><HealthForm /></Layout>} />
-              <Route path="/assessment-goals" element={<Layout><AssessmentGoals /></Layout>} />
-              <Route path="/fitness-plan" element={<Layout><FitnessPlan /></Layout>} />
-              <Route path="/tracking" element={<Layout><Tracking /></Layout>} />
-              <Route path="/profile" element={<Layout><Profile /></Layout>} />
-              <Route path="/fitlearn" element={<Layout><FitLearn /></Layout>} />
-              <Route path="/fitlearn/:contentId" element={<Layout><FitLearnContent /></Layout>} />
-              <Route path="/mindshift" element={<Layout><MindShift /></Layout>} />
-              <Route path="/tribevibe" element={<Layout><TribeVibe /></Layout>} />
-              <Route path="/myzone" element={<Layout><MyZone /></Layout>} />
+
+              {/* Admin-only routes — only suyashsingh.raebareli@gmail.com */}
+              <Route element={<AdminRoute />}>
+                <Route path="/fitmentor" element={<Layout><FitMentor /></Layout>} />
+                <Route path="/pulsehub" element={<Layout><PulseHub /></Layout>} />
+                <Route path="/health-form" element={<Layout><HealthForm /></Layout>} />
+                <Route path="/assessment-goals" element={<Layout><AssessmentGoals /></Layout>} />
+                <Route path="/fitness-plan" element={<Layout><FitnessPlan /></Layout>} />
+                <Route path="/tracking" element={<Layout><Tracking /></Layout>} />
+                <Route path="/profile" element={<Layout><Profile /></Layout>} />
+                <Route path="/fitlearn" element={<Layout><FitLearn /></Layout>} />
+                <Route path="/fitlearn/:contentId" element={<Layout><FitLearnContent /></Layout>} />
+                <Route path="/mindshift" element={<Layout><MindShift /></Layout>} />
+                <Route path="/tribevibe" element={<Layout><TribeVibe /></Layout>} />
+                <Route path="/myzone" element={<Layout><MyZone /></Layout>} />
+              </Route>
+
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>
           </Router>

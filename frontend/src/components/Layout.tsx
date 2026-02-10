@@ -9,6 +9,8 @@ interface LayoutProps {
   children?: ReactNode;
 }
 
+const ADMIN_EMAIL = 'suyashsingh.raebareli@gmail.com';
+
 const Layout = ({ children }: LayoutProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -16,6 +18,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   // Check if current page is home
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
@@ -96,7 +99,7 @@ const Layout = ({ children }: LayoutProps) => {
 
           {/* Right: Login/Profile - Hide on mobile, show on desktop */}
           <div className="hidden md:flex items-center space-x-6">
-            {user ? (
+            {isAdmin ? (
               <div 
                 onClick={() => navigate('/myzone')}
                 className="text-white hover:text-gray-200 flex items-center cursor-pointer transition-colors"
@@ -104,6 +107,10 @@ const Layout = ({ children }: LayoutProps) => {
                 <User size={20} />
                 <span className="ml-2 text-xs hidden md:inline tracking-widest uppercase">Profile</span>
               </div>
+            ) : user ? (
+              <button onClick={handleLogout} className="text-gray-300 hover:text-white text-xs tracking-widest uppercase transition-colors">
+                Logout
+              </button>
             ) : (
               <div className="flex items-center space-x-4">
                 <Link to="/login" className="text-gray-300 hover:text-white text-xs tracking-widest uppercase transition-colors">
@@ -116,9 +123,9 @@ const Layout = ({ children }: LayoutProps) => {
             )}
           </div>
           
-          {/* Mobile profile icon - only show on mobile */}
+          {/* Mobile profile icon - only show on mobile for admin */}
           <div className="flex md:hidden items-center">
-            {user && (
+            {isAdmin && (
               <div 
                 onClick={() => navigate('/myzone')}
                 className="text-white hover:text-gray-200 flex items-center cursor-pointer transition-colors"
@@ -162,7 +169,7 @@ const Layout = ({ children }: LayoutProps) => {
 
           {/* Navigation - Centered with increased spacing */}
           <nav className="flex flex-col items-center space-y-8">
-            {[
+            {isAdmin && [
               { to: "/pulsehub", label: "PULSEHUB" },
               { to: "/tracking", label: "TRACKING" },
               { to: "/fitness-plan", label: "FITNESS PLAN" },
@@ -223,197 +230,119 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
 
-      {/* Newsletter Section - Only show on home page */}
-      {isHomePage && (
-        <section className="bg-[#222222] py-12">
-          <div className="gofit-container text-center">
-            <h2 className="text-2xl font-light tracking-wider text-white mb-4">Newsletter</h2>
-            <p className="text-[#E8E8E8] mb-6 max-w-2xl mx-auto">
-              "Success isn't just about achieving goals, it's about consistently pushing boundaries and embracing the journey."
-            </p>
-            <div className="flex justify-center">
-              <button className="bg-[#E63946] hover:bg-[#E63946]/90 text-white py-3 px-12 transition-colors">
-                SUBSCRIBE
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Footer */}
       <footer className="bg-[#111111] text-white pt-12 pb-6 relative">
         <div className="gofit-container">
-          {/* OurVibe Section - Only show on home page */}
+          {/* Full footer with categories — homepage only */}
           {isHomePage && (
-            <div className="mb-12 border-b border-white/10 pb-12">
-              <h3 className="text-2xl font-light text-white mb-6 text-center">OurVibe</h3>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                <div className="aspect-video bg-black/40 relative overflow-hidden rounded-sm border border-white/10">
-                  <video 
-                    className="w-full h-full object-cover"
-                    controls
-                    poster="/images/blinderfit-logo.svg"
-                    preload="metadata"
-                  >
-                    <source src="/videos/blinderfitvideo.mp4" type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4 text-center">
-                    <p className="text-gold text-sm font-light italic">
-                      "Imagine a fitness journey where every movement brings clarity, every challenge reveals strength, and technology adapts to your unique potential."
-                    </p>
-                    <p className="text-white/70 text-xs mt-2">
-                      — Founder's Vision
-                    </p>
-                  </div>
-                </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 pb-10">
+                {/* Column 1: TRAINING */}
                 <div>
-                  <h4 className="text-xl font-light text-gold mb-4">Our Vision</h4>
-                  <p className="text-silver mb-6">
-                    Currently in the idea stage, BlinderFit is being built with a revolutionary vision to transform how people approach fitness. The founder's bold mission is to create a platform that treats fitness not just as physical activity, but as a holistic journey of clarity and purpose.
-                  </p>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                          <path d="M2 17l10 5 10-5"></path>
-                          <path d="M2 12l10 5 10-5"></path>
-                        </svg>
-                      </div>
-                      <div>Personalized AI-driven fitness experiences for every individual</div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                        </svg>
-                      </div>
-                      <div>Mind-body connection that transforms obstacles into stepping stones</div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center text-gold">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <path d="M12 8v4"></path>
-                          <path d="M12 16h.01"></path>
-                        </svg>
-                      </div>
-                      <div>Community-driven approach to health and fitness transformation</div>
-                    </div>
-                  </div>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Training</h3>
+                  <ul className="space-y-3">
+                    <li><Link to="/beginner-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Beginner Plans</Link></li>
+                    <li><Link to="/advanced-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Advanced Plans</Link></li>
+                    <li><Link to="/celebrity-routines" className="text-[#999] hover:text-gold text-xs transition-colors">Celebrity Routines</Link></li>
+                    <li><Link to="/personal-trainers" className="text-[#999] hover:text-gold text-xs transition-colors">Personal Trainers</Link></li>
+                    <li><Link to="/workout-series" className="text-[#999] hover:text-gold text-xs transition-colors">Workout Series</Link></li>
+                  </ul>
+                </div>
+
+                {/* Column 2: NUTRITION */}
+                <div>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Nutrition</h3>
+                  <ul className="space-y-3">
+                    <li><Link to="/meal-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Meal Plans</Link></li>
+                    <li><Link to="/recipes" className="text-[#999] hover:text-gold text-xs transition-colors">Healthy Recipes</Link></li>
+                    <li><Link to="/supplements" className="text-[#999] hover:text-gold text-xs transition-colors">Supplements</Link></li>
+                    <li><Link to="/nutrition-guides" className="text-[#999] hover:text-gold text-xs transition-colors">Nutrition Guides</Link></li>
+                    <li><Link to="/macro-calculator" className="text-[#999] hover:text-gold text-xs transition-colors">Macro Calculator</Link></li>
+                  </ul>
+                </div>
+
+                {/* Column 3: COMMUNITY */}
+                <div>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Community</h3>
+                  <ul className="space-y-3">
+                    <li><Link to="/tribevibe" className="text-[#999] hover:text-gold text-xs transition-colors">TribeVibe</Link></li>
+                    <li><Link to="/men" className="text-[#999] hover:text-gold text-xs transition-colors">Men</Link></li>
+                    <li><Link to="/women" className="text-[#999] hover:text-gold text-xs transition-colors">Women</Link></li>
+                    <li><Link to="/seniors" className="text-[#999] hover:text-gold text-xs transition-colors">Seniors</Link></li>
+                    <li><Link to="/athletes" className="text-[#999] hover:text-gold text-xs transition-colors">Athletes</Link></li>
+                  </ul>
+                </div>
+
+                {/* Column 4: PROGRAMS */}
+                <div>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Programs</h3>
+                  <ul className="space-y-3">
+                    <li><Link to="/group-classes" className="text-[#999] hover:text-gold text-xs transition-colors">Group Classes</Link></li>
+                    <li><Link to="/wellness-retreats" className="text-[#999] hover:text-gold text-xs transition-colors">Wellness Retreats</Link></li>
+                    <li><Link to="/fitness-challenges" className="text-[#999] hover:text-gold text-xs transition-colors">Fitness Challenges</Link></li>
+                    <li><Link to="/virtual-coaching" className="text-[#999] hover:text-gold text-xs transition-colors">Virtual Coaching</Link></li>
+                    <li><Link to="/personal-assessment" className="text-[#999] hover:text-gold text-xs transition-colors">Personal Assessment</Link></li>
+                  </ul>
+                </div>
+
+                {/* Column 5: RESOURCES */}
+                <div>
+                  <h3 className="text-white uppercase text-sm tracking-wider mb-6">Resources</h3>
+                  <ul className="space-y-3">
+                    <li><Link to="/fitlearn" className="text-[#999] hover:text-gold text-xs transition-colors">FitLearn</Link></li>
+                    <li><Link to="/fitmentor" className="text-[#999] hover:text-gold text-xs transition-colors">FitMentor</Link></li>
+                    <li><Link to="/mindshift" className="text-[#999] hover:text-gold text-xs transition-colors">MindShift</Link></li>
+                    <li><Link to="/careers" className="text-[#999] hover:text-gold text-xs transition-colors">Careers</Link></li>
+                    <li><Link to="/contact" className="text-[#999] hover:text-gold text-xs transition-colors">Contact Us</Link></li>
+                  </ul>
                 </div>
               </div>
-            </div>
+
+              {/* Logo in footer */}
+              <div className="flex justify-center mb-8">
+                <img 
+                  src="/images/blinderfit-logo.svg" 
+                  alt="BlinderFit" 
+                  className="h-16 w-auto"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              </div>
+
+              {/* Social Media Links */}
+              <div className="border-t border-[#333] py-8">
+                <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+                  <a href="https://facebook.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+                    <Facebook size={18} />
+                    <span className="text-xs uppercase tracking-wider">Facebook</span>
+                  </a>
+                  <a href="https://instagram.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+                    <Instagram size={18} />
+                    <span className="text-xs uppercase tracking-wider">Instagram</span>
+                  </a>
+                  <a href="https://linkedin.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+                    <Linkedin size={18} />
+                    <span className="text-xs uppercase tracking-wider">LinkedIn</span>
+                  </a>
+                  <a href="https://youtube.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+                    <Youtube size={18} />
+                    <span className="text-xs uppercase tracking-wider">YouTube</span>
+                  </a>
+                  <a href="https://twitter.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
+                    <Twitter size={18} />
+                    <span className="text-xs uppercase tracking-wider">X</span>
+                  </a>
+                </div>
+              </div>
+            </>
           )}
 
-          {/* Main Footer Categories */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 pb-10">
-            {/* Column 1: TRAINING */}
-            <div>
-              <h3 className="text-white uppercase text-sm tracking-wider mb-6">Training</h3>
-              <ul className="space-y-3">
-                <li><Link to="/beginner-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Beginner Plans</Link></li>
-                <li><Link to="/advanced-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Advanced Plans</Link></li>
-                <li><Link to="/celebrity-routines" className="text-[#999] hover:text-gold text-xs transition-colors">Celebrity Routines</Link></li>
-                <li><Link to="/personal-trainers" className="text-[#999] hover:text-gold text-xs transition-colors">Personal Trainers</Link></li>
-                <li><Link to="/workout-series" className="text-[#999] hover:text-gold text-xs transition-colors">Workout Series</Link></li>
-              </ul>
-            </div>
-
-            {/* Column 2: NUTRITION */}
-            <div>
-              <h3 className="text-white uppercase text-sm tracking-wider mb-6">Nutrition</h3>
-              <ul className="space-y-3">
-                <li><Link to="/meal-plans" className="text-[#999] hover:text-gold text-xs transition-colors">Meal Plans</Link></li>
-                <li><Link to="/recipes" className="text-[#999] hover:text-gold text-xs transition-colors">Healthy Recipes</Link></li>
-                <li><Link to="/supplements" className="text-[#999] hover:text-gold text-xs transition-colors">Supplements</Link></li>
-                <li><Link to="/nutrition-guides" className="text-[#999] hover:text-gold text-xs transition-colors">Nutrition Guides</Link></li>
-                <li><Link to="/macro-calculator" className="text-[#999] hover:text-gold text-xs transition-colors">Macro Calculator</Link></li>
-              </ul>
-            </div>
-
-            {/* Column 3: COMMUNITY */}
-            <div>
-              <h3 className="text-white uppercase text-sm tracking-wider mb-6">Community</h3>
-              <ul className="space-y-3">
-                <li><Link to="/tribevibe" className="text-[#999] hover:text-gold text-xs transition-colors">TribeVibe</Link></li>
-                <li><Link to="/men" className="text-[#999] hover:text-gold text-xs transition-colors">Men</Link></li>
-                <li><Link to="/women" className="text-[#999] hover:text-gold text-xs transition-colors">Women</Link></li>
-                <li><Link to="/seniors" className="text-[#999] hover:text-gold text-xs transition-colors">Seniors</Link></li>
-                <li><Link to="/athletes" className="text-[#999] hover:text-gold text-xs transition-colors">Athletes</Link></li>
-              </ul>
-            </div>
-
-            {/* Column 4: PROGRAMS */}
-            <div>
-              <h3 className="text-white uppercase text-sm tracking-wider mb-6">Programs</h3>
-              <ul className="space-y-3">
-                <li><Link to="/group-classes" className="text-[#999] hover:text-gold text-xs transition-colors">Group Classes</Link></li>
-                <li><Link to="/wellness-retreats" className="text-[#999] hover:text-gold text-xs transition-colors">Wellness Retreats</Link></li>
-                <li><Link to="/fitness-challenges" className="text-[#999] hover:text-gold text-xs transition-colors">Fitness Challenges</Link></li>
-                <li><Link to="/virtual-coaching" className="text-[#999] hover:text-gold text-xs transition-colors">Virtual Coaching</Link></li>
-                <li><Link to="/personal-assessment" className="text-[#999] hover:text-gold text-xs transition-colors">Personal Assessment</Link></li>
-              </ul>
-            </div>
-
-            {/* Column 5: RESOURCES */}
-            <div>
-              <h3 className="text-white uppercase text-sm tracking-wider mb-6">Resources</h3>
-              <ul className="space-y-3">
-                <li><Link to="/fitlearn" className="text-[#999] hover:text-gold text-xs transition-colors">FitLearn</Link></li>
-                <li><Link to="/fitmentor" className="text-[#999] hover:text-gold text-xs transition-colors">FitMentor</Link></li>
-                <li><Link to="/mindshift" className="text-[#999] hover:text-gold text-xs transition-colors">MindShift</Link></li>
-                <li><Link to="/careers" className="text-[#999] hover:text-gold text-xs transition-colors">Careers</Link></li>
-                <li><Link to="/contact" className="text-[#999] hover:text-gold text-xs transition-colors">Contact Us</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Logo in footer */}
-          <div className="flex justify-center mb-8">
-            <img 
-              src="/images/blinderfit-logo.svg" 
-              alt="BlinderFit" 
-              className="h-16 w-auto"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          </div>
-
-          {/* Social Media Links */}
-          <div className="border-t border-[#333] py-8">
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
-              <a href="https://facebook.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
-                <Facebook size={18} />
-                <span className="text-xs uppercase tracking-wider">Facebook</span>
-              </a>
-              <a href="https://instagram.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
-                <Instagram size={18} />
-                <span className="text-xs uppercase tracking-wider">Instagram</span>
-              </a>
-              <a href="https://linkedin.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
-                <Linkedin size={18} />
-                <span className="text-xs uppercase tracking-wider">LinkedIn</span>
-              </a>
-              <a href="https://youtube.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
-                <Youtube size={18} />
-                <span className="text-xs uppercase tracking-wider">YouTube</span>
-              </a>
-              <a href="https://twitter.com" className="flex items-center gap-2 text-[#999] hover:text-white transition-colors" target="_blank" rel="noopener noreferrer">
-                <Twitter size={18} />
-                <span className="text-xs uppercase tracking-wider">X</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Legal Links */}
-          <div className="border-t border-[#333] pt-8 mt-4">
+          {/* Legal Links — shown on all pages */}
+          <div className={`${isHomePage ? 'border-t border-[#333] pt-8 mt-4' : ''}`}>
             <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mb-4">
               <Link to="/legal" className="text-[#999] hover:text-white text-xs transition-colors">Legal</Link>
               <Link to="/privacy-policy" className="text-[#999] hover:text-white text-xs transition-colors">Privacy Policy</Link>
               <Link to="/cookie-policy" className="text-[#999] hover:text-white text-xs transition-colors">Cookie Policy</Link>
               <Link to="/accessibility" className="text-[#999] hover:text-white text-xs transition-colors">Accessibility</Link>
-              <Link to="/privacy-requests" className="text-[#999] hover:text-white text-xs transition-colors">Submit your privacy request</Link>
               <Link to="/contacts" className="text-[#999] hover:text-white text-xs transition-colors">Contacts</Link>
             </div>
             <p className="text-center text-[#666] text-xs mt-6">
@@ -422,14 +351,16 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </div>
 
-        {/* Scroll to top button - Centered at the bottom */}
-        <button 
-          onClick={scrollToTop} 
-          className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-gold/20 hover:bg-gold/30 p-3 rounded-full transition-all duration-300"
-          aria-label="Scroll to top"
-        >
-          <ChevronsUp className="text-gold" size={24} />
-        </button>
+        {/* Scroll to top button — homepage only */}
+        {isHomePage && (
+          <button 
+            onClick={scrollToTop} 
+            className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-gold/20 hover:bg-gold/30 p-3 rounded-full transition-all duration-300"
+            aria-label="Scroll to top"
+          >
+            <ChevronsUp className="text-gold" size={24} />
+          </button>
+        )}
       </footer>
 
       {/* Add Chatbot */}
